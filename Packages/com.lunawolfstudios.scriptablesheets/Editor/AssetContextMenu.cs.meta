@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 1f4b8e2c6a9d4f3b8c7e0a1d2b3c4d5e
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Editor/AssetContextMenu.cs
+  uploadId: 944616

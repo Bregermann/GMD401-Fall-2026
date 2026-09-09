@@ -1,0 +1,18 @@
+{
+    "name": "LunaWolfStudiosEditor.ScriptableSheets.Samples.SerializeReference",
+    "rootNamespace": "LunaWolfStudiosEditor.ScriptableSheets.Samples.SerializeReference",
+    "references": [
+        "GUID:59345a2f14c0468e8eedff4f2970e8d0"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

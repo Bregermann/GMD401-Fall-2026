@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8c2a1b9d3e4f5a8b6c7d0e1f2a3b4c, type: 3}
+  m_Name: HeroDeck
+  m_EditorClassIdentifier: 
+  m_Suit: 0
+  m_Abilities:
+  - rid: 5200000000000000100
+  - rid: 3046326187703140358
+  - rid: 5200000000000000101
+  - rid: 5200000000000000102
+  - rid: 5200000000000000103
+  - rid: 5200000000000000104
+  references:
+    version: 2
+    RefIds:
+    - rid: 3046326187703140358
+      type: {class: HeroAbilityActiveDataDamageObjects, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 2
+        m_CardCount: 3
+        m_Damage: 5
+    - rid: 5200000000000000100
+      type: {class: HeroAbilityActiveDataDirectAttack, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 1
+        m_Damage: 10
+    - rid: 5200000000000000101
+      type: {class: HeroAbilityActiveDataDamageObjects, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 5
+        m_CardCount: 3
+        m_Damage: 5
+    - rid: 5200000000000000102
+      type: {class: HeroAbilityActiveDataAddCardsToField, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 1
+        m_CardCount: 2
+    - rid: 5200000000000000103
+      type: {class: HeroAbilityActiveDataSuitDebuff, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 3
+        m_DebuffStrength: 0.25
+    - rid: 5200000000000000104
+      type: {class: HeroAbilityActiveDataComboAttack, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 2
+        m_DamagePerHit: 030000000500000008000000
+        m_Modifier:
+          m_Multiplier: 1.5
+          m_Note: Finisher

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: a1c4e2f6b9d04e3aa7c2f1e8b5d63c90
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Editor/Modules/Layout/IndexFormat.cs
+  uploadId: 944616

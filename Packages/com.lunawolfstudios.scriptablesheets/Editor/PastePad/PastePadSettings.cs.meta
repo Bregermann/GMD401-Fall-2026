@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: ca064ca1dfd3794409ba0e40676452e0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Editor/PastePad/PastePadSettings.cs
+  uploadId: 944616

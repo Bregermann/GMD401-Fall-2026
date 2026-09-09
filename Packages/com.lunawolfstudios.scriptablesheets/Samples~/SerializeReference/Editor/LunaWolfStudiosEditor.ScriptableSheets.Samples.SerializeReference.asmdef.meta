@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 23953dea0d074b8e8087cb10a5f4a534
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Samples~/SerializeReference/Editor/LunaWolfStudiosEditor.ScriptableSheets.Samples.SerializeReference.asmdef
+  uploadId: 944616

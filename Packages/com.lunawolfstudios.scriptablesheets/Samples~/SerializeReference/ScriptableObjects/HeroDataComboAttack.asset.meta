@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 340e1d9e35e7c5849ba554097aa2289b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Samples~/SerializeReference/ScriptableObjects/HeroDataComboAttack.asset
+  uploadId: 944616

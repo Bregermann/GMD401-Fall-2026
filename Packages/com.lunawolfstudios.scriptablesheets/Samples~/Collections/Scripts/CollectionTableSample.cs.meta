@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: b7e1c2a4d8f34c069a1e5b3f7c2d6e80
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Samples~/Collections/Scripts/CollectionTableSample.cs
+  uploadId: 944616

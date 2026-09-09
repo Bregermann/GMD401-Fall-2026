@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 7f3c2a9b6d4e4f1a8c5b0e9d2a1f6c3b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Tests/Editor/CollectionFieldPathsTests.cs
+  uploadId: 944616

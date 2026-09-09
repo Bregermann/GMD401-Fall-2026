@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2a86af47f4e403e4287c30b3052fb458
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Samples~/SerializeReference/ScriptableObjects/AbilityBook2.asset
+  uploadId: 944616

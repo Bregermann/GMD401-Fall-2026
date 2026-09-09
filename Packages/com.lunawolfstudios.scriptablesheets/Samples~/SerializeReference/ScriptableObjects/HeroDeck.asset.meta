@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5e9a1c3d7f024680ace13579bdf02468
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Samples~/SerializeReference/ScriptableObjects/HeroDeck.asset
+  uploadId: 944616

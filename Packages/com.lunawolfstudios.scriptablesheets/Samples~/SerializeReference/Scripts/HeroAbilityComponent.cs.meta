@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 7a1d4e2f8c9b0a3d5e6f708192a0b1c2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Samples~/SerializeReference/Scripts/HeroAbilityComponent.cs
+  uploadId: 944616

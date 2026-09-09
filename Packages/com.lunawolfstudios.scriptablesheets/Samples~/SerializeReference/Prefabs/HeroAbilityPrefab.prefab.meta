@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8d0f2a4c6e813579024680000cebdf13
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 284559
+  packageName: Scriptable Sheets
+  packageVersion: 1.11.0
+  assetPath: Packages/com.lunawolfstudios.scriptablesheets/Samples~/SerializeReference/Prefabs/HeroAbilityPrefab.prefab
+  uploadId: 944616

@@ -1,0 +1,14 @@
+{
+    "name": "LunaWolfStudios.ScriptableSheets.Samples.SerializeReference",
+    "rootNamespace": "LunaWolfStudios.ScriptableSheets.Samples.SerializeReference",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

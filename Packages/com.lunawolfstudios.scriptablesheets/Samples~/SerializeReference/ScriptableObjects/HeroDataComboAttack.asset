@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23580f3f76554db1a049d850d2b26cb6, type: 3}
+  m_Name: HeroDataComboAttack
+  m_EditorClassIdentifier: 
+  m_Suit: 0
+  m_AbilityActive:
+    rid: 3046326079474630730
+  m_SecondaryAbility:
+    rid: 3046326079474630736
+  references:
+    version: 2
+    RefIds:
+    - rid: 3046326079474630730
+      type: {class: HeroAbilityActiveDataComboAttack, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 2
+        m_DamagePerHit: 030000000500000008000000
+        m_Modifier:
+          m_Multiplier: 1.5
+          m_Note: Finisher
+    - rid: 3046326079474630736
+      type: {class: HeroAbilityActiveDataDirectAttack, ns: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference, asm: LunaWolfStudios.ScriptableSheets.Samples.SerializeReference}
+      data:
+        m_ChargeCount: 4
+        m_Damage: 10
