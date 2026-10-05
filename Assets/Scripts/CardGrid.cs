@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Grid : MonoBehaviour
+public class CardGrid : MonoBehaviour
 {
     [SerializeField] private GameObject slotPrefab;
     [SerializeField] private int rows = 8;
@@ -33,5 +33,41 @@ public class Grid : MonoBehaviour
                 slots[row, col] = slot.transform;
             }
         }
+    }
+    public Transform GetSlot(int row, int col)
+    {
+        if (slots == null || row < 0 || row >= rows || col < 0 || col >= columns)
+            return null;
+
+        return slots[row, col];
+    }
+
+    public Transform GetNearestEmptySlot(Vector3 worldPosition, float maxDistance)
+    {
+        if (slots == null) return null;
+
+        Transform nearest = null;
+        float closest = float.MaxValue;
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < columns; c++)
+            {
+                Transform slot = slots[r, c];
+                if (slot == null) continue;
+
+                // Skip slots that already have a card
+                if (slot.childCount > 0) continue;
+
+                float dist = Vector3.Distance(worldPosition, slot.position);
+                if (dist < closest && dist <= maxDistance)
+                {
+                    closest = dist;
+                    nearest = slot;
+                }
+            }
+        }
+
+        return nearest;
     }
 }
