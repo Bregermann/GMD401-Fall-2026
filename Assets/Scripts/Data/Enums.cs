@@ -1,8 +1,8 @@
 // Shared enums used across CardData and AttackData.
 // Add new status effects or classes here as the game expands.
 
-// Controls turn-order tiebreaking. Priority descends left to right:
-// Assassin > Support > Attacker > Healer > Ranged > Mage > Defender
+// The 7 card classes. Don't reorder - assets save these as numbers, add new ones at the end.
+// Turn-order tiebreaking uses TurnPriority() below, not this order.
 public enum CharacterClass
 {
     Attacker,
@@ -12,6 +12,26 @@ public enum CharacterClass
     Mage,
     Assassin,
     Ranged
+}
+
+public static class CharacterClassExtensions
+{
+    // Speed tiebreak, lower number goes first. Use like: characterClass.TurnPriority()
+    // Assassin > Support > Attacker > Healer > Ranged > Mage > Defender
+    public static int TurnPriority(this CharacterClass characterClass)
+    {
+        switch (characterClass)
+        {
+            case CharacterClass.Assassin: return 0;
+            case CharacterClass.Support:  return 1;
+            case CharacterClass.Attacker: return 2;
+            case CharacterClass.Healer:   return 3;
+            case CharacterClass.Ranged:   return 4;
+            case CharacterClass.Mage:     return 5;
+            case CharacterClass.Defender: return 6;
+            default:                      return 99; // Unranked classes go last
+        }
+    }
 }
 
 // Determines which defense stat reduces incoming damage, or whether the move heals instead.

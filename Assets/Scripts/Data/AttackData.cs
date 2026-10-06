@@ -25,7 +25,8 @@ public class AttackData : ScriptableObject
 
     [Header("Knockback")]
     public bool hasKnockback;
-    // Damage dealt only if the knocked-back card collides with a wall or another card.
+    // Damage dealt if the knocked-back card hits a wall or any card (it stays in place).
+    // If the card it hits is an enemy of the attacker, that card takes this damage too.
     public int knockbackCollisionDamage = 10;
 
     [Header("Status Effects")]
