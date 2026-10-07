@@ -6,17 +6,16 @@ using NUnit.Framework;
 public class CardMover : MonoBehaviour
 {
     [Header("Snap Settings")]
-    [SerializeField] float snapDistance = 1.5f;
     [SerializeField] private float snapSpeed = 15f;
     [SerializeField] private float heightOffset = 0.05f;
 
     private bool isDragging = false;
-    private bool isSnapping = false;          // prevents conflicts
+    private bool isSnapping = false;          
     private Vector3 dragOffset;
     private Camera cam;
     private CardGrid grid;
     private Plane dragPlane;
-    private Coroutine snapCoroutine;          // so we can stop it
+    private Coroutine snapCoroutine;          
 
     void Start()
     {
@@ -114,6 +113,7 @@ public class CardMover : MonoBehaviour
     {
         snapCoroutine = StartCoroutine(SmoothSnap(nearest));
     }
+    
 }
     IEnumerator SmoothSnap(Transform targetSlot)
     {
@@ -136,5 +136,7 @@ public class CardMover : MonoBehaviour
 
         isSnapping = false;
         snapCoroutine = null;
+        transform.SetParent(targetSlot);
+        Debug.Log($"{name} snapped to {targetSlot.name}");
     }
 }

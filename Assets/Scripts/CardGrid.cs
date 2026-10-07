@@ -5,6 +5,7 @@ public class CardGrid : MonoBehaviour
     [SerializeField] private GameObject slotPrefab;
     [SerializeField] private int rows = 8;
     [SerializeField] private int columns = 8;
+    //Creates spacing in between the slots so cards cards on touching each other
     [SerializeField] private float spacingX = 1f;
     [SerializeField] private float spacingZ = 1.5f;
     private Transform[,] slots;
@@ -29,11 +30,13 @@ public class CardGrid : MonoBehaviour
                 GameObject slot = Instantiate(slotPrefab, transform);
                 slot.transform.localPosition = localPos;
                 slot.transform.localRotation = Quaternion.identity;
+                //Lets you read the cards
                 slot.name = $"Slot_{row}_{col}";
                 slots[row, col] = slot.transform;
             }
         }
     }
+    //Helps you find out what row and column a slot is
     public Transform GetSlot(int row, int col)
     {
         if (slots == null || row < 0 || row >= rows || col < 0 || col >= columns)

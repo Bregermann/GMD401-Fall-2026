@@ -623,7 +623,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bec69bc5f99ee16468c4bdf0e03c8542, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Card
-  snapDistance: 1.5
   snapSpeed: 12
   heightOffset: 0.05
 --- !u!1 &1888974611 stripped
@@ -643,7 +642,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bec69bc5f99ee16468c4bdf0e03c8542, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Card
-  snapDistance: 1.5
   snapSpeed: 12
   heightOffset: 0.05
 --- !u!1001 &1750195928779052693
