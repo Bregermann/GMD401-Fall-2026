@@ -45,32 +45,85 @@ public class CardGrid : MonoBehaviour
         return slots[row, col];
     }
 
-    public Transform GetNearestEmptySlot(Vector3 worldPosition, float maxDistance)
+   public Transform GetNearestValidSlot(Vector3 worldPosition, CardData data, Transform currentSlot, float maxDistance = 999f)
+{
+    if (slots == null || data == null) return null;
+
+    int arrayRows = slots.GetLength(0);
+    int arrayCols = slots.GetLength(1);
+
+    // Find where the card currently is
+    int currentRow = -1;
+    int currentCol = -1;
+
+    if (currentSlot != null)
     {
-        if (slots == null) return null;
-
-        Transform nearest = null;
-        float closest = float.MaxValue;
-
-        for (int r = 0; r < rows; r++)
+        for (int r = 0; r < arrayRows; r++)
         {
-            for (int c = 0; c < columns; c++)
+            for (int c = 0; c < arrayCols; c++)
             {
-                Transform slot = slots[r, c];
-                if (slot == null) continue;
-
-                // Skip slots that already have a card
-                if (slot.childCount > 0) continue;
-
-                float dist = Vector3.Distance(worldPosition, slot.position);
-                if (dist < closest && dist <= maxDistance)
+                if (slots[r, c] == currentSlot)
                 {
-                    closest = dist;
-                    nearest = slot;
+                    currentRow = r;
+                    currentCol = c;
+                    break;
                 }
             }
+            if (currentRow != -1) break;
         }
-
-        return nearest;
     }
+
+    Transform nearest = null;
+    float closestDist = float.MaxValue;
+
+    for (int r = 0; r < arrayRows; r++)
+    {
+        for (int c = 0; c < arrayCols; c++)
+        {
+            Transform slot = slots[r, c];
+            if (slot == null || slot.childCount > 0) continue;
+
+            int rowDiff = currentRow == -1 ? 0 : Mathf.Abs(r - currentRow);
+            int colDiff = currentCol == -1 ? 0 : Mathf.Abs(c - currentCol);
+
+            
+            int steps = Mathf.Max(rowDiff, colDiff);
+
+           
+            if (steps > data.moveSpaces) continue;
+
+            bool isOrthogonal = rowDiff == 0 || colDiff == 0;   // pure up/down/left/right
+            bool isDiagonal   = rowDiff == colDiff;             // pure diagonal
+
+            bool allowed = false;
+
+            if (currentRow == -1)
+            {
+                // First placement allow any empty slot
+                allowed = true;
+            }
+            else if (isOrthogonal)
+            {
+                //To move the card forward backward and side to side
+                allowed = true;
+            }
+            else if (isDiagonal && data.canMoveDiagonally)
+            {
+                // Diagonal only if the card allows it
+                allowed = true;
+            }
+
+            if (!allowed) continue;
+
+            float dist = Vector3.Distance(worldPosition, slot.position);
+            if (dist < closestDist && dist <= maxDistance)
+            {
+                closestDist = dist;
+                nearest = slot;
+            }
+        }
+    }
+
+    return nearest;
+}
 }

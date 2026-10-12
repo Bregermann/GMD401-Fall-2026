@@ -9,13 +9,18 @@ public class CardMover : MonoBehaviour
     [SerializeField] private float snapSpeed = 15f;
     [SerializeField] private float heightOffset = 0.05f;
 
+    [Header("CardData Data")]
+    public CardData data;
+
     private bool isDragging = false;
     private bool isSnapping = false;          
     private Vector3 dragOffset;
     private Camera cam;
     private CardGrid grid;
     private Plane dragPlane;
-    private Coroutine snapCoroutine;          
+    private Coroutine snapCoroutine;  
+    private Transform currentSlot;   
+    public bool hasMoved = false;     
 
     void Start()
     {
@@ -32,7 +37,7 @@ public class CardMover : MonoBehaviour
         if (mouse == null) return;
 
         // Start drag
-        if (mouse.leftButton.wasPressedThisFrame && !isSnapping)
+        if (mouse.leftButton.wasPressedThisFrame && !isSnapping && !hasMoved)
         {
             if (IsMouseOverThisCard())
             {
@@ -66,6 +71,12 @@ public class CardMover : MonoBehaviour
 
     void StartDrag()
     {
+        if (snapCoroutine != null)
+    {
+        StopCoroutine(snapCoroutine);
+        snapCoroutine = null;
+    }
+        currentSlot = transform.parent;
 
         isSnapping = false;
         isDragging = true;
@@ -82,6 +93,7 @@ public class CardMover : MonoBehaviour
             Vector3 hitPoint = ray.GetPoint(enter);
             dragOffset = transform.position - hitPoint;
         }
+        Debug.Log($"{name} started drag. currentSlot = {(currentSlot != null ? currentSlot.name : "NULL")} | data = {(data != null ? data.name : "NULL")}");
     }
 
     void Drag()
@@ -92,7 +104,7 @@ public class CardMover : MonoBehaviour
         {
             Vector3 hitPoint = ray.GetPoint(enter);
             Vector3 newPos = hitPoint + dragOffset;
-            newPos.y = transform.position.y;   // keep original height
+            newPos.y = transform.position.y;   
             transform.position = newPos;
         }
     }
@@ -105,13 +117,26 @@ public class CardMover : MonoBehaviour
 
     void TrySnap()
 {
-    if (grid == null || isSnapping) return;
+    if (grid == null || isSnapping || data == null) return;
 
-    Transform nearest = grid.GetNearestEmptySlot(transform.position, 999f);
+    // Look for a legal slot near where the player released the mouse
+    Transform nearestValid = grid.GetNearestValidSlot(
+        transform.position,
+        data,
+        currentSlot,
+        1f
+    );
 
-    if (nearest != null)
+    if (nearestValid != null)
     {
-        snapCoroutine = StartCoroutine(SmoothSnap(nearest));
+        // Player dropped near a legal slot go there
+        snapCoroutine = StartCoroutine(SmoothSnap(nearestValid));
+    }
+    else if (currentSlot != null)
+    {
+        // No legal slot nearby return to original slot
+        Debug.Log($"{name} – illegal drop, returning to original slot");
+        snapCoroutine = StartCoroutine(SmoothSnap(currentSlot));
     }
     
 }
@@ -134,9 +159,19 @@ public class CardMover : MonoBehaviour
         transform.rotation = targetRot;
         transform.SetParent(targetSlot);
 
+        // Only lock the card if it was ALREADY on a slot and moved to a different one
+        if (currentSlot != null && currentSlot != targetSlot)
+        {
+            hasMoved = true;
+            Debug.Log($"{name} has used its move and is now locked");
+        }
+        else
+        {
+            Debug.Log($"{name} placed on board for the first time – can still move later");
+        }
+
         isSnapping = false;
         snapCoroutine = null;
-        transform.SetParent(targetSlot);
-        Debug.Log($"{name} snapped to {targetSlot.name}");
     }
+    
 }
