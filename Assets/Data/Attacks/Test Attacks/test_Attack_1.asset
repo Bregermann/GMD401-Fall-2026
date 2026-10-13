@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4181548305175c4a96fb96e354cb77e, type: 3}
   m_Name: test_Attack_1
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  attackName: 
-  damage: 0
+  attackName: test1
+  damage: 10
   damageType: 0
   positionalBonus: 0
   positionalMultiplier: 1.25

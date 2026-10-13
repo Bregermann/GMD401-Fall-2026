@@ -14,6 +14,7 @@ public class CardInstance
 
     public bool IsAlive => currentHP > 0;
     public bool IsTakingTurn { get; private set; }
+    public bool IsStunned => statusEffects.Has(StatusEffectType.Stun); // Can't move or attack this turn
 
     public CardInstance(CardData data, int owner, int row, int column)
     {
@@ -25,7 +26,10 @@ public class CardInstance
     }
 
     // Stats with status effects included
-    public int Speed => Mathf.Max(10, data.speed + statusEffects.GetSpeedModifier());
+    public const int MinSpeed = 10; // SpeedDown can't push speed below this
+
+    // Floor only stops debuffs, a card with base speed under 10 keeps it
+    public int Speed => Mathf.Max(Mathf.Min(data.speed, MinSpeed), data.speed + statusEffects.GetSpeedModifier());
     public int MoveSpaces => Mathf.Max(0, data.moveSpaces + statusEffects.GetMoveModifier());
     public int PhysicalDefense => Mathf.Max(0, data.physicalDefense + statusEffects.GetPhysicalDefenseModifier());
     public int MagicDefense => Mathf.Max(0, data.magicDefense + statusEffects.GetMagicDefenseModifier());
@@ -48,10 +52,10 @@ public class CardInstance
         currentHP = Mathf.Max(0, currentHP - amount);
     }
 
-    // Returns false if the card has HealBlock
+    // Returns false if the card has HealBlock or is already dead
     public bool Heal(int amount)
     {
-        if (statusEffects.Has(StatusEffectType.HealBlock)) return false;
+        if (!IsAlive || statusEffects.Has(StatusEffectType.HealBlock)) return false;
         currentHP = Mathf.Min(data.maxHP, currentHP + amount);
         return true;
     }
@@ -88,12 +92,15 @@ public class CardInstance
 
     // ---- Turn hooks (called by the turn manager) ----
 
-    // Burn and Regeneration happen at the start of the turn
+    // Regeneration then Burn happen at the start of the turn.
+    // A stunned turn still happens (effects still trigger and count down), it just counts as skipping the attack.
+    // If Burn kills the card, the turn manager should skip the rest of its turn (check IsAlive after this).
     public void StartTurn()
     {
         IsTakingTurn = true;
-        if (statusEffects.Has(StatusEffectType.Burn)) TakeDamage(StatusEffectHandler.BurnDamage);
+        if (IsStunned) SkipAttack();
         if (statusEffects.Has(StatusEffectType.Regeneration)) Heal(StatusEffectHandler.RegenerationAmount);
+        if (statusEffects.Has(StatusEffectType.Burn)) TakeDamage(StatusEffectHandler.BurnDamage);
     }
 
     // Poison happens at the end of the turn, then effects count down

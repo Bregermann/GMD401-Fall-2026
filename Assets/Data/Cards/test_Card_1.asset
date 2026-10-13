@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
   m_Name: test_Card_1
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  cardName: 
+  cardName: Test
   characterClass: 0
   artwork: {fileID: 0}
-  maxHP: 0
-  physicalDefense: 0
-  magicDefense: 0
-  speed: 0
+  maxHP: 50
+  physicalDefense: 25
+  magicDefense: 20
+  speed: 30
   moveSpaces: 3
   canMoveDiagonally: 0
   attack1: {fileID: 11400000, guid: e261f25de5ceb464c873ad9aa4e50466, type: 2}

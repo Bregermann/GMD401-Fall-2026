@@ -72,8 +72,8 @@ public enum StatusEffectType
     PhysicalDefenseDown, // -50 physical defense (min 0), 2 turns
     MagicDefenseDown,    // -50 magic defense (min 0), 2 turns
     SpeedDown,           // -50 speed (min 10, may shift turn order), 2 turns
-    Stagger,             // Does nothing alone; required before Stun can be applied, 2 turns
-    Stun,                // Target loses its next turn; card must already have Stagger, 1 turn
+    Stagger,             // Does nothing alone; required before Stun can be applied, removed when Stun lands, 2 turns
+    Stun,                // Target loses its next turn; without Stagger it applies Stagger instead, 1 turn
     Burn,                // 50 damage at turn start, ignores defense, 2 turns
     Poison,              // 100 damage at turn end, ignores defense, 2 turns
     Hindered,            // -1 move space, 2 turns

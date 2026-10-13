@@ -25,7 +25,16 @@ public class StatusEffectHandler
     // duringOwnTurn adds an extra turn so it isn't counted down at the end of the current turn.
     public void Apply(StatusEffectType type, bool duringOwnTurn)
     {
-        // TODO: Stun should require Stagger first - waiting on rules
+        // Stun needs Stagger first. Without it, the card gets Stagger instead.
+        // Landing a Stun removes the Stagger, so it has to be reapplied.
+        if (type == StatusEffectType.Stun)
+        {
+            if (!Has(StatusEffectType.Stagger))
+                type = StatusEffectType.Stagger;
+            else
+                Remove(StatusEffectType.Stagger);
+        }
+
         int duration = type == StatusEffectType.Stun ? StunDuration : DefaultDuration;
         if (duringOwnTurn) duration++;
 
