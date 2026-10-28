@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 
 public enum GamePhase
 {
+    Draft,
     Placement,
     Battle,
     GameOver
@@ -30,7 +31,7 @@ public class TurnManager : MonoBehaviour
     public event System.Action<CardUnit> CardPoisoned;
     public event System.Action<CardUnit> CardRegenerated;
 
-    public GamePhase Phase { get; private set; } = GamePhase.Placement;
+    public GamePhase Phase { get; private set; } = GamePhase.Draft;
     public int PlacingPlayer { get; private set; } = 1;
     public CardUnit ActiveUnit { get; private set; } // Card taking its turn
     public int Round { get; private set; }
@@ -66,15 +67,27 @@ public class TurnManager : MonoBehaviour
             yield break;
         }
 
-        // For now uses the cards already in the scene. The draft will hand these over later.
-        units.AddRange(FindObjectsByType<CardUnit>(FindObjectsSortMode.None));
-        units.RemoveAll(u => u.Instance == null);
+        // The draft hands the cards over with StartPlacement when it's done
+        if (DraftManager.Instance != null) yield break;
 
-        if (!HasUnplacedCards(1)) PlacingPlayer = 2;
+        // No draft in the scene (testing), so use the cards already in the scene
+        StartPlacement(new List<CardUnit>(FindObjectsByType<CardUnit>(FindObjectsSortMode.None)), 1);
+    }
+
+    // Called by the draft when it's done, or by Start when there's no draft
+    public void StartPlacement(List<CardUnit> cards, int firstPlayer)
+    {
+        units.Clear();
+        units.AddRange(cards);
+        units.RemoveAll(u => u == null || u.Instance == null);
+
+        Phase = GamePhase.Placement;
+        PlacingPlayer = firstPlayer;
+        if (!HasUnplacedCards(PlacingPlayer)) PlacingPlayer = PlacingPlayer == 1 ? 2 : 1;
         if (!HasUnplacedCards(PlacingPlayer))
         {
             Debug.LogWarning("No cards to place");
-            yield break;
+            return;
         }
         Debug.Log($"Placement phase. Player {PlacingPlayer} places first");
     }
@@ -115,8 +128,9 @@ public class TurnManager : MonoBehaviour
     {
         if (unit == null || unit.Instance == null) return false;
 
+        // Nothing can be dragged during the draft (falls through to false)
         if (Phase == GamePhase.Placement)
-            return unit.Instance.owner == PlacingPlayer && !IsPlaced(unit);
+            return units.Contains(unit) && unit.Instance.owner == PlacingPlayer && !IsPlaced(unit);
 
         if (Phase == GamePhase.Battle)
             return unit == ActiveUnit && !isBusy && selectedAttack == null && Time.frameCount != attackFrame;

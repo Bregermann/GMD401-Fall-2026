@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: PH_Support_2
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Support 2
+  characterClass: 3
+  artwork: {fileID: 0}
+  maxHP: 130
+  physicalDefense: 20
+  magicDefense: 20
+  speed: 65
+  moveSpaces: 2
+  canMoveDiagonally: 1
+  attack1: {fileID: 11400000, guid: 891ecb0ba64acb44ca917bd5dc6183c4, type: 2}
+  attack2: {fileID: 11400000, guid: 73d7db9ea4012da47908dc6ff1ea88fa, type: 2}
+  attack3: {fileID: 11400000, guid: f7ff730477ef9fa47aa0405c0469b3e1, type: 2}
+  attack4: {fileID: 11400000, guid: 4d06b5bb41bbbcd4288a8f01d134eb74, type: 2}
