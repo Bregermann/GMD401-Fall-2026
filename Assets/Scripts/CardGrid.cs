@@ -45,7 +45,9 @@ public class CardGrid : MonoBehaviour
         return slots[row, col];
     }
 
-   public Transform GetNearestValidSlot(Vector3 worldPosition, CardData data, Transform currentSlot, float maxDistance = 999f)
+   //moveSpaces is passed in so Haste and Hindered change how far the card can go
+   //owner limits first placement to that player's rows (0 = anywhere)
+   public Transform GetNearestValidSlot(Vector3 worldPosition, CardData data, int moveSpaces, int owner, Transform currentSlot, float maxDistance = 999f)
 {
     if (slots == null || data == null) return null;
 
@@ -90,7 +92,7 @@ public class CardGrid : MonoBehaviour
             int steps = Mathf.Max(rowDiff, colDiff);
 
            
-            if (steps > data.moveSpaces) continue;
+            if (steps > moveSpaces) continue;
 
             bool isOrthogonal = rowDiff == 0 || colDiff == 0;   // pure up/down/left/right
             bool isDiagonal   = rowDiff == colDiff;             // pure diagonal
@@ -99,8 +101,8 @@ public class CardGrid : MonoBehaviour
 
             if (currentRow == -1)
             {
-                // First placement allow any empty slot
-                allowed = true;
+                // First placement only in the player's own rows
+                allowed = BoardState.IsInPlacementZone(r, owner);
             }
             else if (isOrthogonal)
             {

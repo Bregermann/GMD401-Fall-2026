@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
-using NUnit.Framework;
+using NUnit.Framework; // LOOK AT THIS COULD FAIL - not used, and could break a build outside the editor
 
 public class CardMover : MonoBehaviour
 {
@@ -20,7 +20,8 @@ public class CardMover : MonoBehaviour
     private Plane dragPlane;
     private Coroutine snapCoroutine;  
     private Transform currentSlot;   
-    public bool hasMoved = false;     
+    public bool hasMoved = false;
+    public bool IsBusy => isDragging || isSnapping; // Being dragged or still snapping
 
     void Start()
     {
@@ -37,7 +38,7 @@ public class CardMover : MonoBehaviour
         if (mouse == null) return;
 
         // Start drag
-        if (mouse.leftButton.wasPressedThisFrame && !isSnapping && !hasMoved)
+        if (mouse.leftButton.wasPressedThisFrame && !isSnapping && !hasMoved && CanDrag())
         {
             if (IsMouseOverThisCard())
             {
@@ -56,6 +57,13 @@ public class CardMover : MonoBehaviour
         {
             EndDrag();
         }
+    }
+
+    // TurnManager decides which cards can move right now. Without one any card can be dragged
+    bool CanDrag()
+    {
+        if (TurnManager.Instance == null) return true;
+        return TurnManager.Instance.CanDrag(GetComponent<CardUnit>());
     }
 
     bool IsMouseOverThisCard()
@@ -119,10 +127,18 @@ public class CardMover : MonoBehaviour
 {
     if (grid == null || isSnapping || data == null) return;
 
+    // Uses the card's move spaces with status effects, or the base stat if it has no CardUnit
+    CardUnit unit = GetComponent<CardUnit>();
+    int moveSpaces = unit != null && unit.Instance != null ? unit.Instance.MoveSpaces : data.moveSpaces;
+    // Owner limits first placement to that player's rows (0 = anywhere)
+    int owner = unit != null && unit.Instance != null ? unit.Instance.owner : 0;
+
     // Look for a legal slot near where the player released the mouse
     Transform nearestValid = grid.GetNearestValidSlot(
         transform.position,
         data,
+        moveSpaces,
+        owner,
         currentSlot,
         1f
     );
@@ -159,6 +175,11 @@ public class CardMover : MonoBehaviour
         transform.rotation = targetRot;
         transform.SetParent(targetSlot);
 
+        // Tells combat where the card is now
+        CardUnit unit = GetComponent<CardUnit>();
+        if (unit != null && CombatManager.Instance != null)
+            CombatManager.Instance.UpdateCardPosition(unit, targetSlot);
+
         // Only lock the card if it was ALREADY on a slot and moved to a different one
         if (currentSlot != null && currentSlot != targetSlot)
         {
@@ -172,6 +193,10 @@ public class CardMover : MonoBehaviour
 
         isSnapping = false;
         snapCoroutine = null;
+
+        // Lets the turn manager know (next player places, or a move was used)
+        if (TurnManager.Instance != null)
+            TurnManager.Instance.OnCardSnapped(unit);
     }
     
 }

@@ -9,6 +9,11 @@ public class CombatManager : MonoBehaviour
     public static CombatManager Instance { get; private set; }
 
     [SerializeField] private float cardHeightOffset = 0.05f; // Matches CardMover's heightOffset
+    [SerializeField] private float defeatDelay = 1.5f;       // How long a defeated card stays for the CARD DEFEATED popup
+    public float DefeatDelay => defeatDelay;
+
+    // UI hook for the CARD DEFEATED popup. The card is already off the board when this fires
+    public event System.Action<CardUnit> CardDefeated;
 
     public BoardState Board { get; private set; } = new BoardState();
 
@@ -127,6 +132,10 @@ public class CombatManager : MonoBehaviour
         if (!units.TryGetValue(card, out CardUnit unit)) return;
 
         units.Remove(card);
-        if (unit != null) Destroy(unit.gameObject);
+        if (unit == null) return;
+
+        unit.transform.SetParent(null); // Frees the slot straight away
+        CardDefeated?.Invoke(unit);
+        Destroy(unit.gameObject, defeatDelay);
     }
 }

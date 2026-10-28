@@ -5,15 +5,21 @@ using System.Collections.Generic;
 //
 // CombatManager (in the scene) owns this and handles the scene side of attacks
 // (moving knocked-back cards, removing defeated cards).
-// STILL NEEDED: CardMover has to tell combat when a card is placed or moved, or combat won't know where it is.
-// In CardMover.SmoothSnap after the card snaps, add:
-//     CombatManager.Instance.UpdateCardPosition(GetComponent<CardUnit>(), targetSlot);
+// CardMover updates it through CombatManager.UpdateCardPosition whenever a card snaps to a slot.
 public class BoardState
 {
     public const int Rows = 8;
     public const int Columns = 8;
 
     private readonly CardInstance[,] cards = new CardInstance[Rows, Columns];
+
+    // Rows each player can place cards in during the placement phase
+    public static bool IsInPlacementZone(int row, int owner)
+    {
+        if (owner == 1) return row <= 1;
+        if (owner == 2) return row >= Rows - 2;
+        return true; // No owner, no limit
+    }
 
     public bool IsInBounds(int row, int column)
     {

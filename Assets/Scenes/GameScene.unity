@@ -370,6 +370,69 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &370837694
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 370837697}
+  - component: {fileID: 370837696}
+  - component: {fileID: 370837695}
+  m_Layer: 0
+  m_Name: Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &370837695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370837694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a466916062a63d546bd73be187b63cff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurnManager
+  stunnedDelay: 1.5
+  burnDelay: 1
+  poisonDelay: 1
+  regenerationDelay: 1
+--- !u!114 &370837696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370837694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef85ecf9df8bd4743ab2a4d170d78eba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatManager
+  cardHeightOffset: 0.05
+  defeatDelay: 1.5
+--- !u!4 &370837697
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370837694}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.01122, y: 0.53, z: 1.356}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -519,7 +582,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 301755834638135864, guid: d3dd23c108af5a54abf7c248adbeca23, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.356
+      value: -5.69
       objectReference: {fileID: 0}
     - target: {fileID: 301755834638135864, guid: d3dd23c108af5a54abf7c248adbeca23, type: 3}
       propertyPath: m_LocalRotation.w
@@ -628,7 +691,7 @@ MonoBehaviour:
   columns: 8
   spacingX: 1.2
   spacingZ: 0.75
---- !u!1 &1585524888
+--- !u!1 &1088218400
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -636,57 +699,48 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1585524891}
-  - component: {fileID: 1585524890}
-  - component: {fileID: 1585524889}
+  - component: {fileID: 1088218402}
+  - component: {fileID: 1088218401}
   m_Layer: 0
-  m_Name: CombatManager
+  m_Name: GameLog
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1585524889
+--- !u!114 &1088218401
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1585524888}
+  m_GameObject: {fileID: 1088218400}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f82120399698bb4fb98ee4c7be91f66, type: 3}
+  m_Script: {fileID: 11500000, guid: 1b48c700c7ceeab4a848d5cc1d5c73b0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatKeyTest
-  attacker: {fileID: 1750195928779052695}
-  target: {fileID: 728319018}
-  attackerRow: 3
-  attackerColumn: 3
-  targetRow: 4
-  targetColumn: 3
---- !u!114 &1585524890
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1585524888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef85ecf9df8bd4743ab2a4d170d78eba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatManager
-  cardHeightOffset: 0.05
---- !u!4 &1585524891
+  m_EditorClassIdentifier: Assembly-CSharp::GameLog
+  logText: {fileID: 0}
+  scrollRect: {fileID: 0}
+  boxSize: {x: 550, y: 260}
+  fontSize: 18
+  maxLines: 100
+  showWarningsAndErrors: 0
+  ignoreIfContains:
+  - started drag
+  - has used its move
+  - placed on board for the first time
+  - illegal drop
+--- !u!4 &1088218402
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1585524888}
+  m_GameObject: {fileID: 1088218400}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.01122, y: 0.53, z: 1.356}
+  m_LocalPosition: {x: -0.42695, y: 0, z: -9.75}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -710,7 +764,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 301755834638135864, guid: d3dd23c108af5a54abf7c248adbeca23, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.00055
+      value: 5.91
       objectReference: {fileID: 0}
     - target: {fileID: 301755834638135864, guid: d3dd23c108af5a54abf7c248adbeca23, type: 3}
       propertyPath: m_LocalRotation.w
@@ -779,4 +833,5 @@ SceneRoots:
   - {fileID: 134275041}
   - {fileID: 1750195928779052693}
   - {fileID: 728319016}
-  - {fileID: 1585524891}
+  - {fileID: 370837697}
+  - {fileID: 1088218402}
