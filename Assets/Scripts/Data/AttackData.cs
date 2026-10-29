@@ -21,7 +21,7 @@ public class AttackData : ScriptableObject
     // areaSize and areaAffects are ignored for Single. Area attacks never knock back.
     public AttackArea area = AttackArea.Single;
     public int areaSize = 1;                              // Spaces out from the center, 1 = 3x3
-    public AreaAffects areaAffects = AreaAffects.Enemies; // Who else gets hit
+    public AreaAffects areaAffects = AreaAffects.Enemies; // Who else gets hit. Heals always hit allies
 
     [Header("Positional Bonus")]
     // Extra damage when the attacker is on the specified side of the target.
@@ -45,6 +45,11 @@ public class AttackData : ScriptableObject
     [Header("Status Effects")]
     public StatusEffectApplication[] targetStatusEffects; // Applied to the card being attacked
     public StatusEffectApplication[] selfStatusEffects;   // Applied to the card using this attack
+
+    [Header("Visual Effects")]
+    // Optional. Leave empty to use the default effect for the damage type
+    public GameObject hitEffectPrefab;  // Spawned on each card hit, removed after 3 seconds
+    public GameObject projectilePrefab; // Flies from the attacker to the target when they aren't next to each other
 }
 
 // One status effect an attack applies. Amount/duration of 0 use the effect's default (see StatusEffectHandler)

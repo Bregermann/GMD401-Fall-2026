@@ -13,6 +13,9 @@ public class BoardState
 
     private readonly CardInstance[,] cards = new CardInstance[Rows, Columns];
 
+    // Player 1 -> 2, Player 2 -> 1
+    public static int OtherPlayer(int player) => player == 1 ? 2 : 1;
+
     // Rows each player can place cards in during the placement phase
     public static bool IsInPlacementZone(int row, int owner)
     {

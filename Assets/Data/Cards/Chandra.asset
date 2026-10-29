@@ -19,7 +19,7 @@ MonoBehaviour:
   physicalDefense: 40
   magicDefense: 60
   speed: 360
-  moveSpaces: 0
+  moveSpaces: 4
   canMoveDiagonally: 0
   attack1: {fileID: 11400000, guid: 7de9fd7a53caa7d4088c694f32e892f4, type: 2}
   attack2: {fileID: 11400000, guid: 0052df20dcc36554a8d404ed0626c168, type: 2}

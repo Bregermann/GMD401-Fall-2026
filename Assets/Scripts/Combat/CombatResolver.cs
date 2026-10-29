@@ -86,7 +86,8 @@ public static class CombatResolver
     }
 
     // Every card the attack hits, main target first. Area attacks add cards within areaSize
-    // of the center (diagonals count) that are on the side areaAffects picks. The attacker is never added.
+    // of the center (diagonals count) that are on the side areaAffects picks. Heals always hit allies.
+    // The attacker is never added.
     public static List<CardInstance> GetAffectedCards(CardInstance attacker, AttackData attack, CardInstance target, BoardState board)
     {
         List<CardInstance> affected = new List<CardInstance>();
@@ -94,7 +95,7 @@ public static class CombatResolver
         if (attack.area == AttackArea.Single) return affected;
 
         CardInstance center = attack.area == AttackArea.AroundSelf ? attacker : target;
-        bool wantAllies = attack.areaAffects == AreaAffects.Allies;
+        bool wantAllies = attack.damageType == DamageType.Heal || attack.areaAffects == AreaAffects.Allies;
 
         foreach (CardInstance card in board.GetAllCards())
         {

@@ -11,7 +11,8 @@ public enum GamePhase
     GameOver
 }
 
-// Runs the match: placement phase, then card turns by speed until one player has no cards left.
+// Runs the match: waits for the draft (DraftManager) or dev mode (DevSetup) to hand over the cards,
+// then the placement phase, then card turns by speed until one player has no cards left.
 // Put one on the same GameObject as CombatManager.
 // Controls for now: drag to move, 1-4 picks an attack (press again to cancel), click a card to attack it, Space ends the turn.
 // UI can listen to the events below for popups and animations, e.g. TurnManager.Instance.CardStunned += unit => ShowPopup("STUNNED");
@@ -24,12 +25,13 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private float burnDelay = 1f;         // Time for the burn animation
     [SerializeField] private float poisonDelay = 1f;       // Time for the poison animation
     [SerializeField] private float regenerationDelay = 1f; // Time for the regeneration animation
+    [SerializeField] private float attackPause = 0.5f;     // Minimum pause after an attack so the hit can play
 
-    // UI hooks for popups and animations
+    // UI hooks for popups and animations. The int is the damage or healing amount
     public event System.Action<CardUnit> CardStunned;
-    public event System.Action<CardUnit> CardBurned;
-    public event System.Action<CardUnit> CardPoisoned;
-    public event System.Action<CardUnit> CardRegenerated;
+    public event System.Action<CardUnit, int> CardBurned;
+    public event System.Action<CardUnit, int> CardPoisoned;
+    public event System.Action<CardUnit, int> CardRegenerated;
 
     public GamePhase Phase { get; private set; } = GamePhase.Draft;
     public int PlacingPlayer { get; private set; } = 1;
@@ -47,7 +49,6 @@ public class TurnManager : MonoBehaviour
     private bool hasAttacked;
     private bool isBusy;          // True while a popup or animation plays, blocks input
     private int attackFrame = -1; // Stops the click that attacked from also starting a drag
-    private Camera cam;
 
     private BoardState Board => CombatManager.Instance.Board;
 
@@ -59,7 +60,6 @@ public class TurnManager : MonoBehaviour
     // Waits a frame so every CardUnit has made its CardInstance
     IEnumerator Start()
     {
-        cam = Camera.main;
         yield return null;
 
         if (CombatManager.Instance == null)
@@ -82,13 +82,11 @@ public class TurnManager : MonoBehaviour
     // Called by the draft when it's done, or by Start when there's no draft
     public void StartPlacement(List<CardUnit> cards, int firstPlayer)
     {
-        units.Clear();
-        units.AddRange(cards);
-        units.RemoveAll(u => u == null || u.Instance == null);
+        SetUnits(cards);
 
         Phase = GamePhase.Placement;
         PlacingPlayer = firstPlayer;
-        if (!HasUnplacedCards(PlacingPlayer)) PlacingPlayer = PlacingPlayer == 1 ? 2 : 1;
+        if (!HasUnplacedCards(PlacingPlayer)) PlacingPlayer = BoardState.OtherPlayer(PlacingPlayer);
         if (!HasUnplacedCards(PlacingPlayer))
         {
             Debug.LogWarning("No cards to place");
@@ -121,8 +119,8 @@ public class TurnManager : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (selectedAttack != null && mouse != null && mouse.leftButton.wasPressedThisFrame)
         {
-            CardUnit target = GetClickedCard();
-            if (target != null) UseAttack(target);
+            CardUnit target = CardUnit.UnderMouse();
+            if (target != null && target.Instance != null) UseAttack(target);
         }
     }
 
@@ -172,7 +170,7 @@ public class TurnManager : MonoBehaviour
     // Players take turns placing. If one runs out, the other keeps going
     void NextPlacingPlayer()
     {
-        int other = PlacingPlayer == 1 ? 2 : 1;
+        int other = BoardState.OtherPlayer(PlacingPlayer);
         if (HasUnplacedCards(other))
         {
             PlacingPlayer = other;
@@ -198,10 +196,16 @@ public class TurnManager : MonoBehaviour
     // Skips placement, for cards already on the board (used by dev mode)
     public void StartBattle(List<CardUnit> cards)
     {
+        SetUnits(cards);
+        StartBattle();
+    }
+
+    // The cards in this match, skipping any without card data
+    void SetUnits(List<CardUnit> cards)
+    {
         units.Clear();
         units.AddRange(cards);
         units.RemoveAll(u => u == null || u.Instance == null);
-        StartBattle();
     }
 
     // Dev tools changed HP outside of an attack. Clears dead cards, checks for a winner,
@@ -286,18 +290,21 @@ public class TurnManager : MonoBehaviour
 
         // Regeneration then Burn both happen in StartTurn, so the animations play after the HP has changed
         CardInstance card = unit.Instance;
-        bool regenerating = card.statusEffects.Has(StatusEffectType.Regeneration) && !card.statusEffects.Has(StatusEffectType.HealBlock);
+        // Regeneration only plays if it actually heals (not at full HP or with HealBlock)
+        int regenAmount = Mathf.Min(card.statusEffects.GetAmount(StatusEffectType.Regeneration), card.data.maxHP - card.currentHP);
+        bool regenerating = regenAmount > 0 && !card.statusEffects.Has(StatusEffectType.HealBlock);
         bool burning = card.statusEffects.Has(StatusEffectType.Burn);
+        int burnAmount = card.statusEffects.GetAmount(StatusEffectType.Burn);
         card.StartTurn();
 
         if (regenerating)
         {
-            CardRegenerated?.Invoke(unit);
+            CardRegenerated?.Invoke(unit, regenAmount);
             yield return new WaitForSeconds(regenerationDelay);
         }
         if (burning)
         {
-            CardBurned?.Invoke(unit);
+            CardBurned?.Invoke(unit, burnAmount);
             yield return new WaitForSeconds(burnDelay);
         }
         yield return RemoveDefeated();
@@ -332,11 +339,12 @@ public class TurnManager : MonoBehaviour
         if (!hasAttacked) card.SkipAttack(); // Skipping clears the cooldown
 
         bool poisoned = card.statusEffects.Has(StatusEffectType.Poison);
+        int poisonAmount = card.statusEffects.GetAmount(StatusEffectType.Poison);
         card.EndTurn();
 
         if (poisoned)
         {
-            CardPoisoned?.Invoke(ActiveUnit);
+            CardPoisoned?.Invoke(ActiveUnit, poisonAmount);
             yield return new WaitForSeconds(poisonDelay);
         }
         yield return RemoveDefeated();
@@ -421,7 +429,18 @@ public class TurnManager : MonoBehaviour
             Debug.Log($"{attack.attackName} hit {result.hits.Count} card(s): {HitsText(result)}, defeated: {result.defeatedCards.Count}");
 
         if (CheckForWinner()) return;
-        if (HasMoved(ActiveUnit)) Debug.Log("Moved and attacked. Press Space to end turn");
+        StartCoroutine(WaitForAttackEffects());
+    }
+
+    // Blocks input until the hit has played (at least attackPause, longer if a projectile is still flying)
+    IEnumerator WaitForAttackEffects()
+    {
+        isBusy = true;
+        yield return new WaitForSeconds(attackPause);
+        while (CombatEffects.IsPlaying) yield return null;
+        isBusy = false;
+
+        if (ActiveUnit != null && HasMoved(ActiveUnit)) Debug.Log("Moved and attacked. Press Space to end turn");
     }
 
     // ---- Helpers ----
@@ -450,13 +469,5 @@ public class TurnManager : MonoBehaviour
     {
         CardMover mover = unit.GetComponent<CardMover>();
         return mover != null && mover.hasMoved;
-    }
-
-    CardUnit GetClickedCard()
-    {
-        Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f))
-            return hit.collider.GetComponentInParent<CardUnit>();
-        return null;
     }
 }

@@ -53,7 +53,7 @@ public class CardInspector : MonoBehaviour
             }
             else if (!mouse.leftButton.isPressed) // Not while dragging a card
             {
-                CardUnit card = GetClickedCard();
+                CardUnit card = CardUnit.UnderMouse();
                 if (card != null) Open(card);
             }
         }
@@ -307,13 +307,5 @@ public class CardInspector : MonoBehaviour
         inspectCamera.targetTexture = renderTexture;
 
         cardImage.texture = renderTexture;
-    }
-
-    CardUnit GetClickedCard()
-    {
-        Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f))
-            return hit.collider.GetComponentInParent<CardUnit>();
-        return null;
     }
 }

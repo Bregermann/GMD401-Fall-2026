@@ -24,7 +24,6 @@ public class DraftManager : MonoBehaviour
     [SerializeField] private int firstRow = 2;          // Draft cards fill rows 2-5...
     [SerializeField] private int firstColumn = 1;       // ...in columns 1-5
     [SerializeField] private int cardsPerRow = 5;
-    [SerializeField] private float heightOffset = 0.05f; // Matches CardMover's heightOffset
     [SerializeField] private float sideOffset = 1f;      // How far off the board picked cards wait
     [SerializeField] private int firstSideColumn = 1;    // Picked cards line up starting at this column
 
@@ -53,7 +52,9 @@ public class DraftManager : MonoBehaviour
     private bool isBusy; // True while a picked card slides, blocks input
     private int firstPicker;
     private CardGrid grid;
-    private Camera cam;
+
+    // Same height cards sit at on the board
+    private float HeightOffset => CombatManager.Instance != null ? CombatManager.Instance.CardHeightOffset : 0.05f;
 
     void Awake()
     {
@@ -63,7 +64,6 @@ public class DraftManager : MonoBehaviour
     // Waits a frame so CardGrid has built its slots
     IEnumerator Start()
     {
-        cam = Camera.main;
         grid = FindAnyObjectByType<CardGrid>();
         yield return null;
 
@@ -84,7 +84,7 @@ public class DraftManager : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (mouse != null && mouse.leftButton.wasPressedThisFrame)
         {
-            CardUnit clicked = GetClickedCard();
+            CardUnit clicked = CardUnit.UnderMouse();
             if (clicked != null && available.Contains(clicked))
                 Select(clicked == selected ? null : clicked);
         }
@@ -121,16 +121,8 @@ public class DraftManager : MonoBehaviour
     // Spawns a card on a slot. It belongs to nobody until it's picked
     CardUnit SpawnCard(CardData data, Transform slot)
     {
-        GameObject card = Instantiate(cardPrefab, slot.position + Vector3.up * heightOffset, slot.rotation);
-        card.transform.SetParent(slot);
-        card.name = data.cardName;
-
-        CardMover mover = card.GetComponent<CardMover>();
-        if (mover != null) mover.data = data;
-
-        CardUnit unit = card.GetComponent<CardUnit>();
-        if (unit == null) unit = card.AddComponent<CardUnit>(); // Card prefab doesn't have one yet
-
+        CardUnit unit = CardUnit.Spawn(cardPrefab, data, 0, slot.position + Vector3.up * HeightOffset, slot.rotation);
+        unit.transform.SetParent(slot);
         cardData[unit] = data;
         return unit;
     }
@@ -184,7 +176,7 @@ public class DraftManager : MonoBehaviour
         }
 
         // Alternate, unless the other player already has all their cards
-        int other = player == 1 ? 2 : 1;
+        int other = BoardState.OtherPlayer(player);
         PickingPlayer = picked[other].Count < picksPerPlayer ? other : player;
         isBusy = false;
         Debug.Log($"Player {PickingPlayer}'s pick. Click a card, Space to confirm");
@@ -207,7 +199,7 @@ public class DraftManager : MonoBehaviour
         drafted.AddRange(picked[2]);
 
         // Whoever picked second places first, to balance the coin flip
-        int placesFirst = firstPicker == 1 ? 2 : 1;
+        int placesFirst = BoardState.OtherPlayer(firstPicker);
         if (TurnManager.Instance != null)
             TurnManager.Instance.StartPlacement(drafted, placesFirst);
         else
@@ -227,7 +219,7 @@ public class DraftManager : MonoBehaviour
         Transform slot = grid.GetSlot(edgeRow, column);
 
         Vector3 awayFromBoard = grid.transform.forward * (player == 1 ? -sideOffset : sideOffset);
-        return slot.position + awayFromBoard + Vector3.up * heightOffset;
+        return slot.position + awayFromBoard + Vector3.up * HeightOffset;
     }
 
     // Smooth slide like CardMover's snap
@@ -240,13 +232,5 @@ public class DraftManager : MonoBehaviour
             yield return null;
         }
         card.position = target;
-    }
-
-    CardUnit GetClickedCard()
-    {
-        Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f))
-            return hit.collider.GetComponentInParent<CardUnit>();
-        return null;
     }
 }

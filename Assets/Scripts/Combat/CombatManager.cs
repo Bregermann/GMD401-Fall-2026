@@ -11,9 +11,13 @@ public class CombatManager : MonoBehaviour
     [SerializeField] private float cardHeightOffset = 0.05f; // Matches CardMover's heightOffset
     [SerializeField] private float defeatDelay = 1.5f;       // How long a defeated card stays for the CARD DEFEATED popup
     public float DefeatDelay => defeatDelay;
+    public float CardHeightOffset => cardHeightOffset;       // How far cards sit above their slot
 
     // UI hook for the CARD DEFEATED popup. The card is already off the board when this fires
     public event System.Action<CardUnit> CardDefeated;
+
+    // Hook for attack visuals: attacker, attack, target, result. Fires before defeated cards are removed
+    public event System.Action<CardUnit, AttackData, CardUnit, AttackResult> AttackResolved;
 
     public BoardState Board { get; private set; } = new BoardState();
 
@@ -88,6 +92,8 @@ public class CombatManager : MonoBehaviour
         if (result.wasKnockedBack)
             SnapToSlot(target);
 
+        AttackResolved?.Invoke(attacker, attack, target, result);
+
         foreach (CardInstance dead in result.defeatedCards)
             DestroyCard(dead);
 
@@ -113,6 +119,12 @@ public class CombatManager : MonoBehaviour
     }
 
     // ---- Scene ----
+
+    // The GameObject side of a card on the board. Null if it isn't known
+    public CardUnit GetUnit(CardInstance card)
+    {
+        return card != null && units.TryGetValue(card, out CardUnit unit) ? unit : null;
+    }
 
     // Moves a card's GameObject onto the slot matching its CardInstance row/column
     public void SnapToSlot(CardUnit unit)

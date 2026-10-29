@@ -31,8 +31,6 @@ public class DevSetup : MonoBehaviour
     [SerializeField] private bool fixedTurnOrder = false;  // Turns go in list order instead of by speed
     [SerializeField] private int damageAmount = 100;       // How much D deals
 
-    private Camera cam;
-
     void Awake()
     {
         Instance = this;
@@ -47,7 +45,6 @@ public class DevSetup : MonoBehaviour
     // Waits a frame so CardGrid and CombatManager are set up
     IEnumerator Start()
     {
-        cam = Camera.main;
         yield return null;
 
         if (cardPrefab == null || CombatManager.Instance == null || TurnManager.Instance == null)
@@ -96,17 +93,13 @@ public class DevSetup : MonoBehaviour
             return null;
         }
 
-        GameObject card = Instantiate(cardPrefab);
-        card.name = $"{devCard.data.cardName} (P{devCard.owner})";
-
-        CardUnit unit = card.GetComponent<CardUnit>();
-        if (unit == null) unit = card.AddComponent<CardUnit>(); // Card prefab doesn't have one yet
-        unit.Setup(devCard.data, devCard.owner);
+        CardUnit unit = CardUnit.Spawn(cardPrefab, devCard.data, devCard.owner, Vector3.zero, Quaternion.identity);
+        unit.name = $"{devCard.data.cardName} (P{devCard.owner})";
 
         if (!CombatManager.Instance.UpdateCardPosition(unit, devCard.row, devCard.column))
         {
-            Debug.LogWarning($"{card.name} couldn't go on {devCard.row}, {devCard.column} (taken or off the board), skipped");
-            Destroy(card);
+            Debug.LogWarning($"{unit.name} couldn't go on {devCard.row}, {devCard.column} (taken or off the board), skipped");
+            Destroy(unit.gameObject);
             return null;
         }
         CombatManager.Instance.SnapToSlot(unit);
@@ -123,19 +116,11 @@ public class DevSetup : MonoBehaviour
     // Runs a change on the card under the mouse, then lets the turn manager react (defeats, game over)
     void ChangeHovered(System.Action<CardInstance> change, string whatHappened)
     {
-        CardUnit unit = GetHoveredCard();
+        CardUnit unit = CardUnit.UnderMouse();
         if (unit == null || unit.Instance == null || !CombatManager.Instance.Board.IsOnBoard(unit.Instance)) return;
 
         change(unit.Instance);
         Debug.Log($"[Dev] {unit.Instance.data.cardName} {whatHappened} (HP {unit.Instance.currentHP}/{unit.Instance.data.maxHP})");
         TurnManager.Instance.DevRefresh();
-    }
-
-    CardUnit GetHoveredCard()
-    {
-        Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f))
-            return hit.collider.GetComponentInParent<CardUnit>();
-        return null;
     }
 }

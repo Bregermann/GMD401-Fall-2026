@@ -95,3 +95,25 @@ public enum StatusEffectType
     Hindered,            // -1 move space, 2 turns
     HealBlock            // Card cannot receive healing, 2 turns
 }
+
+public static class StatusEffectTypeExtensions
+{
+    // True for effects that help the card. Use like: effect.IsBuff()
+    // Add new buffs here too, so UI colours them right
+    public static bool IsBuff(this StatusEffectType type)
+    {
+        switch (type)
+        {
+            case StatusEffectType.PhysicalAttackUp:
+            case StatusEffectType.MagicAttackUp:
+            case StatusEffectType.PhysicalDefenseUp:
+            case StatusEffectType.MagicDefenseUp:
+            case StatusEffectType.SpeedUp:
+            case StatusEffectType.Haste:
+            case StatusEffectType.Regeneration:
+                return true;
+            default:
+                return false;
+        }
+    }
+}

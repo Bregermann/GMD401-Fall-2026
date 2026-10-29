@@ -383,6 +383,7 @@ GameObject:
   - component: {fileID: 370837695}
   - component: {fileID: 370837699}
   - component: {fileID: 370837700}
+  - component: {fileID: 370837701}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -406,6 +407,7 @@ MonoBehaviour:
   burnDelay: 1
   poisonDelay: 1
   regenerationDelay: 1
+  attackPause: 0.5
 --- !u!114 &370837696
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -470,16 +472,35 @@ MonoBehaviour:
     row: 1
     column: 0
     startingHP: 3200
-    startingEffects: 
+    startingEffects: 05000000i
   - data: {fileID: 11400000, guid: 3694c82bbfe762546a22599f919aa783, type: 2}
     owner: 2
     row: 0
     column: 0
     startingHP: 4400
-    startingEffects: 
+    startingEffects: 06000000i
   ignoreCooldowns: 0
   fixedTurnOrder: 0
-  damageAmount: 100
+  damageAmount: 5000
+--- !u!114 &370837701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370837694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b81a50b24056a40bbab817ba0f5a0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatEffects
+  projectileSpeed: 8
+  hitDuration: 0.4
+  textDuration: 1
+  numberSize: 3
+  shakeAmount: 0.05
+  effectHeight: 0.3
+  textRise: 0.6
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
