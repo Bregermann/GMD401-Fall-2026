@@ -78,7 +78,7 @@ public class DraftManager : MonoBehaviour
 
     void Update()
     {
-        if (!IsDrafting || isBusy) return;
+        if (!IsDrafting || isBusy || CardInspector.IsOpen) return;
 
         // Click a card to select it, click it again to deselect
         Mouse mouse = Mouse.current;
@@ -215,6 +215,9 @@ public class DraftManager : MonoBehaviour
     }
 
     // ---- Helpers ----
+
+    // True if the card is still in the draft pool (for the card inspector)
+    public bool IsUndrafted(CardUnit unit) => available.Contains(unit);
 
     // Spot just off the board on the player's side. Player 1 is past row 0, Player 2 past the last row
     Vector3 SidePosition(int player, int index)

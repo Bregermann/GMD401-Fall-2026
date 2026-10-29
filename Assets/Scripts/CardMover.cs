@@ -62,6 +62,7 @@ public class CardMover : MonoBehaviour
     // TurnManager decides which cards can move right now. Without one any card can be dragged
     bool CanDrag()
     {
+        if (CardInspector.IsOpen) return false; // No dragging while inspecting a card
         if (TurnManager.Instance == null) return true;
         return TurnManager.Instance.CanDrag(GetComponent<CardUnit>());
     }

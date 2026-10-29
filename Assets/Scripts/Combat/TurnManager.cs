@@ -94,7 +94,7 @@ public class TurnManager : MonoBehaviour
 
     void Update()
     {
-        if (Phase != GamePhase.Battle || ActiveUnit == null || isBusy) return;
+        if (Phase != GamePhase.Battle || ActiveUnit == null || isBusy || CardInspector.IsOpen) return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)

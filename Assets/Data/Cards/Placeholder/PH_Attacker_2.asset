@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardName: Attacker 2
   characterClass: 0
-  artwork: {fileID: 0}
+  artwork: {fileID: 2777473820236066183, guid: bb640f275e6d51948bfd88ed8aa5431c, type: 3}
   maxHP: 150
   physicalDefense: 20
   magicDefense: 15

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardName: Mage 1
   characterClass: 4
-  artwork: {fileID: 0}
+  artwork: {fileID: 1371347551380637131, guid: a47baddc42fea044bb44c482835ea979, type: 3}
   maxHP: 110
   physicalDefense: 10
   magicDefense: 35

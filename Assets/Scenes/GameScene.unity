@@ -382,6 +382,7 @@ GameObject:
   - component: {fileID: 370837696}
   - component: {fileID: 370837695}
   - component: {fileID: 370837698}
+  - component: {fileID: 370837699}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -459,6 +460,22 @@ MonoBehaviour:
   firstSideColumn: 1
   selectedScale: 1.2
   slideSpeed: 10
+--- !u!114 &370837699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370837694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85ef291828eed954190c3961f8bb1792, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CardInspector
+  cardImageSize: {x: 360, y: 560}
+  statsSize: {x: 620, y: 560}
+  fontSize: 22
+  copySpot: {x: 1000, y: 0, z: 1000}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
