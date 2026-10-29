@@ -36,6 +36,8 @@ public class TurnManager : MonoBehaviour
     public CardUnit ActiveUnit { get; private set; } // Card taking its turn
     public int Round { get; private set; }
     public int Winner { get; private set; }          // 0 until the game ends
+    public bool IsBusy => isBusy;                    // A popup or animation is playing
+    public bool FixedTurnOrder { get; set; }         // Dev only: turns go in card list order instead of by speed
 
     private readonly List<CardUnit> units = new List<CardUnit>();
     private readonly HashSet<CardInstance> actedThisRound = new HashSet<CardInstance>();
@@ -69,6 +71,9 @@ public class TurnManager : MonoBehaviour
 
         // The draft hands the cards over with StartPlacement when it's done
         if (DraftManager.Instance != null) yield break;
+
+        // Dev mode spawns its own cards and calls StartBattle
+        if (DevSetup.Instance != null) yield break;
 
         // No draft in the scene (testing), so use the cards already in the scene
         StartPlacement(new List<CardUnit>(FindObjectsByType<CardUnit>(FindObjectsSortMode.None)), 1);
@@ -190,6 +195,30 @@ public class TurnManager : MonoBehaviour
         NextTurn();
     }
 
+    // Skips placement, for cards already on the board (used by dev mode)
+    public void StartBattle(List<CardUnit> cards)
+    {
+        units.Clear();
+        units.AddRange(cards);
+        units.RemoveAll(u => u == null || u.Instance == null);
+        StartBattle();
+    }
+
+    // Dev tools changed HP outside of an attack. Clears dead cards, checks for a winner,
+    // and moves on if the card taking its turn died
+    public void DevRefresh()
+    {
+        CombatManager.Instance.RemoveDefeatedCards();
+        if (Phase != GamePhase.Battle || CheckForWinner()) return;
+
+        if (ActiveUnit != null && !ActiveUnit.Instance.IsAlive)
+        {
+            ActiveUnit = null;
+            selectedAttack = null;
+            NextTurn();
+        }
+    }
+
     // A round is every card taking one turn
     void StartRound()
     {
@@ -229,6 +258,10 @@ public class TurnManager : MonoBehaviour
     // Speed, then class priority, then the coin flip
     bool GoesBefore(CardInstance a, CardInstance b)
     {
+        // Dev mode option: earlier in the list goes first
+        if (FixedTurnOrder)
+            return units.FindIndex(u => u.Instance == a) < units.FindIndex(u => u.Instance == b);
+
         if (a.Speed != b.Speed) return a.Speed > b.Speed;
 
         int aPriority = a.data.characterClass.TurnPriority();

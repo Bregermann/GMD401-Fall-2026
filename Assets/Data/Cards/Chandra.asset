@@ -21,7 +21,7 @@ MonoBehaviour:
   speed: 360
   moveSpaces: 0
   canMoveDiagonally: 0
-  attack1: {fileID: 11400000, guid: 891ecb0ba64acb44ca917bd5dc6183c4, type: 2}
-  attack2: {fileID: 11400000, guid: 73d7db9ea4012da47908dc6ff1ea88fa, type: 2}
+  attack1: {fileID: 11400000, guid: 7de9fd7a53caa7d4088c694f32e892f4, type: 2}
+  attack2: {fileID: 11400000, guid: 0052df20dcc36554a8d404ed0626c168, type: 2}
   attack3: {fileID: 11400000, guid: 3085020e8351b694e9bfab9135efb3ff, type: 2}
-  attack4: {fileID: 11400000, guid: bdfe046271fa5584cb4244c2ef79b4df, type: 2}
+  attack4: {fileID: 11400000, guid: 71037f0ab89a8b54fb44a3fe4e897a47, type: 2}

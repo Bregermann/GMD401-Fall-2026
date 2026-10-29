@@ -185,12 +185,31 @@ public class CardInspector : MonoBehaviour
         return $"{baseValue} <color={color}>({current})</color>";
     }
 
+    // Active effects with amount and turns left, e.g. "MagicDefenseDown 80 (2)"
     string EffectsText(CardInstance card)
     {
         List<string> effects = new List<string>();
         foreach (StatusEffectInstance effect in card.statusEffects.ActiveEffects)
-            effects.Add($"{effect.type} ({effect.turnsRemaining})");
+        {
+            string amount = effect.amount > 0 ? $" {effect.amount}" : "";
+            effects.Add($"{effect.type}{amount} ({effect.turnsRemaining})");
+        }
         return effects.Count > 0 ? string.Join(", ", effects) : "none";
+    }
+
+    // What an attack applies, with the real amount and duration, e.g. "MagicDefenseDown 80 for 3 turns"
+    string ApplicationsText(StatusEffectApplication[] applications)
+    {
+        List<string> parts = new List<string>();
+        foreach (StatusEffectApplication effect in applications)
+        {
+            int amount = effect.amount > 0 ? effect.amount : StatusEffectHandler.GetDefaultAmount(effect.type);
+            int duration = effect.duration > 0 ? effect.duration
+                : effect.type == StatusEffectType.Stun ? StatusEffectHandler.StunDuration : StatusEffectHandler.DefaultDuration;
+            string amountText = amount > 0 ? $" {amount}" : "";
+            parts.Add($"{effect.type}{amountText} for {duration} turn{(duration == 1 ? "" : "s")}");
+        }
+        return string.Join(", ", parts);
     }
 
     string AttackText(int number, AttackData attack, CardInstance card, bool onBoard)
@@ -214,8 +233,8 @@ public class CardInspector : MonoBehaviour
         if (attack.positionalBonus != PositionalBonus.None) extras.Add($"x{attack.positionalMultiplier} from {attack.positionalBonus}");
         if (attack.hasClassBonus) extras.Add($"x{attack.classMultiplier} vs {attack.classBonusTarget}");
         if (attack.hasKnockback && attack.area == AttackArea.Single) extras.Add($"Knockback ({attack.knockbackCollisionDamage} if it hits something)");
-        if (attack.targetStatusEffects != null && attack.targetStatusEffects.Length > 0) extras.Add("Applies " + string.Join(", ", attack.targetStatusEffects));
-        if (attack.selfStatusEffects != null && attack.selfStatusEffects.Length > 0) extras.Add("Self " + string.Join(", ", attack.selfStatusEffects));
+        if (attack.targetStatusEffects != null && attack.targetStatusEffects.Length > 0) extras.Add("Applies " + ApplicationsText(attack.targetStatusEffects));
+        if (attack.selfStatusEffects != null && attack.selfStatusEffects.Length > 0) extras.Add("Self " + ApplicationsText(attack.selfStatusEffects));
 
         return extras.Count == 0 ? line : $"{line}\n    <size=85%>{string.Join(", ", extras)}</size>";
     }

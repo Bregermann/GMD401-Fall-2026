@@ -7,6 +7,7 @@ public class AttackData : ScriptableObject
 {
     [Header("Base")]
     public string attackName;
+    [TextArea(2, 4)] public string description; // What it does, shown on the card (e.g. "Inflicts magic defense down on target")
     public int damage;
     public DamageType damageType;
 
@@ -42,6 +43,15 @@ public class AttackData : ScriptableObject
     public int knockbackCollisionDamage = 10;
 
     [Header("Status Effects")]
-    public StatusEffectType[] targetStatusEffects; // Applied to the card being attacked
-    public StatusEffectType[] selfStatusEffects;   // Applied to the card using this attack
+    public StatusEffectApplication[] targetStatusEffects; // Applied to the card being attacked
+    public StatusEffectApplication[] selfStatusEffects;   // Applied to the card using this attack
+}
+
+// One status effect an attack applies. Amount/duration of 0 use the effect's default (see StatusEffectHandler)
+[System.Serializable]
+public class StatusEffectApplication
+{
+    public StatusEffectType type;
+    public int amount;   // e.g. 80 for Magic Defense Down -80. 0 = default
+    public int duration; // In the affected card's own turns. 0 = default
 }

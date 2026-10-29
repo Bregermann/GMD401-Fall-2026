@@ -62,9 +62,15 @@ public class CardInstance
 
     // ---- Status effects ----
 
-    public void ApplyStatusEffect(StatusEffectType type)
+    // amount/duration of 0 use the effect's defaults
+    public void ApplyStatusEffect(StatusEffectType type, int amount = 0, int duration = 0)
     {
-        statusEffects.Apply(type, IsTakingTurn);
+        statusEffects.Apply(type, IsTakingTurn, amount, duration);
+    }
+
+    public void ApplyStatusEffect(StatusEffectApplication effect)
+    {
+        ApplyStatusEffect(effect.type, effect.amount, effect.duration);
     }
 
     // ---- Attacks ----
@@ -74,9 +80,11 @@ public class CardInstance
         return new AttackData[] { data.attack1, data.attack2, data.attack3, data.attack4 };
     }
 
+    public static bool IgnoreCooldowns; // Dev only, set by DevSetup
+
     public bool CanUseAttack(AttackData attack)
     {
-        return attack != null && attack != lastAttackUsed;
+        return attack != null && (IgnoreCooldowns || attack != lastAttackUsed);
     }
 
     public void RecordAttackUsed(AttackData attack)
@@ -99,14 +107,14 @@ public class CardInstance
     {
         IsTakingTurn = true;
         if (IsStunned) SkipAttack();
-        if (statusEffects.Has(StatusEffectType.Regeneration)) Heal(StatusEffectHandler.RegenerationAmount);
-        if (statusEffects.Has(StatusEffectType.Burn)) TakeDamage(StatusEffectHandler.BurnDamage);
+        if (statusEffects.Has(StatusEffectType.Regeneration)) Heal(statusEffects.GetAmount(StatusEffectType.Regeneration));
+        if (statusEffects.Has(StatusEffectType.Burn)) TakeDamage(statusEffects.GetAmount(StatusEffectType.Burn));
     }
 
     // Poison happens at the end of the turn, then effects count down
     public void EndTurn()
     {
-        if (statusEffects.Has(StatusEffectType.Poison)) TakeDamage(StatusEffectHandler.PoisonDamage);
+        if (statusEffects.Has(StatusEffectType.Poison)) TakeDamage(statusEffects.GetAmount(StatusEffectType.Poison));
         statusEffects.TickDown();
         IsTakingTurn = false;
     }

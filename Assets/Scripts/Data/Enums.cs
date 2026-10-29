@@ -69,7 +69,8 @@ public enum AreaAffects
 }
 
 // Every status effect in the game that weve made so far
-// Applying the same effect to a card that already has it resets the timer rather than stacking.
+// Applying the same effect to a card that already has it replaces it (amount and timer) rather than stacking.
+// Amounts and durations below are the defaults. Each attack can set its own.
 public enum StatusEffectType
 {
     //Buffs 

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Arcturus
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Arcturus
+  characterClass: 0
+  artwork: {fileID: 2777473820236066183, guid: bb640f275e6d51948bfd88ed8aa5431c, type: 3}
+  maxHP: 4400
+  physicalDefense: 80
+  magicDefense: 50
+  speed: 250
+  moveSpaces: 0
+  canMoveDiagonally: 0
+  attack1: {fileID: 11400000, guid: ccb629153cee6cf4386079c4bba4ac9f, type: 2}
+  attack2: {fileID: 11400000, guid: 1a951c9b46bc5a344ad515477b36c37f, type: 2}
+  attack3: {fileID: 11400000, guid: defb849775e303f439228802d379f1ef, type: 2}
+  attack4: {fileID: 11400000, guid: dca9337e31ae2ad4c858cc402f8567bd, type: 2}

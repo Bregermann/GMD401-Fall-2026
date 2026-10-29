@@ -170,7 +170,7 @@ public static class CombatResolver
 
             if (card.IsAlive && attack.targetStatusEffects != null)
             {
-                foreach (StatusEffectType effect in attack.targetStatusEffects)
+                foreach (StatusEffectApplication effect in attack.targetStatusEffects)
                     card.ApplyStatusEffect(effect);
             }
 
@@ -186,7 +186,7 @@ public static class CombatResolver
 
         if (attack.selfStatusEffects != null)
         {
-            foreach (StatusEffectType effect in attack.selfStatusEffects)
+            foreach (StatusEffectApplication effect in attack.selfStatusEffects)
                 attacker.ApplyStatusEffect(effect);
         }
 
