@@ -360,7 +360,9 @@ public class TurnManager : MonoBehaviour
 
         // Pressing the same attack again cancels it
         selectedAttack = selectedAttack == attack ? null : attack;
-        Debug.Log(selectedAttack != null ? $"{attack.attackName} selected, click a target" : "Attack cancelled");
+        // AroundSelf attacks are used by clicking the card itself
+        string howToUse = attack.area == AttackArea.AroundSelf ? $"click {card.data.cardName} to use it" : "click a target";
+        Debug.Log(selectedAttack != null ? $"{attack.attackName} selected, {howToUse}" : "Attack cancelled");
     }
 
     void UseAttack(CardUnit target)
@@ -379,14 +381,31 @@ public class TurnManager : MonoBehaviour
         hasAttacked = true;
         selectedAttack = null;
         attackFrame = Time.frameCount;
-        Debug.Log($"{attack.attackName} on {targetName}: damage {result.damageDealt}, healed {result.amountHealed}, " +
-                  $"HP now {targetCard.currentHP}, knocked back: {result.wasKnockedBack}, defeated: {result.defeatedCards.Count}");
+        if (attack.area == AttackArea.Single)
+            Debug.Log($"{attack.attackName} on {targetName}: damage {result.damageDealt}, healed {result.amountHealed}, " +
+                      $"HP now {targetCard.currentHP}, knocked back: {result.wasKnockedBack}, defeated: {result.defeatedCards.Count}");
+        else
+            Debug.Log($"{attack.attackName} hit {result.hits.Count} card(s): {HitsText(result)}, defeated: {result.defeatedCards.Count}");
 
         if (CheckForWinner()) return;
         if (HasMoved(ActiveUnit)) Debug.Log("Moved and attacked. Press Space to end turn");
     }
 
     // ---- Helpers ----
+
+    // Each card an area attack hit and what happened to it, e.g. "Mage 1 -320, Defender 2 -150"
+    string HitsText(AttackResult result)
+    {
+        if (result.hits.Count == 0) return "nobody in range";
+
+        List<string> parts = new List<string>();
+        foreach (AttackHit hit in result.hits)
+        {
+            string change = hit.damage > 0 ? $" -{hit.damage}" : hit.healed > 0 ? $" +{hit.healed}" : "";
+            parts.Add(hit.card.data.cardName + change);
+        }
+        return string.Join(", ", parts);
+    }
 
     // Cards still on the board. Defeated cards are taken off the board straight away
     List<CardUnit> LivingUnits()

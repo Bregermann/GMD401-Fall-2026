@@ -10,6 +10,18 @@ public class AttackData : ScriptableObject
     public int damage;
     public DamageType damageType;
 
+    [Header("Range")]
+    // How many spaces away this attack reaches. 0 = default (Ranged class reaches across the board, everyone else 1 space)
+    public int range = 0;
+
+    [Header("Area")]
+    // Single hits only the target. AroundTarget also hits cards near the target.
+    // AroundSelf hits cards near the attacker and is used by clicking the attacker.
+    // areaSize and areaAffects are ignored for Single. Area attacks never knock back.
+    public AttackArea area = AttackArea.Single;
+    public int areaSize = 1;                              // Spaces out from the center, 1 = 3x3
+    public AreaAffects areaAffects = AreaAffects.Enemies; // Who else gets hit
+
     [Header("Positional Bonus")]
     // Extra damage when the attacker is on the specified side of the target.
     // multiplier is ignored when positionalBonus is None.

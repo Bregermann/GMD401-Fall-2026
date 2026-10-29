@@ -53,6 +53,21 @@ public enum PositionalBonus
     Front
 }
 
+// Who an attack hits besides (or instead of) the target
+public enum AttackArea
+{
+    Single,       // Only the target
+    AroundTarget, // The target and cards near it, e.g. areaSize 1 = 3x3 square
+    AroundSelf    // Cards near the attacker, not the attacker. Used by clicking the attacker
+}
+
+// Which side an area attack hits
+public enum AreaAffects
+{
+    Enemies,
+    Allies
+}
+
 // Every status effect in the game that weve made so far
 // Applying the same effect to a card that already has it resets the timer rather than stacking.
 public enum StatusEffectType

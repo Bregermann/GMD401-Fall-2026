@@ -207,9 +207,13 @@ public class CardInspector : MonoBehaviour
 
         // Extra effects on a second, smaller line
         List<string> extras = new List<string>();
+        if (attack.range > 0) extras.Add($"Range {attack.range}");
+        int width = attack.areaSize * 2 + 1;
+        if (attack.area == AttackArea.AroundTarget) extras.Add($"Hits {attack.areaAffects.ToString().ToLower()} in a {width}x{width} around the target");
+        if (attack.area == AttackArea.AroundSelf) extras.Add($"Hits {attack.areaAffects.ToString().ToLower()} within {attack.areaSize} space(s)");
         if (attack.positionalBonus != PositionalBonus.None) extras.Add($"x{attack.positionalMultiplier} from {attack.positionalBonus}");
         if (attack.hasClassBonus) extras.Add($"x{attack.classMultiplier} vs {attack.classBonusTarget}");
-        if (attack.hasKnockback) extras.Add($"Knockback ({attack.knockbackCollisionDamage} if it hits something)");
+        if (attack.hasKnockback && attack.area == AttackArea.Single) extras.Add($"Knockback ({attack.knockbackCollisionDamage} if it hits something)");
         if (attack.targetStatusEffects != null && attack.targetStatusEffects.Length > 0) extras.Add("Applies " + string.Join(", ", attack.targetStatusEffects));
         if (attack.selfStatusEffects != null && attack.selfStatusEffects.Length > 0) extras.Add("Self " + string.Join(", ", attack.selfStatusEffects));
 

@@ -43,6 +43,31 @@ public class CardPool : ScriptableObject
         return pool;
     }
 
+#if UNITY_EDITOR
+    // Editor only: the ⋮ menu on this asset's Inspector. Finds every CardData in the project and adds the missing ones
+    [ContextMenu("Add All Cards In Project")]
+    private void AddAllCardsInProject()
+    {
+        UnityEditor.Undo.RecordObject(this, "Add All Cards In Project");
+        cards.RemoveAll(c => c == null); // Clears empty slots
+
+        int added = 0;
+        foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:CardData"))
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+            CardData card = UnityEditor.AssetDatabase.LoadAssetAtPath<CardData>(path);
+            if (card != null && !cards.Contains(card))
+            {
+                cards.Add(card);
+                added++;
+            }
+        }
+
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log($"Card Pool: added {added} card(s), {cards.Count} total");
+    }
+#endif
+
     private static void Shuffle(List<CardData> list)
     {
         for (int i = list.Count - 1; i > 0; i--)

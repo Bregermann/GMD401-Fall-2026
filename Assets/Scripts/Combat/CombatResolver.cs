@@ -1,11 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// One card hit by an attack. Area attacks have one per card
+public class AttackHit
+{
+    public CardInstance card;
+    public int damage;
+    public int healed;
+}
+
 // What happened during one attack, for UI and animations
 public class AttackResult
 {
-    public int damageDealt;
-    public int amountHealed;
+    public int damageDealt;            // On the main target
+    public int amountHealed;           // On the main target
+    public List<AttackHit> hits = new List<AttackHit>(); // Every card hit, main target first
     public bool wasKnockedBack;        // Target moved 1 space
     public bool hitObstacle;           // Knockback was blocked by a wall or card
     public int collisionDamage;        // Damage from hitting the obstacle
@@ -13,7 +22,7 @@ public class AttackResult
     public List<CardInstance> defeatedCards = new List<CardInstance>();
 }
 
-// Handles attacking: targeting, damage, heals, status effects and knockback.
+// Handles attacking: targeting, area attacks, damage, heals, status effects and knockback.
 public static class CombatResolver
 {
     public const int MeleeRange = 1;
@@ -25,6 +34,7 @@ public static class CombatResolver
 
     public static int GetRange(CardInstance attacker, AttackData attack)
     {
+        if (attack.range > 0) return attack.range; // Set on the attack itself
         if (attack.damageType == DamageType.Heal) return HealRange;
         if (attacker.data.characterClass == CharacterClass.Ranged) return RangedRange;
         return MeleeRange;
@@ -32,12 +42,15 @@ public static class CombatResolver
 
     // True if the attacker can use this attack on this target right now.
     // Physical/Magic hit enemies only. Heals hit self or allies only.
+    // AroundSelf attacks are used on the attacker itself.
     public static bool CanTarget(CardInstance attacker, AttackData attack, CardInstance target, BoardState board)
     {
         if (attacker == null || attack == null || target == null) return false;
         if (!board.IsOnBoard(attacker) || !board.IsOnBoard(target)) return false;
         if (!attacker.IsAlive || !target.IsAlive || attacker.IsStunned) return false;
         if (!attacker.CanUseAttack(attack)) return false;
+
+        if (attack.area == AttackArea.AroundSelf) return target == attacker;
 
         if (attack.damageType == DamageType.Heal)
         {
@@ -70,6 +83,30 @@ public static class CombatResolver
                 return false;
         }
         return true;
+    }
+
+    // Every card the attack hits, main target first. Area attacks add cards within areaSize
+    // of the center (diagonals count) that are on the side areaAffects picks. The attacker is never added.
+    public static List<CardInstance> GetAffectedCards(CardInstance attacker, AttackData attack, CardInstance target, BoardState board)
+    {
+        List<CardInstance> affected = new List<CardInstance>();
+        if (attack.area != AttackArea.AroundSelf) affected.Add(target);
+        if (attack.area == AttackArea.Single) return affected;
+
+        CardInstance center = attack.area == AttackArea.AroundSelf ? attacker : target;
+        bool wantAllies = attack.areaAffects == AreaAffects.Allies;
+
+        foreach (CardInstance card in board.GetAllCards())
+        {
+            if (card == attacker || affected.Contains(card) || !card.IsAlive) continue;
+
+            int distance = Mathf.Max(Mathf.Abs(card.row - center.row), Mathf.Abs(card.column - center.column));
+            if (distance > attack.areaSize) continue;
+
+            bool isAlly = card.owner == attacker.owner;
+            if (isAlly == wantAllies) affected.Add(card);
+        }
+        return affected;
     }
 
     // Which side of the target the attacker is on.
@@ -113,23 +150,38 @@ public static class CombatResolver
 
         AttackResult result = new AttackResult();
 
-        // Heals get no bonuses
-        if (attack.damageType == DamageType.Heal)
+        // Damage/heal and status effects on every card hit. Bonuses are checked per card
+        foreach (CardInstance card in GetAffectedCards(attacker, attack, target, board))
         {
-            int hpBefore = target.currentHP;
-            target.Heal(attack.damage);
-            result.amountHealed = target.currentHP - hpBefore;
-        }
-        else
-        {
-            result.damageDealt = CalculateDamage(attacker, attack, target);
-            target.TakeDamage(result.damageDealt);
+            AttackHit hit = new AttackHit { card = card };
+
+            // Heals get no bonuses
+            if (attack.damageType == DamageType.Heal)
+            {
+                int hpBefore = card.currentHP;
+                card.Heal(attack.damage);
+                hit.healed = card.currentHP - hpBefore;
+            }
+            else
+            {
+                hit.damage = CalculateDamage(attacker, attack, card);
+                card.TakeDamage(hit.damage);
+            }
+
+            if (card.IsAlive && attack.targetStatusEffects != null)
+            {
+                foreach (StatusEffectType effect in attack.targetStatusEffects)
+                    card.ApplyStatusEffect(effect);
+            }
+
+            result.hits.Add(hit);
         }
 
-        if (target.IsAlive && attack.targetStatusEffects != null)
+        // Main target's numbers (AroundSelf attacks have no main target)
+        if (result.hits.Count > 0 && result.hits[0].card == target)
         {
-            foreach (StatusEffectType effect in attack.targetStatusEffects)
-                target.ApplyStatusEffect(effect);
+            result.damageDealt = result.hits[0].damage;
+            result.amountHealed = result.hits[0].healed;
         }
 
         if (attack.selfStatusEffects != null)
@@ -138,13 +190,15 @@ public static class CombatResolver
                 attacker.ApplyStatusEffect(effect);
         }
 
-        if (attack.hasKnockback && target.IsAlive && target != attacker)
+        // Area attacks never knock back
+        if (attack.hasKnockback && attack.area == AttackArea.Single && target.IsAlive && target != attacker)
             ResolveKnockback(attacker, attack, target, board, result);
 
         attacker.RecordAttackUsed(attack);
 
         // Remove anything that died
-        RemoveIfDead(target, board, result);
+        foreach (AttackHit hit in result.hits)
+            RemoveIfDead(hit.card, board, result);
         if (result.collidedWith != null) RemoveIfDead(result.collidedWith, board, result);
 
         return result;
