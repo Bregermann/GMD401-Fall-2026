@@ -2,15 +2,18 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using TMPro;
-using UnityEngine.SceneManagement; 
+using UnityEngine.SceneManagement;
 
 public class OptionsManager : MonoBehaviour
 {
+    public static OptionsManager Instance;
     [Tooltip("Drag your Settings Panel here in the Inspector")]
     public GameObject settingsPanel;
     private bool isSettingsActive = false;
     public TMP_Dropdown resolutionDropdown;
     Resolution[] resolutions;
+    public GameObject winPanel;
+    public TextMeshProUGUI winText;
 
     void Start()
     {
@@ -82,5 +85,12 @@ public class OptionsManager : MonoBehaviour
     {
         Debug.Log("Quit button pressed!"); 
         Application.Quit(); 
+    }
+    public void ShowWinPanel(int winner)
+    {
+        if (winPanel == null || winText == null) return;
+
+        winText.text = $"Player {TurnManager.Winner} Wins!";
+        winPanel.SetActive(true);
     }
 }

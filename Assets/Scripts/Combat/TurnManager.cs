@@ -19,7 +19,7 @@ public enum GamePhase
 public class TurnManager : MonoBehaviour
 {
     public static TurnManager Instance { get; private set; }
-
+    public OptionsManager optionsManager;
     [Header("Timing")]
     [SerializeField] private float stunnedDelay = 1.5f;    // How long the STUNNED popup shows before the turn ends
     [SerializeField] private float burnDelay = 1f;         // Time for the burn animation
@@ -37,7 +37,7 @@ public class TurnManager : MonoBehaviour
     public int PlacingPlayer { get; private set; } = 1;
     public CardUnit ActiveUnit { get; private set; } // Card taking its turn
     public int Round { get; private set; }
-    public int Winner { get; private set; }          // 0 until the game ends
+    public static int Winner { get; private set; }          // 0 until the game ends
     public bool IsBusy => isBusy;                    // A popup or animation is playing
     public bool FixedTurnOrder { get; set; }         // Dev only: turns go in card list order instead of by speed
 
@@ -373,6 +373,14 @@ public class TurnManager : MonoBehaviour
         ActiveUnit = null;
         Winner = player1Alive ? 1 : 2;
         Debug.Log($"Player {Winner} wins!");
+        if (optionsManager != null)
+        {
+            optionsManager.ShowWinPanel(Winner);
+        }
+        else
+        {
+            Debug.LogError("OptionsManager reference is missing!");
+        }
         return true;
     }
 
