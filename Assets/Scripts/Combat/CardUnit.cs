@@ -21,6 +21,9 @@ public class CardUnit : MonoBehaviour
 
         CardUnit unit = card.GetComponent<CardUnit>();
         if (unit == null) unit = card.AddComponent<CardUnit>();
+
+        unit.ApplyArt(data);
+
         if (owner > 0) unit.Setup(data, owner);
         return unit;
     }
@@ -42,7 +45,7 @@ public class CardUnit : MonoBehaviour
     {
         CardMover mover = GetComponent<CardMover>();
         if (mover != null) mover.data = data;
-
+        ApplyArt(data);
         // Row/column are set when the card is placed on the board
         Instance = new CardInstance(data, owner, -1, -1);
     }
@@ -58,7 +61,12 @@ public class CardUnit : MonoBehaviour
             Debug.LogError($"{name} needs a CardMover with CardData assigned, or a Setup() call");
             return;
         }
-
+        ApplyArt(mover.data);
         Instance = new CardInstance(mover.data, owner, -1, -1);
     }
+    void ApplyArt(CardData data)
+{
+    CardView view = GetComponent<CardView>();
+    if (view != null) view.Setup(data);
+}
 }
