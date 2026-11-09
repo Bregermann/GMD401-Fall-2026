@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4181548305175c4a96fb96e354cb77e, type: 3}
   m_Name: Anchored Stance
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  attackName: 
-  description: 
+  attackName: Anchored Stance
+  description: While this move is on cooldown, ignores knockback
   damage: 0
   damageType: 0
   range: 0
   area: 0
-  areaSize: 1
-  areaAffects: 0
+  areaSize: 0
+  areaAffects: 1
   positionalBonus: 0
   positionalMultiplier: 1.25
   hasClassBonus: 0

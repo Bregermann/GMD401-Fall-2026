@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Lupine
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Lupine
+  characterClass: 2
+  artwork: {fileID: 0}
+  maxHP: 1310
+  physicalDefense: 30
+  magicDefense: 20
+  speed: 440
+  moveSpaces: 2
+  canMoveDiagonally: 1
+  attack1: {fileID: 11400000, guid: d8f178efe7cd645efa4f459f7967c7b1, type: 2}
+  attack2: {fileID: 11400000, guid: 81e802ec2650841b3a2e5e380b3c811b, type: 2}
+  attack3: {fileID: 11400000, guid: 4f3d3b88dcb7944bdb6ff86e2145b7bd, type: 2}
+  attack4: {fileID: 11400000, guid: 369a7157c57084bcf9b7e8c0281daebc, type: 2}

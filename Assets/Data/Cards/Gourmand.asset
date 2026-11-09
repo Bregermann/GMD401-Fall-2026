@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Gourmand
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Gourmand
+  characterClass: 3
+  artwork: {fileID: 0}
+  maxHP: 1310
+  physicalDefense: 30
+  magicDefense: 30
+  speed: 450
+  moveSpaces: 3
+  canMoveDiagonally: 0
+  attack1: {fileID: 11400000, guid: 8bf80d3ebeb61497bba05f3cd67ec40d, type: 2}
+  attack2: {fileID: 11400000, guid: 1c55d3233198442488bb3c16c1092e72, type: 2}
+  attack3: {fileID: 11400000, guid: c65186bd180744b30b7c7f4946b6695a, type: 2}
+  attack4: {fileID: 11400000, guid: 7dd1ca2f9905c4954b7bbf02ecfa02de, type: 2}
