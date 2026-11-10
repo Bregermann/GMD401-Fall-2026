@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
-using NUnit.Framework; // LOOK AT THIS COULD FAIL - not used, and could break a build outside the editor
 
 public class CardMover : MonoBehaviour
 {
@@ -63,6 +62,7 @@ public class CardMover : MonoBehaviour
     bool CanDrag()
     {
         if (CardInspector.IsOpen) return false; // No dragging while inspecting a card
+        if (InputGate.IsPaused || InputGate.PointerOverUI) return false; // Or through the options menu
         if (TurnManager.Instance == null) return true;
         return TurnManager.Instance.CanDrag(GetComponent<CardUnit>());
     }

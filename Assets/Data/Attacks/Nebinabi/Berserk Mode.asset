@@ -17,7 +17,7 @@ MonoBehaviour:
   damage: 0
   damageType: 0
   range: 0
-  area: 0
+  area: 3
   areaSize: 0
   areaAffects: 1
   positionalBonus: 0
@@ -35,5 +35,10 @@ MonoBehaviour:
   - type: 0
     amount: 100
     duration: 2
+  bonuses: []
+  ignoresDefense: 0
+  executeAtOrBelowHP: 0
+  whileOnCooldown: 0
+  passiveDamage: 100
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}

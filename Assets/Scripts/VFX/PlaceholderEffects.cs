@@ -21,7 +21,7 @@ public static class PlaceholderEffects
 
     private static readonly Color PoisonPurple = new Color(0.6f, 0.3f, 0.9f);
 
-    private enum Shape { Dot, Ring, Star, Plus, Shard }
+    private enum Shape { Dot, Ring, Star, Plus, Shard, Arrow, Cross, Link }
     private static readonly Dictionary<Shape, Material> materials = new Dictionary<Shape, Material>();
 
     public static Color ColorFor(DamageType type)
@@ -177,6 +177,187 @@ public static class PlaceholderEffects
         return Emit(stars, loop, faint ? 1.5f : 5f, 8);
     }
 
+    // ---- Buff and debuff auras (looping) ----
+
+    private static readonly Color AttackUpColor = new Color(1f, 0.55f, 0.15f);
+    private static readonly Color AttackDownColor = new Color(0.75f, 0.15f, 0.2f);
+    private static readonly Color DefenseUpColor = new Color(1f, 0.85f, 0.3f);
+    private static readonly Color DefenseDownColor = new Color(0.6f, 0.6f, 0.65f);
+    private static readonly Color SpeedUpColor = new Color(0.5f, 0.95f, 1f);
+    private static readonly Color SpeedDownColor = new Color(0.3f, 0.45f, 0.9f);
+    private static readonly Color HinderedColor = new Color(0.65f, 0.65f, 0.7f);
+    private static readonly Color HealBlockColor = new Color(1f, 0.25f, 0.3f);
+
+    // Orange arrows rising up the screen
+    public static GameObject AttackUp(Vector3 position)
+    {
+        return Arrows("Aura_AttackUp", position, AttackUpColor, 0.5f);
+    }
+
+    // Dark red arrows sinking down the screen
+    public static GameObject AttackDown(Vector3 position)
+    {
+        return Arrows("Aura_AttackDown", position, AttackDownColor, -0.4f);
+    }
+
+    // Gold ring around the card that slowly pulses, with sparkles on its edge
+    public static GameObject DefenseUp(Vector3 position)
+    {
+        ParticleSystem ring = ShieldRing("Aura_DefenseUp", position, DefenseUpColor, new[] { 0f, 0.7f, 0.7f, 0f });
+
+        ParticleSystem sparkles = NewSystem("Aura_DefenseUp_Sparkles", position, Shape.Star, ring.transform);
+        ParticleSystem.MainModule main = sparkles.main;
+        main.loop = true;
+        main.startLifetime = Range(0.4f, 0.6f);
+        main.startSize = Range(0.06f, 0.1f);
+        ScreenCircle(sparkles, 0.55f);
+        ParticleSystem.ShapeModule shape = sparkles.shape;
+        shape.radiusThickness = 0f; // On the ring's edge
+        SetRate(sparkles, 6f);
+        Fade(sparkles, Gradient(new[] { Color.white, DefenseUpColor }, new[] { 0f, 1f, 0f }));
+        sparkles.Play();
+
+        return ring.gameObject;
+    }
+
+    // Grey ring that flickers like it's breaking, with shards falling off
+    public static GameObject DefenseDown(Vector3 position)
+    {
+        ParticleSystem ring = ShieldRing("Aura_DefenseDown", position, DefenseDownColor, new[] { 0f, 0.6f, 0.1f, 0.5f, 0f, 0.4f, 0f });
+
+        ParticleSystem shards = NewSystem("Aura_DefenseDown_Shards", position, Shape.Shard, ring.transform);
+        ParticleSystem.MainModule main = shards.main;
+        main.loop = true;
+        main.startLifetime = Range(0.7f, 1f);
+        main.startSize = Range(0.06f, 0.1f);
+        main.startRotation = Range(0f, Mathf.PI * 2f);
+        ScreenCircle(shards, 0.55f);
+        ParticleSystem.ShapeModule shape = shards.shape;
+        shape.radiusThickness = 0f;
+        Drift(shards, -0.4f);
+        Spin(shards, 3f);
+        SetRate(shards, 4f);
+        Fade(shards, Gradient(new[] { DefenseDownColor, DefenseDownColor * 0.5f }, new[] { 1f, 0f }));
+        shards.Play();
+
+        return ring.gameObject;
+    }
+
+    // Cyan speed lines streaking sideways across the card
+    public static GameObject SpeedUp(Vector3 position)
+    {
+        ParticleSystem lines = NewSystem("Aura_SpeedUp", position, Shape.Dot);
+        ParticleSystem.MainModule main = lines.main;
+        main.loop = true;
+        main.startLifetime = Range(0.15f, 0.3f);
+        main.startSpeed = Range(2.5f, 3.5f);
+        main.startSize = Range(0.03f, 0.05f);
+
+        // Flat cone pointing screen-right, so lines start spread out up and down the card
+        ParticleSystem.ShapeModule shape = lines.shape;
+        shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 0f;
+        shape.radius = 0.4f;
+        shape.rotation = Quaternion.LookRotation(ScreenRight(), ScreenUp()).eulerAngles;
+
+        ParticleSystemRenderer renderer = lines.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Stretch;
+        renderer.lengthScale = 4f;
+        renderer.velocityScale = 0.05f;
+
+        SetRate(lines, 14f);
+        Fade(lines, Gradient(new[] { Color.white, SpeedUpColor }, new[] { 0f, 1f, 0f }));
+        lines.Play();
+        return lines.gameObject;
+    }
+
+    // Slow heavy blue drips sinking down
+    public static GameObject SpeedDown(Vector3 position)
+    {
+        ParticleSystem drips = NewSystem("Aura_SpeedDown", position, Shape.Dot);
+        ParticleSystem.MainModule main = drips.main;
+        main.loop = true;
+        main.startLifetime = Range(1f, 1.4f);
+        main.startSize = Range(0.07f, 0.11f);
+        ScreenCircle(drips, 0.3f);
+        Drift(drips, -0.25f);
+        SizeCurve(drips, new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(0.5f, 1f), new Keyframe(1f, 0.6f)));
+        SetRate(drips, 4f);
+        Fade(drips, Gradient(new[] { SpeedDownColor, SpeedDownColor * 0.6f }, new[] { 0f, 1f, 0f }));
+        drips.Play();
+        return drips.gameObject;
+    }
+
+    // Grey chain links circling slowly around the card
+    public static GameObject Hindered(Vector3 position)
+    {
+        ParticleSystem links = NewSystem("Aura_Hindered", position, Shape.Link);
+        ParticleSystem.MainModule main = links.main;
+        main.loop = true;
+        main.startLifetime = Range(1.3f, 1.6f);
+        main.startSize = Range(0.12f, 0.16f);
+        main.startRotation = Range(0f, Mathf.PI * 2f);
+        ScreenCircle(links, 0.45f);
+        ParticleSystem.ShapeModule shape = links.shape;
+        shape.radiusThickness = 0f;
+        Swirl(links, 1.2f, 0f);
+        Spin(links, 1f);
+        SetRate(links, 6f);
+        Fade(links, Gradient(new[] { HinderedColor, HinderedColor }, new[] { 0f, 1f, 1f, 0f }));
+        links.Play();
+        return links.gameObject;
+    }
+
+    // Red X marks pulsing over the card
+    public static GameObject HealBlock(Vector3 position)
+    {
+        ParticleSystem crosses = NewSystem("Aura_HealBlock", position, Shape.Cross);
+        ParticleSystem.MainModule main = crosses.main;
+        main.loop = true;
+        main.startLifetime = Range(0.9f, 1.1f);
+        main.startSize = Range(0.16f, 0.2f);
+        ScreenCircle(crosses, 0.35f);
+        SizeCurve(crosses, new AnimationCurve(new Keyframe(0f, 0.6f), new Keyframe(0.3f, 1f), new Keyframe(1f, 0.8f)));
+        SetRate(crosses, 2.5f);
+        Fade(crosses, Gradient(new[] { HealBlockColor, HealBlockColor }, new[] { 0f, 1f, 0f }));
+        crosses.Play();
+        return crosses.gameObject;
+    }
+
+    // Arrows drifting up (positive speed) or down (negative, flipped to point down)
+    private static GameObject Arrows(string name, Vector3 position, Color color, float speed)
+    {
+        ParticleSystem arrows = NewSystem(name, position, Shape.Arrow);
+        ParticleSystem.MainModule main = arrows.main;
+        main.loop = true;
+        main.startLifetime = Range(0.8f, 1.1f);
+        main.startSize = Range(0.12f, 0.18f);
+        if (speed < 0f) main.startRotation = Mathf.PI; // Point down
+        ScreenCircle(arrows, 0.35f);
+        Drift(arrows, speed);
+        SetRate(arrows, speed > 0f ? 5f : 4f);
+        Fade(arrows, Gradient(new[] { Color.white, color }, new[] { 0f, 1f, 1f, 0f }));
+        arrows.Play();
+        return arrows.gameObject;
+    }
+
+    // Big ring around the card that follows it, alpha keys set the pulse or flicker
+    private static ParticleSystem ShieldRing(string name, Vector3 position, Color color, float[] alphas)
+    {
+        ParticleSystem ring = NewSystem(name, position, Shape.Ring);
+        ParticleSystem.MainModule main = ring.main;
+        main.loop = true;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local; // Moves with the card
+        main.startLifetime = 1.6f;
+        main.startSize = 1.15f;
+        SizeCurve(ring, new AnimationCurve(new Keyframe(0f, 0.95f), new Keyframe(1f, 1.05f)));
+        SetRate(ring, 1.2f);
+        Fade(ring, Gradient(new[] { color, color }, alphas));
+        ring.Play();
+        return ring;
+    }
+
     // ---- Defeat ----
 
     // Grey shards spinning and scattering
@@ -257,9 +438,10 @@ public static class PlaceholderEffects
     {
         if (effect == null) return;
         effect.transform.SetParent(null, true);
-        foreach (ParticleSystem particles in effect.GetComponentsInChildren<ParticleSystem>())
+        ParticleSystem[] systems = effect.GetComponentsInChildren<ParticleSystem>();
+        foreach (ParticleSystem particles in systems)
             particles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        Object.Destroy(effect, 1.5f);
+        Object.Destroy(effect, systems.Length > 0 ? 1.5f : 0f); // Nothing to fade without particles
     }
 
     // ---- Text ----
@@ -461,6 +643,7 @@ public static class PlaceholderEffects
 
     private static Quaternion ScreenRotation() => Camera.main != null ? Camera.main.transform.rotation : Quaternion.Euler(90f, 0f, 0f);
     private static Vector3 ScreenUp() => Camera.main != null ? Camera.main.transform.up : Vector3.forward;
+    private static Vector3 ScreenRight() => Camera.main != null ? Camera.main.transform.right : Vector3.right;
 
     // ---- Textures ----
 
@@ -520,6 +703,19 @@ public static class PlaceholderEffects
 
             case Shape.Shard: // Diamond
                 return Mathf.Clamp01((0.7f - (Mathf.Abs(x) + Mathf.Abs(y) * 0.6f)) * 15f);
+
+            case Shape.Arrow: // Chevron pointing up
+                float chevron = Mathf.Abs(y - (0.35f - Mathf.Abs(x)));
+                return Mathf.Clamp01((0.16f - chevron) * 14f) * Mathf.Clamp01((0.65f - Mathf.Abs(x)) * 14f);
+
+            case Shape.Cross: // X
+                float stroke = Mathf.Min(Mathf.Abs(x - y), Mathf.Abs(x + y));
+                return Mathf.Clamp01((0.2f - stroke) * 12f) * Mathf.Clamp01((0.8f - distance) * 10f);
+
+            case Shape.Link: // Chain link (tall oval ring)
+                float oval = Mathf.Sqrt((x / 0.45f) * (x / 0.45f) + (y / 0.8f) * (y / 0.8f));
+                float edge = (oval - 0.8f) / 0.16f;
+                return Mathf.Exp(-edge * edge);
 
             default: // Soft dot
                 float dot = Mathf.Clamp01(1f - distance);

@@ -31,9 +31,27 @@ MonoBehaviour:
   - type: 10
     amount: 50
     duration: 2
-  - type: 11
-    amount: 50
-    duration: 2
+    ignoreStagger: 0
   selfStatusEffects: []
+  bonuses:
+  - condition: 3
+    status: 0
+    ally: {fileID: 11400000, guid: 0a5c2cdf706f94f05b3498f18ac6deaf, type: 2}
+    otherAttack: {fileID: 0}
+    side: 0
+    targetClass: 0
+    hp: 0
+    hpIsPercent: 0
+    bonusDamage: 0
+    extraTargetEffects:
+    - type: 11
+      amount: 50
+      duration: 2
+      ignoreStagger: 0
+    extraSelfEffects: []
+  ignoresDefense: 0
+  executeAtOrBelowHP: 0
+  whileOnCooldown: 0
+  passiveDamage: 100
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}

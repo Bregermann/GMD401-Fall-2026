@@ -51,7 +51,7 @@ public class CardInspector : MonoBehaviour
             {
                 Close();
             }
-            else if (!mouse.leftButton.isPressed) // Not while dragging a card
+            else if (!mouse.leftButton.isPressed && !IsDraftDealing()) // Not while dragging a card or dealing the draft
             {
                 CardUnit card = CardUnit.UnderMouse();
                 if (card != null) Open(card);
@@ -61,6 +61,8 @@ public class CardInspector : MonoBehaviour
         // Keeps HP and status effects up to date while it's open
         if (IsOpen) RefreshStats();
     }
+
+    bool IsDraftDealing() => DraftManager.Instance != null && DraftManager.Instance.IsDealing;
 
     void Open(CardUnit card)
     {
@@ -230,13 +232,51 @@ public class CardInspector : MonoBehaviour
         int width = attack.areaSize * 2 + 1;
         if (attack.area == AttackArea.AroundTarget) extras.Add($"Hits {attack.areaAffects.ToString().ToLower()} in a {width}x{width} around the target");
         if (attack.area == AttackArea.AroundSelf) extras.Add($"Hits {attack.areaAffects.ToString().ToLower()} within {attack.areaSize} space(s)");
+        if (attack.area == AttackArea.Self) extras.Add("Self only");
         if (attack.positionalBonus != PositionalBonus.None) extras.Add($"x{attack.positionalMultiplier} from {attack.positionalBonus}");
         if (attack.hasClassBonus) extras.Add($"x{attack.classMultiplier} vs {attack.classBonusTarget}");
         if (attack.hasKnockback && attack.area == AttackArea.Single) extras.Add($"Knockback ({attack.knockbackCollisionDamage} if it hits something)");
+        if (attack.ignoresDefense) extras.Add("Ignores defense");
+        if (attack.executeAtOrBelowHP > 0) extras.Add($"Defeats enemies at {attack.executeAtOrBelowHP} HP or less");
         if (attack.targetStatusEffects != null && attack.targetStatusEffects.Length > 0) extras.Add("Applies " + ApplicationsText(attack.targetStatusEffects));
         if (attack.selfStatusEffects != null && attack.selfStatusEffects.Length > 0) extras.Add("Self " + ApplicationsText(attack.selfStatusEffects));
+        if (attack.whileOnCooldown == CooldownPassive.DamageAttackers) extras.Add($"On cooldown: attackers take {attack.passiveDamage}");
+        if (attack.whileOnCooldown == CooldownPassive.KnockbackImmune) extras.Add("On cooldown: can't be knocked back");
+        if (attack.bonuses != null)
+            foreach (AttackBonus bonus in attack.bonuses)
+                extras.Add(BonusText(bonus, attack.damageType == DamageType.Heal));
 
         return extras.Count == 0 ? line : $"{line}\n    <size=85%>{string.Join(", ", extras)}</size>";
+    }
+
+    // e.g. "+120 if target has Hindered", "Applies Speed Down if Fjora is in play"
+    string BonusText(AttackBonus bonus, bool isHeal)
+    {
+        List<string> rewards = new List<string>();
+        if (bonus.bonusDamage > 0)
+        {
+            string each = bonus.condition == BonusCondition.TargetDebuffCount ? " per debuff on target" : "";
+            rewards.Add($"+{bonus.bonusDamage}{(isHeal ? " healing" : "")}{each}");
+        }
+        if (bonus.extraTargetEffects != null && bonus.extraTargetEffects.Length > 0) rewards.Add("applies " + ApplicationsText(bonus.extraTargetEffects));
+        if (bonus.extraSelfEffects != null && bonus.extraSelfEffects.Length > 0) rewards.Add("self " + ApplicationsText(bonus.extraSelfEffects));
+
+        string hp = bonus.hpIsPercent ? $"{bonus.hp}% HP" : $"{bonus.hp} HP";
+        string condition;
+        switch (bonus.condition)
+        {
+            case BonusCondition.TargetHasStatus:   condition = $"if target has {bonus.status}"; break;
+            case BonusCondition.TargetDebuffCount: condition = ""; break;
+            case BonusCondition.AttackerHasStatus: condition = $"if this card has {bonus.status}"; break;
+            case BonusCondition.AllyInPlay:        condition = $"if {(bonus.ally != null ? bonus.ally.cardName : "?")} is in play"; break;
+            case BonusCondition.AttackOnCooldown:  condition = $"if {(bonus.otherAttack != null ? bonus.otherAttack.attackName : "?")} is on cooldown"; break;
+            case BonusCondition.FromSide:          condition = $"from the {bonus.side.ToString().ToLower()}"; break;
+            case BonusCondition.TargetClass:       condition = $"vs {bonus.targetClass}"; break;
+            case BonusCondition.AttackerHPBelow:   condition = $"if below {hp}"; break;
+            case BonusCondition.AttackerHPAbove:   condition = $"if above {hp}"; break;
+            default:                               condition = ""; break;
+        }
+        return $"{string.Join(" and ", rewards)} {condition}".Trim();
     }
 
     // ---- Building the UI ----

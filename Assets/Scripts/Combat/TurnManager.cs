@@ -97,7 +97,7 @@ public class TurnManager : MonoBehaviour
 
     void Update()
     {
-        if (Phase != GamePhase.Battle || ActiveUnit == null || isBusy || CardInspector.IsOpen) return;
+        if (Phase != GamePhase.Battle || ActiveUnit == null || isBusy || CardInspector.IsOpen || InputGate.IsPaused) return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
@@ -373,14 +373,10 @@ public class TurnManager : MonoBehaviour
         ActiveUnit = null;
         Winner = player1Alive ? 1 : 2;
         Debug.Log($"Player {Winner} wins!");
-        if (optionsManager != null)
-        {
-            optionsManager.ShowWinPanel(Winner);
-        }
-        else
-        {
-            Debug.LogError("OptionsManager reference is missing!");
-        }
+
+        // Finds it if the slot is empty. Scenes without one (TestScene) just skip the win panel
+        if (optionsManager == null) optionsManager = FindAnyObjectByType<OptionsManager>();
+        if (optionsManager != null) optionsManager.ShowWinPanel(Winner);
         return true;
     }
 
@@ -409,8 +405,8 @@ public class TurnManager : MonoBehaviour
 
         // Pressing the same attack again cancels it
         selectedAttack = selectedAttack == attack ? null : attack;
-        // AroundSelf attacks are used by clicking the card itself
-        string howToUse = attack.area == AttackArea.AroundSelf ? $"click {card.data.cardName} to use it" : "click a target";
+        // AroundSelf and Self attacks are used by clicking the card itself
+        string howToUse = CombatResolver.UsedOnSelf(attack) ? $"click {card.data.cardName} to use it" : "click a target";
         Debug.Log(selectedAttack != null ? $"{attack.attackName} selected, {howToUse}" : "Attack cancelled");
     }
 
@@ -436,6 +432,11 @@ public class TurnManager : MonoBehaviour
         else
             Debug.Log($"{attack.attackName} hit {result.hits.Count} card(s): {HitsText(result)}, defeated: {result.defeatedCards.Count}");
 
+        if (result.reflectedDamage > 0)
+            Debug.Log($"{ActiveUnit.Instance.data.cardName} took {result.reflectedDamage} damage back");
+        if (result.knockbackBlocked)
+            Debug.Log($"{targetName} couldn't be knocked back");
+
         if (CheckForWinner()) return;
         StartCoroutine(WaitForAttackEffects());
     }
@@ -446,6 +447,18 @@ public class TurnManager : MonoBehaviour
         isBusy = true;
         yield return new WaitForSeconds(attackPause);
         while (CombatEffects.IsPlaying) yield return null;
+
+        // A passive like Hangry can defeat the attacker, which ends its turn
+        if (ActiveUnit != null && !ActiveUnit.Instance.IsAlive)
+        {
+            Debug.Log($"{ActiveUnit.Instance.data.cardName} was defeated by a passive");
+            yield return new WaitForSeconds(CombatManager.Instance.DefeatDelay);
+            ActiveUnit = null;
+            isBusy = false;
+            NextTurn();
+            yield break;
+        }
+
         isBusy = false;
 
         if (ActiveUnit != null && HasMoved(ActiveUnit)) Debug.Log("Moved and attacked. Press Space to end turn");
@@ -461,7 +474,7 @@ public class TurnManager : MonoBehaviour
         List<string> parts = new List<string>();
         foreach (AttackHit hit in result.hits)
         {
-            string change = hit.damage > 0 ? $" -{hit.damage}" : hit.healed > 0 ? $" +{hit.healed}" : "";
+            string change = hit.executed ? " executed" : hit.damage > 0 ? $" -{hit.damage}" : hit.healed > 0 ? $" +{hit.healed}" : "";
             parts.Add(hit.card.data.cardName + change);
         }
         return string.Join(", ", parts);

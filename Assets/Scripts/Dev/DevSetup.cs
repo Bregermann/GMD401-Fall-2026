@@ -68,7 +68,7 @@ public class DevSetup : MonoBehaviour
     void Update()
     {
         Keyboard keyboard = Keyboard.current;
-        if (keyboard == null || CardInspector.IsOpen) return;
+        if (keyboard == null || CardInspector.IsOpen || InputGate.IsPaused) return;
 
         if (keyboard.rKey.wasPressedThisFrame)
         {

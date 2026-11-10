@@ -22,12 +22,28 @@ MonoBehaviour:
   areaAffects: 0
   positionalBonus: 0
   positionalMultiplier: 1.25
-  hasClassBonus: 1
+  hasClassBonus: 0
   classBonusTarget: 4
-  classMultiplier: 1.625
+  classMultiplier: 1.25
   hasKnockback: 0
   knockbackCollisionDamage: 10
   targetStatusEffects: []
   selfStatusEffects: []
+  bonuses:
+  - condition: 6
+    status: 0
+    ally: {fileID: 0}
+    otherAttack: {fileID: 0}
+    side: 0
+    targetClass: 4
+    hp: 0
+    hpIsPercent: 0
+    bonusDamage: 150
+    extraTargetEffects: []
+    extraSelfEffects: []
+  ignoresDefense: 0
+  executeAtOrBelowHP: 0
+  whileOnCooldown: 0
+  passiveDamage: 100
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}

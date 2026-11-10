@@ -403,6 +403,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a466916062a63d546bd73be187b63cff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnManager
+  optionsManager: {fileID: 0}
   stunnedDelay: 1.5
   burnDelay: 1
   poisonDelay: 1
@@ -467,16 +468,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DevSetup
   cardPrefab: {fileID: 2641182804274139228, guid: d3dd23c108af5a54abf7c248adbeca23, type: 3}
   cards:
-  - data: {fileID: 11400000, guid: b2e318376f9248c41aa90ef8d196877d, type: 2}
+  - data: {fileID: 11400000, guid: 0a5c2cdf706f94f05b3498f18ac6deaf, type: 2}
     owner: 1
     row: 1
     column: 0
     startingHP: 3200
-    startingEffects: 05000000i
-  - data: {fileID: 11400000, guid: 3694c82bbfe762546a22599f919aa783, type: 2}
+    startingEffects: 
+  - data: {fileID: 11400000, guid: c8e346032d002469095cd9a90621573f, type: 2}
     owner: 2
     row: 0
     column: 0
+    startingHP: 4400
+    startingEffects: 
+  - data: {fileID: 11400000, guid: 5771b6bbbfa2e42d6b4016745c728d2b, type: 2}
+    owner: 2
+    row: 0
+    column: 3
     startingHP: 4400
     startingEffects: 06000000i
   ignoreCooldowns: 0
@@ -494,6 +501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26b81a50b24056a40bbab817ba0f5a0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatEffects
+  library: {fileID: 11400000, guid: e6d9f760ada2464480b085225c818ea7, type: 2}
   projectileSpeed: 8
   hitDuration: 0.4
   textDuration: 1

@@ -58,7 +58,30 @@ public enum AttackArea
 {
     Single,       // Only the target
     AroundTarget, // The target and cards near it, e.g. areaSize 1 = 3x3 square
-    AroundSelf    // Cards near the attacker, not the attacker. Used by clicking the attacker
+    AroundSelf,   // Cards near the attacker, not the attacker. Used by clicking the attacker
+    Self          // Only the attacker (e.g. "heals self"). Used by clicking the attacker
+}
+
+// What an attack bonus checks for. Add new ones at the end, assets save these as numbers
+public enum BonusCondition
+{
+    TargetHasStatus,    // Target has the status effect
+    TargetDebuffCount,  // Bonus damage for each debuff on the target
+    AttackerHasStatus,  // The user has the status effect
+    AllyInPlay,         // A specific card is on the user's team and alive
+    AttackOnCooldown,   // The user's last attack was a specific attack
+    FromSide,           // Attacking from the front, side or back
+    TargetClass,        // Target is a specific class
+    AttackerHPBelow,    // The user's HP is below a number (or percent)
+    AttackerHPAbove     // The user's HP is above a number (or percent)
+}
+
+// Passive a card has while a specific attack is its one on cooldown
+public enum CooldownPassive
+{
+    None,
+    DamageAttackers,  // Enemies that attack this card take damage (ignores defense)
+    KnockbackImmune   // Can't be knocked back (no collision damage either)
 }
 
 // Which side an area attack hits

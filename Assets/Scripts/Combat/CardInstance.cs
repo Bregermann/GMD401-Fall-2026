@@ -63,15 +63,18 @@ public class CardInstance
     // ---- Status effects ----
 
     // amount/duration of 0 use the effect's defaults
-    public void ApplyStatusEffect(StatusEffectType type, int amount = 0, int duration = 0)
+    public void ApplyStatusEffect(StatusEffectType type, int amount = 0, int duration = 0, bool ignoreStagger = false)
     {
-        statusEffects.Apply(type, IsTakingTurn, amount, duration);
+        statusEffects.Apply(type, IsTakingTurn, amount, duration, ignoreStagger);
     }
 
     public void ApplyStatusEffect(StatusEffectApplication effect)
     {
-        ApplyStatusEffect(effect.type, effect.amount, effect.duration);
+        ApplyStatusEffect(effect.type, effect.amount, effect.duration, effect.ignoreStagger);
     }
+
+    // Passive from the attack on cooldown (e.g. Hangry, Anchored Stance)
+    public CooldownPassive ActivePassive => lastAttackUsed != null ? lastAttackUsed.whileOnCooldown : CooldownPassive.None;
 
     // ---- Attacks ----
 

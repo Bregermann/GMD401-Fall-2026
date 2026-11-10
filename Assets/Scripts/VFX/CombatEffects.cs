@@ -6,11 +6,15 @@ using UnityEngine;
 
 // Plays the visual side of combat: projectiles, hit particles, flash and shake, floating numbers,
 // status effect visuals and the defeat effect. Put one on the CombatManager object.
-// Uses PlaceholderEffects unless an attack has its own effect prefabs. TurnManager waits while IsPlaying.
+// Effects come from the attack's own prefabs first, then the Effect Library, then PlaceholderEffects.
+// TurnManager waits while IsPlaying.
 public class CombatEffects : MonoBehaviour
 {
     public static CombatEffects Instance { get; private set; }
     public static bool IsPlaying => Instance != null && Time.time < Instance.busyUntil;
+
+    [Header("Effects")]
+    [SerializeField] private EffectLibrary library; // Effect prefabs for each moment. Empty slots use the placeholders
 
     [Header("Timing")]
     [SerializeField] private float projectileSpeed = 8f;  // World units per second
@@ -23,18 +27,15 @@ public class CombatEffects : MonoBehaviour
     [SerializeField] private float effectHeight = 0.3f;   // How far above the card effects spawn
     [SerializeField] private float textRise = 0.6f;       // How far floating text drifts up
 
-    // Effects that get a looping visual on the card while it has them
-    private static readonly StatusEffectType[] AuraEffects =
-    {
-        StatusEffectType.Burn, StatusEffectType.Poison, StatusEffectType.Regeneration,
-        StatusEffectType.Stagger, StatusEffectType.Stun
-    };
+    // Looping visuals a card can have while it has a status effect. Several effects can share one (e.g. both Defense Ups)
+    private enum AuraSlot { Burn, Poison, Regeneration, Stun, Stagger, Hindered, AttackUp, AttackDown, DefenseUp, DefenseDown, SpeedUp, SpeedDown, HealBlock }
+    private static readonly AuraSlot[] AuraSlots = (AuraSlot[])System.Enum.GetValues(typeof(AuraSlot));
 
     private float busyUntil;
     private float nextAuraCheck;
     private Camera cam;
     private readonly Dictionary<CardInstance, float> hitTimes = new Dictionary<CardInstance, float>(); // When a projectile reaches each card
-    private readonly Dictionary<(CardInstance, StatusEffectType), GameObject> auras = new Dictionary<(CardInstance, StatusEffectType), GameObject>();
+    private readonly Dictionary<(CardInstance, AuraSlot), GameObject> auras = new Dictionary<(CardInstance, AuraSlot), GameObject>();
     private MaterialPropertyBlock flashBlock;
 
     void Awake()
@@ -101,13 +102,15 @@ public class CombatEffects : MonoBehaviour
             StartCoroutine(Projectile(attack, start, end, color, travel));
         }
 
-        // Pulse out from the user for attacks centred on itself
+        // Pulse out from the user for attacks centred on itself, or a blast on the target for area attacks
         if (aroundSelf) PlaceholderEffects.Pulse(Above(attacker.transform), color, 1.5f + attack.areaSize * 1.2f);
+        if (attack.area == AttackArea.AroundTarget && target != null)
+            StartCoroutine(DelayedEffect(Slot(l => l.areaBlast), Above(target.transform), travel));
 
         foreach (AttackHit hit in result.hits)
         {
             hitTimes[hit.card] = Time.time + travel;
-            StartCoroutine(PlayHit(CombatManager.Instance.GetUnit(hit.card), hit, attack, color, travel));
+            StartCoroutine(PlayHit(CombatManager.Instance.GetUnit(hit.card), hit, attack, attacker.Instance.owner, color, travel));
         }
 
         // Knockback into a wall or card
@@ -117,6 +120,15 @@ public class CombatEffects : MonoBehaviour
             if (result.collidedWith != null && result.collidedWith.owner != attacker.Instance.owner)
                 StartCoroutine(DelayedText(CombatManager.Instance.GetUnit(result.collidedWith), $"-{result.collisionDamage}", PlaceholderEffects.PhysicalColor, 0, travel + 0.2f));
         }
+
+        // Damage the attacker took back (Hangry) and knockback that didn't work (Anchored Stance)
+        if (result.reflectedDamage > 0)
+        {
+            StartCoroutine(DelayedText(attacker, $"-{result.reflectedDamage}", PlaceholderEffects.PhysicalColor, 1, travel + 0.3f));
+            StartCoroutine(DelayedShake(attacker.transform, travel + 0.3f));
+        }
+        if (result.knockbackBlocked)
+            StartCoroutine(DelayedText(target, "Anchored", PlaceholderEffects.BuffColor, 2, travel + 0.2f, 0.6f));
 
         // Effects the attacker gave itself
         if (attack.selfStatusEffects != null)
@@ -129,43 +141,47 @@ public class CombatEffects : MonoBehaviour
         busyUntil = Mathf.Max(busyUntil, Time.time + travel + hitDuration);
     }
 
+    // The attack's own projectile, then the library's for its damage type, then the placeholder
     IEnumerator Projectile(AttackData attack, Vector3 start, Vector3 end, Color color, float travel)
     {
-        GameObject custom = attack.projectilePrefab != null ? Instantiate(attack.projectilePrefab, start, Quaternion.LookRotation(end - start)) : null;
-        GameObject placeholder = custom == null ? PlaceholderEffects.Projectile(start, attack.damageType) : null;
-        Transform mover = custom != null ? custom.transform : placeholder.transform;
+        Quaternion facing = Quaternion.LookRotation(end - start);
+        EffectEntry entry = Slot(l => attack.damageType == DamageType.Heal ? l.healProjectile
+                                    : attack.damageType == DamageType.Magic ? l.magicProjectile : l.physicalProjectile);
+
+        GameObject projectile;
+        if (attack.projectilePrefab != null) projectile = Instantiate(attack.projectilePrefab, start, facing);
+        else if (entry != null && entry.IsSet) projectile = SpawnEffect(entry, start, facing);
+        else projectile = PlaceholderEffects.Projectile(start, attack.damageType);
 
         for (float t = 0f; t < travel; t += Time.deltaTime)
         {
-            if (mover == null) yield break;
-            mover.position = Vector3.Lerp(start, end, t / travel);
+            if (projectile == null) yield break;
+            projectile.transform.position = Vector3.Lerp(start, end, t / travel);
             yield return null;
         }
 
-        if (custom != null) Destroy(custom);
-        else PlaceholderEffects.Stop(placeholder);
+        // Stop emitting so trails fade out instead of vanishing
+        PlaceholderEffects.Stop(projectile);
     }
 
     // Particles, flash, shake and numbers on one card, once the projectile arrives
-    IEnumerator PlayHit(CardUnit unit, AttackHit hit, AttackData attack, Color color, float delay)
+    IEnumerator PlayHit(CardUnit unit, AttackHit hit, AttackData attack, int attackerOwner, Color color, float delay)
     {
         if (delay > 0f) yield return new WaitForSeconds(delay);
         if (unit == null) yield break;
 
-        Vector3 position = Above(unit.transform);
-        if (attack.hitEffectPrefab != null)
-            Destroy(Instantiate(attack.hitEffectPrefab, position, Quaternion.identity), 3f);
-        else if (attack.damageType == DamageType.Heal)
-            PlaceholderEffects.HealHit(position);
-        else if (attack.damageType == DamageType.Magic)
-            PlaceholderEffects.MagicHit(position);
-        else
-            PlaceholderEffects.PhysicalHit(position);
+        // Buffs on yourself or allies (Roar, Hibernate) don't "hit" - just the aura and effect names show
+        bool buffOnly = attack.damageType != DamageType.Heal && hit.damage == 0 && hit.card.owner == attackerOwner;
 
-        StartCoroutine(Flash(unit, color));
+        if (!buffOnly)
+        {
+            PlayHitEffect(attack, Above(unit.transform));
+            StartCoroutine(Flash(unit, color));
+        }
         if (hit.damage > 0) StartCoroutine(Shake(unit.transform));
 
         int line = 0;
+        if (hit.executed) ShowText(unit, "Executed!", PlaceholderEffects.DebuffColor, line++, 1.1f);
         if (hit.damage > 0) ShowText(unit, $"-{hit.damage}", PlaceholderEffects.PhysicalColor, line++);
         if (hit.healed > 0) ShowText(unit, $"+{hit.healed}", PlaceholderEffects.HealColor, line++);
 
@@ -175,33 +191,50 @@ public class CombatEffects : MonoBehaviour
                 ShowText(unit, EffectName(effect.type, hit.card), EffectColor(effect.type), line++, 0.6f);
     }
 
+    // The attack's own hit effect, then the library's for its damage type, then the placeholder
+    void PlayHitEffect(AttackData attack, Vector3 position)
+    {
+        if (attack.hitEffectPrefab != null)
+            Destroy(Instantiate(attack.hitEffectPrefab, position, Quaternion.identity), 3f);
+        else if (attack.damageType == DamageType.Heal)
+            PlayOnce(Slot(l => l.healHit), position, () => PlaceholderEffects.HealHit(position));
+        else if (attack.damageType == DamageType.Magic)
+            PlayOnce(Slot(l => l.magicHit), position, () => PlaceholderEffects.MagicHit(position));
+        else
+            PlayOnce(Slot(l => l.physicalHit), position, () => PlaceholderEffects.PhysicalHit(position));
+    }
+
     // ---- Status effects (from TurnManager) ----
 
     void OnBurned(CardUnit unit, int amount)
     {
         if (unit == null) return;
-        PlaceholderEffects.Burn(Above(unit.transform), false);
+        Vector3 position = Above(unit.transform);
+        PlayOnce(Slot(l => l.burnTick), position, () => PlaceholderEffects.Burn(position, false));
         StatusHit(unit, $"-{amount}", PlaceholderEffects.BurnColor, true);
     }
 
     void OnPoisoned(CardUnit unit, int amount)
     {
         if (unit == null) return;
-        PlaceholderEffects.Poison(Above(unit.transform), false);
+        Vector3 position = Above(unit.transform);
+        PlayOnce(Slot(l => l.poisonTick), position, () => PlaceholderEffects.Poison(position, false));
         StatusHit(unit, $"-{amount}", PlaceholderEffects.PoisonColor, true);
     }
 
     void OnRegenerated(CardUnit unit, int amount)
     {
         if (unit == null) return;
-        PlaceholderEffects.Regeneration(Above(unit.transform), false);
+        Vector3 position = Above(unit.transform);
+        PlayOnce(Slot(l => l.regenerationTick), position, () => PlaceholderEffects.Regeneration(position, false));
         StatusHit(unit, $"+{amount}", PlaceholderEffects.HealColor, false);
     }
 
     void OnStunned(CardUnit unit)
     {
         if (unit == null) return;
-        PlaceholderEffects.Stars(Above(unit.transform), false, false);
+        Vector3 position = Above(unit.transform);
+        PlayOnce(Slot(l => l.stunTick), position, () => PlaceholderEffects.Stars(position, false, false));
         StartCoroutine(Flash(unit, PlaceholderEffects.StunColor));
         StartCoroutine(FloatText(unit.transform, "STUNNED", PlaceholderEffects.StunColor, 0, 1.2f, textDuration * 1.5f));
     }
@@ -218,14 +251,14 @@ public class CombatEffects : MonoBehaviour
     void UpdateAuras()
     {
         // Remove ones whose card is gone or lost the effect
-        List<(CardInstance, StatusEffectType)> finished = new List<(CardInstance, StatusEffectType)>();
-        foreach (KeyValuePair<(CardInstance, StatusEffectType), GameObject> aura in auras)
+        List<(CardInstance, AuraSlot)> finished = new List<(CardInstance, AuraSlot)>();
+        foreach (KeyValuePair<(CardInstance, AuraSlot), GameObject> aura in auras)
         {
             CardInstance card = aura.Key.Item1;
-            if (aura.Value == null || !card.IsAlive || !CombatManager.Instance.Board.IsOnBoard(card) || !card.statusEffects.Has(aura.Key.Item2))
+            if (aura.Value == null || !card.IsAlive || !CombatManager.Instance.Board.IsOnBoard(card) || !HasAura(card, aura.Key.Item2))
                 finished.Add(aura.Key);
         }
-        foreach ((CardInstance, StatusEffectType) key in finished)
+        foreach ((CardInstance, AuraSlot) key in finished)
         {
             PlaceholderEffects.Stop(auras[key]);
             auras.Remove(key);
@@ -237,28 +270,87 @@ public class CombatEffects : MonoBehaviour
             CardUnit unit = CombatManager.Instance.GetUnit(card);
             if (unit == null) continue;
 
-            foreach (StatusEffectType type in AuraEffects)
+            foreach (AuraSlot slot in AuraSlots)
             {
-                if (card.statusEffects.Has(type) && !auras.ContainsKey((card, type)))
-                    auras[(card, type)] = MakeAura(type, unit.transform);
+                if (!HasAura(card, slot) || auras.ContainsKey((card, slot))) continue;
+                GameObject aura = MakeAura(slot, unit.transform);
+                if (aura != null) auras[(card, slot)] = aura;
             }
         }
     }
 
-    GameObject MakeAura(StatusEffectType type, Transform card)
+    bool HasAura(CardInstance card, AuraSlot slot)
+    {
+        StatusEffectHandler effects = card.statusEffects;
+        switch (slot)
+        {
+            case AuraSlot.Burn:         return effects.Has(StatusEffectType.Burn);
+            case AuraSlot.Poison:       return effects.Has(StatusEffectType.Poison);
+            case AuraSlot.Regeneration: return effects.Has(StatusEffectType.Regeneration);
+            case AuraSlot.Stun:         return effects.Has(StatusEffectType.Stun);
+            case AuraSlot.Stagger:      return effects.Has(StatusEffectType.Stagger);
+            case AuraSlot.Hindered:     return effects.Has(StatusEffectType.Hindered);
+            case AuraSlot.AttackUp:     return effects.Has(StatusEffectType.PhysicalAttackUp) || effects.Has(StatusEffectType.MagicAttackUp);
+            case AuraSlot.AttackDown:   return effects.Has(StatusEffectType.PhysicalAttackDown) || effects.Has(StatusEffectType.MagicAttackDown);
+            case AuraSlot.DefenseUp:    return effects.Has(StatusEffectType.PhysicalDefenseUp) || effects.Has(StatusEffectType.MagicDefenseUp);
+            case AuraSlot.DefenseDown:  return effects.Has(StatusEffectType.PhysicalDefenseDown) || effects.Has(StatusEffectType.MagicDefenseDown);
+            case AuraSlot.SpeedUp:      return effects.Has(StatusEffectType.SpeedUp) || effects.Has(StatusEffectType.Haste);
+            case AuraSlot.SpeedDown:    return effects.Has(StatusEffectType.SpeedDown);
+            case AuraSlot.HealBlock:    return effects.Has(StatusEffectType.HealBlock);
+            default: return false;
+        }
+    }
+
+    // Library aura if there is one, otherwise the placeholder
+    GameObject MakeAura(AuraSlot slot, Transform card)
     {
         Vector3 position = card.position + Vector3.up * effectHeight * 0.5f;
+        EffectEntry entry = Slot(l => LibraryAura(l, slot));
+
         GameObject aura;
-        switch (type)
+        if (entry != null && entry.IsSet) aura = SpawnEffect(entry, position);
+        else
         {
-            case StatusEffectType.Burn:         aura = PlaceholderEffects.Burn(position, true); break;
-            case StatusEffectType.Poison:       aura = PlaceholderEffects.Poison(position, true); break;
-            case StatusEffectType.Regeneration: aura = PlaceholderEffects.Regeneration(position, true); break;
-            case StatusEffectType.Stun:         aura = PlaceholderEffects.Stars(position, true, false); break;
-            default:                            aura = PlaceholderEffects.Stars(position, true, true); break; // Stagger, faint
+            switch (slot)
+            {
+                case AuraSlot.Burn:         aura = PlaceholderEffects.Burn(position, true); break;
+                case AuraSlot.Poison:       aura = PlaceholderEffects.Poison(position, true); break;
+                case AuraSlot.Regeneration: aura = PlaceholderEffects.Regeneration(position, true); break;
+                case AuraSlot.Stun:         aura = PlaceholderEffects.Stars(position, true, false); break;
+                case AuraSlot.Stagger:      aura = PlaceholderEffects.Stars(position, true, true); break;
+                case AuraSlot.Hindered:     aura = PlaceholderEffects.Hindered(position); break;
+                case AuraSlot.AttackUp:     aura = PlaceholderEffects.AttackUp(position); break;
+                case AuraSlot.AttackDown:   aura = PlaceholderEffects.AttackDown(position); break;
+                case AuraSlot.DefenseUp:    aura = PlaceholderEffects.DefenseUp(position); break;
+                case AuraSlot.DefenseDown:  aura = PlaceholderEffects.DefenseDown(position); break;
+                case AuraSlot.SpeedUp:      aura = PlaceholderEffects.SpeedUp(position); break;
+                case AuraSlot.SpeedDown:    aura = PlaceholderEffects.SpeedDown(position); break;
+                case AuraSlot.HealBlock:    aura = PlaceholderEffects.HealBlock(position); break;
+                default:                    return null;
+            }
         }
         aura.transform.SetParent(card, true); // Follows the card when it moves
         return aura;
+    }
+
+    EffectEntry LibraryAura(EffectLibrary l, AuraSlot slot)
+    {
+        switch (slot)
+        {
+            case AuraSlot.Burn:         return l.burnAura;
+            case AuraSlot.Poison:       return l.poisonAura;
+            case AuraSlot.Regeneration: return l.regenerationAura;
+            case AuraSlot.Stun:         return l.stunAura;
+            case AuraSlot.Stagger:      return l.staggerAura;
+            case AuraSlot.Hindered:     return l.hinderedAura;
+            case AuraSlot.AttackUp:     return l.attackUpAura;
+            case AuraSlot.AttackDown:   return l.attackDownAura;
+            case AuraSlot.DefenseUp:    return l.defenseUpAura;
+            case AuraSlot.DefenseDown:  return l.defenseDownAura;
+            case AuraSlot.SpeedUp:      return l.speedUpAura;
+            case AuraSlot.SpeedDown:    return l.speedDownAura;
+            default:                    return l.healBlockAura;
+        }
     }
 
     // ---- Defeat ----
@@ -282,7 +374,8 @@ public class CombatEffects : MonoBehaviour
         if (delay > 0f) yield return new WaitForSeconds(delay);
         if (card == null) yield break;
 
-        PlaceholderEffects.Shatter(Above(card));
+        Vector3 position = Above(card);
+        PlayOnce(Slot(l => l.defeat), position, () => PlaceholderEffects.Shatter(position));
         Vector3 startScale = card.localScale;
 
         for (float t = 0f; t < duration; t += Time.deltaTime)
@@ -357,6 +450,12 @@ public class CombatEffects : MonoBehaviour
         StartCoroutine(FloatText(unit.transform, text, color, line, sizeScale, textDuration));
     }
 
+    IEnumerator DelayedShake(Transform card, float delay)
+    {
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+        yield return Shake(card);
+    }
+
     IEnumerator DelayedText(CardUnit unit, string text, Color color, int line, float delay, float sizeScale = 1f)
     {
         if (delay > 0f) yield return new WaitForSeconds(delay);
@@ -379,6 +478,40 @@ public class CombatEffects : MonoBehaviour
             yield return null;
         }
         if (tmp != null) Destroy(tmp.gameObject);
+    }
+
+    // ---- Library effects ----
+
+    // A slot from the library, or null if there's no library
+    EffectEntry Slot(System.Func<EffectLibrary, EffectEntry> pick) => library != null ? pick(library) : null;
+
+    // Spawns a library effect at its slot's scale. Hierarchy scaling makes every particle system follow that scale
+    GameObject SpawnEffect(EffectEntry entry, Vector3 position, Quaternion? rotation = null)
+    {
+        Quaternion facing = rotation ?? (entry.tiltToScreen ? cam.transform.rotation : entry.prefab.transform.rotation);
+        GameObject effect = Instantiate(entry.prefab, position, facing);
+        effect.transform.localScale = entry.prefab.transform.localScale * entry.scale;
+
+        foreach (ParticleSystem particles in effect.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            ParticleSystem.MainModule main = particles.main;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+        }
+        return effect;
+    }
+
+    // Plays a library effect once, or the placeholder if the slot is empty
+    void PlayOnce(EffectEntry entry, Vector3 position, System.Action placeholder)
+    {
+        if (entry != null && entry.IsSet) Destroy(SpawnEffect(entry, position), entry.lifetime);
+        else placeholder?.Invoke();
+    }
+
+    IEnumerator DelayedEffect(EffectEntry entry, Vector3 position, float delay)
+    {
+        if (entry == null || !entry.IsSet) yield break;
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+        Destroy(SpawnEffect(entry, position), entry.lifetime);
     }
 
     // ---- Helpers ----

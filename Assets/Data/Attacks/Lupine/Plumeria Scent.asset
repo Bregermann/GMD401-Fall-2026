@@ -17,8 +17,8 @@ MonoBehaviour:
   damage: 200
   damageType: 2
   range: 0
-  area: 0
-  areaSize: 8
+  area: 2
+  areaSize: 7
   areaAffects: 1
   positionalBonus: 0
   positionalMultiplier: 1.25
@@ -29,5 +29,10 @@ MonoBehaviour:
   knockbackCollisionDamage: 10
   targetStatusEffects: []
   selfStatusEffects: []
+  bonuses: []
+  ignoresDefense: 0
+  executeAtOrBelowHP: 0
+  whileOnCooldown: 0
+  passiveDamage: 100
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}

@@ -17,7 +17,7 @@ MonoBehaviour:
   damage: 0
   damageType: 0
   range: 0
-  area: 0
+  area: 3
   areaSize: 1
   areaAffects: 0
   positionalBonus: 0
@@ -35,6 +35,7 @@ MonoBehaviour:
   - type: 2
     amount: 200
     duration: 3
-  - type: 16
+  - type: 13
     amount: 0
-    duration: 1
+    duration: 0
+    ignoreStagger: 1

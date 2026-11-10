@@ -29,5 +29,21 @@ MonoBehaviour:
   knockbackCollisionDamage: 10
   targetStatusEffects: []
   selfStatusEffects: []
+  bonuses:
+  - condition: 0
+    status: 13
+    ally: {fileID: 0}
+    otherAttack: {fileID: 0}
+    side: 0
+    targetClass: 0
+    hp: 0
+    hpIsPercent: 0
+    bonusDamage: 130
+    extraTargetEffects: []
+    extraSelfEffects: []
+  ignoresDefense: 0
+  executeAtOrBelowHP: 0
+  whileOnCooldown: 0
+  passiveDamage: 100
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}

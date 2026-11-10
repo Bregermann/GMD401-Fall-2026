@@ -7,6 +7,7 @@ public class AttackHit
     public CardInstance card;
     public int damage;
     public int healed;
+    public bool executed;              // Defeated instantly by executeAtOrBelowHP
 }
 
 // What happened during one attack, for UI and animations
@@ -15,6 +16,8 @@ public class AttackResult
     public int damageDealt;            // On the main target
     public int amountHealed;           // On the main target
     public List<AttackHit> hits = new List<AttackHit>(); // Every card hit, main target first
+    public int reflectedDamage;        // Damage the attacker took back from passives like Hangry
+    public bool knockbackBlocked;      // Target ignored the knockback (e.g. Anchored Stance)
     public bool wasKnockedBack;        // Target moved 1 space
     public bool hitObstacle;           // Knockback was blocked by a wall or card
     public int collisionDamage;        // Damage from hitting the obstacle
@@ -22,7 +25,7 @@ public class AttackResult
     public List<CardInstance> defeatedCards = new List<CardInstance>();
 }
 
-// Handles attacking: targeting, area attacks, damage, heals, status effects and knockback.
+// Handles attacking: targeting, area attacks, bonuses, damage, heals, status effects, knockback and passives.
 public static class CombatResolver
 {
     public const int MeleeRange = 1;
@@ -42,7 +45,7 @@ public static class CombatResolver
 
     // True if the attacker can use this attack on this target right now.
     // Physical/Magic hit enemies only. Heals hit self or allies only.
-    // AroundSelf attacks are used on the attacker itself.
+    // AroundSelf and Self attacks are used on the attacker itself.
     public static bool CanTarget(CardInstance attacker, AttackData attack, CardInstance target, BoardState board)
     {
         if (attacker == null || attack == null || target == null) return false;
@@ -50,7 +53,7 @@ public static class CombatResolver
         if (!attacker.IsAlive || !target.IsAlive || attacker.IsStunned) return false;
         if (!attacker.CanUseAttack(attack)) return false;
 
-        if (attack.area == AttackArea.AroundSelf) return target == attacker;
+        if (UsedOnSelf(attack)) return target == attacker;
 
         if (attack.damageType == DamageType.Heal)
         {
@@ -63,6 +66,12 @@ public static class CombatResolver
         }
 
         return HasLineOfSight(attacker, target, GetRange(attacker, attack), board);
+    }
+
+    // Attacks used by clicking the attacker itself
+    public static bool UsedOnSelf(AttackData attack)
+    {
+        return attack.area == AttackArea.AroundSelf || attack.area == AttackArea.Self;
     }
 
     // Straight lines only (same row or column). Any card in between blocks it.
@@ -87,10 +96,16 @@ public static class CombatResolver
 
     // Every card the attack hits, main target first. Area attacks add cards within areaSize
     // of the center (diagonals count) that are on the side areaAffects picks. Heals always hit allies.
-    // The attacker is never added.
+    // The attacker is only included for Self attacks.
     public static List<CardInstance> GetAffectedCards(CardInstance attacker, AttackData attack, CardInstance target, BoardState board)
     {
         List<CardInstance> affected = new List<CardInstance>();
+        if (attack.area == AttackArea.Self)
+        {
+            affected.Add(attacker);
+            return affected;
+        }
+
         if (attack.area != AttackArea.AroundSelf) affected.Add(target);
         if (attack.area == AttackArea.Single) return affected;
 
@@ -123,12 +138,12 @@ public static class CombatResolver
 
     // ---- Damage ----
 
-    // Power x positional x class, rounded, minus defense, then the damage floor
-    public static int CalculateDamage(CardInstance attacker, AttackData attack, CardInstance target)
+    // (Power + bonus damage) x positional x class, rounded, minus defense, then the damage floor
+    public static int CalculateDamage(CardInstance attacker, AttackData attack, CardInstance target, int bonusDamage = 0)
     {
-        if (attack.damage == 0) return 0; // Status-only attack
+        if (attack.damage == 0 && bonusDamage == 0) return 0; // Status-only attack
 
-        float damage = attacker.GetAttackPower(attack);
+        float damage = attacker.GetAttackPower(attack) + bonusDamage;
 
         if (attack.positionalBonus != PositionalBonus.None && GetSideHit(attacker, target) == attack.positionalBonus)
             damage *= attack.positionalMultiplier;
@@ -138,8 +153,55 @@ public static class CombatResolver
 
         int rounded = Mathf.FloorToInt(damage + 0.5f); // Rounds .5 up (Mathf.RoundToInt rounds .5 to even)
         int defense = attack.damageType == DamageType.Physical ? target.PhysicalDefense : target.MagicDefense;
+        if (attack.ignoresDefense) defense = 0;
 
         return Mathf.Max(DamageFloor, rounded - defense);
+    }
+
+    // ---- Bonuses ----
+
+    // Adds up every bonus whose condition is met against this card, and collects their extra effects
+    private static int CollectBonuses(CardInstance attacker, AttackData attack, CardInstance card, BoardState board,
+                                      List<StatusEffectApplication> extraTargetEffects, List<StatusEffectApplication> extraSelfEffects)
+    {
+        if (attack.bonuses == null) return 0;
+
+        int bonusDamage = 0;
+        foreach (AttackBonus bonus in attack.bonuses)
+        {
+            int times = TimesMet(bonus, attacker, card, board);
+            if (times <= 0) continue;
+
+            bonusDamage += bonus.bonusDamage * times;
+            if (bonus.extraTargetEffects != null) extraTargetEffects.AddRange(bonus.extraTargetEffects);
+            if (bonus.extraSelfEffects != null) extraSelfEffects.AddRange(bonus.extraSelfEffects);
+        }
+        return bonusDamage;
+    }
+
+    // How many times a bonus applies: 0 or 1, or the number of debuffs for TargetDebuffCount.
+    // Checked before this attack's own effects land
+    public static int TimesMet(AttackBonus bonus, CardInstance attacker, CardInstance target, BoardState board)
+    {
+        switch (bonus.condition)
+        {
+            case BonusCondition.TargetHasStatus:   return target.statusEffects.Has(bonus.status) ? 1 : 0;
+            case BonusCondition.TargetDebuffCount: return target.statusEffects.DebuffCount();
+            case BonusCondition.AttackerHasStatus: return attacker.statusEffects.Has(bonus.status) ? 1 : 0;
+            case BonusCondition.AllyInPlay:        return board.GetCards(attacker.owner).Exists(c => c != attacker && c.IsAlive && c.data == bonus.ally) ? 1 : 0;
+            case BonusCondition.AttackOnCooldown:  return bonus.otherAttack != null && attacker.lastAttackUsed == bonus.otherAttack ? 1 : 0;
+            case BonusCondition.FromSide:          return target != attacker && GetSideHit(attacker, target) == bonus.side ? 1 : 0;
+            case BonusCondition.TargetClass:       return target.data.characterClass == bonus.targetClass ? 1 : 0;
+            case BonusCondition.AttackerHPBelow:   return attacker.currentHP < HPThreshold(bonus, attacker) ? 1 : 0;
+            case BonusCondition.AttackerHPAbove:   return attacker.currentHP > HPThreshold(bonus, attacker) ? 1 : 0;
+            default:                               return 0;
+        }
+    }
+
+    // hp as a number, or as a percent of max HP
+    private static int HPThreshold(AttackBonus bonus, CardInstance attacker)
+    {
+        return bonus.hpIsPercent ? Mathf.RoundToInt(attacker.data.maxHP * bonus.hp / 100f) : bonus.hp;
     }
 
     // ---- Attacking ----
@@ -150,33 +212,56 @@ public static class CombatResolver
         if (!CanTarget(attacker, attack, target, board)) return null;
 
         AttackResult result = new AttackResult();
+        List<StatusEffectApplication> extraSelfEffects = new List<StatusEffectApplication>();
+        List<CardInstance> affected = GetAffectedCards(attacker, attack, target, board);
 
-        // Damage/heal and status effects on every card hit. Bonuses are checked per card
-        foreach (CardInstance card in GetAffectedCards(attacker, attack, target, board))
+        // Damage/heal, bonuses and status effects on every card hit. Bonuses are checked per card
+        foreach (CardInstance card in affected)
         {
             AttackHit hit = new AttackHit { card = card };
+            List<StatusEffectApplication> extraTargetEffects = new List<StatusEffectApplication>();
+            int bonus = CollectBonuses(attacker, attack, card, board, extraTargetEffects, extraSelfEffects);
 
-            // Heals get no bonuses
+            // Heals get no multipliers or defense
             if (attack.damageType == DamageType.Heal)
             {
                 int hpBefore = card.currentHP;
-                card.Heal(attack.damage);
+                card.Heal(attack.damage + bonus);
                 hit.healed = card.currentHP - hpBefore;
             }
             else
             {
-                hit.damage = CalculateDamage(attacker, attack, card);
+                hit.damage = CalculateDamage(attacker, attack, card, bonus);
                 card.TakeDamage(hit.damage);
             }
 
-            if (card.IsAlive && attack.targetStatusEffects != null)
+            // Instant defeat at low HP (enemies only)
+            if (attack.executeAtOrBelowHP > 0 && card.IsAlive && card.owner != attacker.owner && card.currentHP <= attack.executeAtOrBelowHP)
             {
-                foreach (StatusEffectApplication effect in attack.targetStatusEffects)
-                    card.ApplyStatusEffect(effect);
+                card.TakeDamage(card.currentHP);
+                hit.executed = true;
+            }
+
+            // Base effects first so a bonus version of the same effect replaces it
+            if (card.IsAlive)
+            {
+                ApplyEffects(card, attack.targetStatusEffects);
+                ApplyEffects(card, extraTargetEffects);
+            }
+
+            // Hangry-style passive: enemies that attack this card take damage back
+            if (card.owner != attacker.owner && card.ActivePassive == CooldownPassive.DamageAttackers)
+            {
+                attacker.TakeDamage(card.lastAttackUsed.passiveDamage);
+                result.reflectedDamage += card.lastAttackUsed.passiveDamage;
             }
 
             result.hits.Add(hit);
         }
+
+        // Self bonuses still count when an area attack found nobody
+        if (affected.Count == 0)
+            CollectBonuses(attacker, attack, attacker, board, new List<StatusEffectApplication>(), extraSelfEffects);
 
         // Main target's numbers (AroundSelf attacks have no main target)
         if (result.hits.Count > 0 && result.hits[0].card == target)
@@ -185,10 +270,10 @@ public static class CombatResolver
             result.amountHealed = result.hits[0].healed;
         }
 
-        if (attack.selfStatusEffects != null)
+        if (attacker.IsAlive)
         {
-            foreach (StatusEffectApplication effect in attack.selfStatusEffects)
-                attacker.ApplyStatusEffect(effect);
+            ApplyEffects(attacker, attack.selfStatusEffects);
+            ApplyEffects(attacker, extraSelfEffects);
         }
 
         // Area attacks never knock back
@@ -197,19 +282,33 @@ public static class CombatResolver
 
         attacker.RecordAttackUsed(attack);
 
-        // Remove anything that died
+        // Remove anything that died, including the attacker if a passive got it
         foreach (AttackHit hit in result.hits)
             RemoveIfDead(hit.card, board, result);
         if (result.collidedWith != null) RemoveIfDead(result.collidedWith, board, result);
+        RemoveIfDead(attacker, board, result);
 
         return result;
     }
 
+    private static void ApplyEffects(CardInstance card, IEnumerable<StatusEffectApplication> effects)
+    {
+        if (effects == null) return;
+        foreach (StatusEffectApplication effect in effects)
+            card.ApplyStatusEffect(effect);
+    }
+
     // Pushes the target 1 space away from the attacker. If a wall or any card is in the way,
     // the target stays put and takes collision damage. An enemy card it hits takes it too.
-    // Collision damage ignores defense.
+    // Collision damage ignores defense. Cards with a KnockbackImmune passive aren't moved and take nothing.
     private static void ResolveKnockback(CardInstance attacker, AttackData attack, CardInstance target, BoardState board, AttackResult result)
     {
+        if (target.ActivePassive == CooldownPassive.KnockbackImmune)
+        {
+            result.knockbackBlocked = true;
+            return;
+        }
+
         int newRow = target.row + System.Math.Sign(target.row - attacker.row);
         int newColumn = target.column + System.Math.Sign(target.column - attacker.column);
 

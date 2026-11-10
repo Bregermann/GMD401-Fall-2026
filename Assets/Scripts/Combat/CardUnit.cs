@@ -28,12 +28,12 @@ public class CardUnit : MonoBehaviour
         return unit;
     }
 
-    // The card under the mouse, or null
+    // The card under the mouse, or null. Also null while paused or when the mouse is over UI
     public static CardUnit UnderMouse()
     {
         Camera cam = Camera.main;
         Mouse mouse = Mouse.current;
-        if (cam == null || mouse == null) return null;
+        if (cam == null || mouse == null || InputGate.IsPaused || InputGate.PointerOverUI) return null;
 
         Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
         return Physics.Raycast(ray, out RaycastHit hit, 100f) ? hit.collider.GetComponentInParent<CardUnit>() : null;

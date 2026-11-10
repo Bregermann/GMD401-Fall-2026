@@ -24,13 +24,14 @@ public class StatusEffectHandler
     // Adds an effect. If the card already has it, the new one replaces it (amount and timer).
     // amount/duration of 0 use the defaults above.
     // duringOwnTurn adds an extra turn so it isn't counted down at the end of the current turn.
-    public void Apply(StatusEffectType type, bool duringOwnTurn, int amount = 0, int duration = 0)
+    // ignoreStagger lets a Stun land without Stagger (e.g. a card stunning itself).
+    public void Apply(StatusEffectType type, bool duringOwnTurn, int amount = 0, int duration = 0, bool ignoreStagger = false)
     {
         // Stun needs Stagger first. Without it, the card gets a default Stagger instead.
         // Landing a Stun removes the Stagger, so it has to be reapplied.
         if (type == StatusEffectType.Stun)
         {
-            if (!Has(StatusEffectType.Stagger))
+            if (!Has(StatusEffectType.Stagger) && !ignoreStagger)
             {
                 type = StatusEffectType.Stagger;
                 amount = 0;
@@ -63,6 +64,12 @@ public class StatusEffectHandler
     public bool Has(StatusEffectType type)
     {
         return Find(type) != null;
+    }
+
+    // How many debuffs the card has right now
+    public int DebuffCount()
+    {
+        return activeEffects.FindAll(e => !e.type.IsBuff()).Count;
     }
 
     // How strong an active effect is (e.g. Burn damage). 0 if the card doesn't have it
