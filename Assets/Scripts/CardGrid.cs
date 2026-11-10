@@ -117,6 +117,9 @@ public class CardGrid : MonoBehaviour
 
             if (!allowed) continue;
 
+            // Cards can't move through other cards
+            if (currentRow != -1 && !IsPathClear(currentRow, currentCol, r, c)) continue;
+
             float dist = Vector3.Distance(worldPosition, slot.position);
             if (dist < closestDist && dist <= maxDistance)
             {
@@ -128,4 +131,19 @@ public class CardGrid : MonoBehaviour
 
     return nearest;
 }
+
+    //True if every slot between the two (not counting either end) is empty. Moves are straight lines so this steps along one
+    bool IsPathClear(int fromRow, int fromCol, int toRow, int toCol)
+    {
+        int rowStep = System.Math.Sign(toRow - fromRow);
+        int colStep = System.Math.Sign(toCol - fromCol);
+        int steps = Mathf.Max(Mathf.Abs(toRow - fromRow), Mathf.Abs(toCol - fromCol));
+
+        for (int i = 1; i < steps; i++)
+        {
+            if (slots[fromRow + rowStep * i, fromCol + colStep * i].childCount > 0)
+                return false;
+        }
+        return true;
+    }
 }

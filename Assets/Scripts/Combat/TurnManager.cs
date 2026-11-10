@@ -95,9 +95,10 @@ public class TurnManager : MonoBehaviour
         Debug.Log($"Placement phase. Player {PlacingPlayer} places first");
     }
 
+    // Turns keyboard and mouse input into commands
     void Update()
     {
-        if (Phase != GamePhase.Battle || ActiveUnit == null || isBusy || CardInspector.IsOpen || InputGate.IsPaused) return;
+        if (!CanAct || CardInspector.IsOpen || InputGate.IsPaused) return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
@@ -106,22 +107,33 @@ public class TurnManager : MonoBehaviour
             if (keyboard.digit2Key.wasPressedThisFrame) SelectAttack(1);
             if (keyboard.digit3Key.wasPressedThisFrame) SelectAttack(2);
             if (keyboard.digit4Key.wasPressedThisFrame) SelectAttack(3);
-
-            // Can't end the turn mid-drag
-            CardMover mover = ActiveUnit.GetComponent<CardMover>();
-            if (keyboard.spaceKey.wasPressedThisFrame && (mover == null || !mover.IsBusy))
-            {
-                StartCoroutine(EndCardTurn());
-                return;
-            }
+            if (keyboard.spaceKey.wasPressedThisFrame && EndTurn()) return;
         }
 
         Mouse mouse = Mouse.current;
         if (selectedAttack != null && mouse != null && mouse.leftButton.wasPressedThisFrame)
         {
             CardUnit target = CardUnit.UnderMouse();
-            if (target != null && target.Instance != null) UseAttack(target);
+            if (target != null) UseAttack(target);
         }
+    }
+
+    // ---- Commands (player input now, a computer opponent could use these too) ----
+
+    // The active card is waiting for its player: move, attack or end turn
+    public bool CanAct => Phase == GamePhase.Battle && ActiveUnit != null && !isBusy;
+    public AttackData SelectedAttack => selectedAttack;
+
+    // Ends the active card's turn. False if it can't right now (e.g. mid-drag)
+    public bool EndTurn()
+    {
+        if (!CanAct) return false;
+
+        CardMover mover = ActiveUnit.GetComponent<CardMover>();
+        if (mover != null && mover.IsBusy) return false; // Can't end the turn mid-drag
+
+        StartCoroutine(EndCardTurn());
+        return true;
     }
 
     // ---- Called by CardMover ----
@@ -259,22 +271,15 @@ public class TurnManager : MonoBehaviour
         return best;
     }
 
-    // Speed, then class priority, then the coin flip
+    // TurnOrder rules, or list order in dev mode
     bool GoesBefore(CardInstance a, CardInstance b)
     {
-        // Dev mode option: earlier in the list goes first
         if (FixedTurnOrder)
             return units.FindIndex(u => u.Instance == a) < units.FindIndex(u => u.Instance == b);
 
-        if (a.Speed != b.Speed) return a.Speed > b.Speed;
-
-        int aPriority = a.data.characterClass.TurnPriority();
-        int bPriority = b.data.characterClass.TurnPriority();
-        if (aPriority != bPriority) return aPriority < bPriority;
-
         coinFlips.TryGetValue(a, out float aFlip);
         coinFlips.TryGetValue(b, out float bFlip);
-        return aFlip > bFlip;
+        return TurnOrder.GoesBefore(a, b, aFlip, bFlip);
     }
 
     IEnumerator StartCardTurn(CardUnit unit)
@@ -382,12 +387,14 @@ public class TurnManager : MonoBehaviour
 
     // ---- Attacking ----
 
-    void SelectAttack(int index)
+    // Picks attack 0-3 for the active card. Picking the selected one again cancels it. False if it can't be used
+    public bool SelectAttack(int index)
     {
+        if (!CanAct || index < 0 || index > 3) return false;
         if (hasAttacked)
         {
             Debug.Log("Already attacked this turn");
-            return;
+            return false;
         }
 
         CardInstance card = ActiveUnit.Instance;
@@ -395,23 +402,26 @@ public class TurnManager : MonoBehaviour
         if (attack == null)
         {
             Debug.Log($"Attack {index + 1} isn't assigned");
-            return;
+            return false;
         }
         if (!card.CanUseAttack(attack))
         {
             Debug.Log($"{attack.attackName} is on cooldown");
-            return;
+            return false;
         }
 
-        // Pressing the same attack again cancels it
         selectedAttack = selectedAttack == attack ? null : attack;
         // AroundSelf and Self attacks are used by clicking the card itself
         string howToUse = CombatResolver.UsedOnSelf(attack) ? $"click {card.data.cardName} to use it" : "click a target";
         Debug.Log(selectedAttack != null ? $"{attack.attackName} selected, {howToUse}" : "Attack cancelled");
+        return true;
     }
 
-    void UseAttack(CardUnit target)
+    // Uses the selected attack on a card. False if nothing is selected or the attack isn't allowed
+    public bool UseAttack(CardUnit target)
     {
+        if (!CanAct || selectedAttack == null || target == null || target.Instance == null) return false;
+
         AttackData attack = selectedAttack;
         CardInstance targetCard = target.Instance;
         string targetName = targetCard.data.cardName;
@@ -420,7 +430,7 @@ public class TurnManager : MonoBehaviour
         if (result == null)
         {
             Debug.Log($"Can't use {attack.attackName} on {targetName}. Check team, range and line of sight");
-            return;
+            return false;
         }
 
         hasAttacked = true;
@@ -437,22 +447,26 @@ public class TurnManager : MonoBehaviour
         if (result.knockbackBlocked)
             Debug.Log($"{targetName} couldn't be knocked back");
 
-        if (CheckForWinner()) return;
-        StartCoroutine(WaitForAttackEffects());
+        if (!CheckForWinner()) StartCoroutine(WaitForAttackEffects(ActiveUnit.Instance));
+        return true;
     }
 
-    // Blocks input until the hit has played (at least attackPause, longer if a projectile is still flying)
-    IEnumerator WaitForAttackEffects()
+    // Blocks input until the hit has played (at least attackPause, longer if a projectile is still flying).
+    // Takes the attacker's CardInstance up front, because its GameObject is destroyed if a passive like Hangry kills it
+    IEnumerator WaitForAttackEffects(CardInstance attacker)
     {
         isBusy = true;
+        float started = Time.time;
         yield return new WaitForSeconds(attackPause);
         while (CombatEffects.IsPlaying) yield return null;
 
-        // A passive like Hangry can defeat the attacker, which ends its turn
-        if (ActiveUnit != null && !ActiveUnit.Instance.IsAlive)
+        // Attacker was defeated during its own attack: let the defeat play out, then the turn ends
+        if (!attacker.IsAlive)
         {
-            Debug.Log($"{ActiveUnit.Instance.data.cardName} was defeated by a passive");
-            yield return new WaitForSeconds(CombatManager.Instance.DefeatDelay);
+            Debug.Log($"{attacker.data.cardName} was defeated by a passive");
+            float defeatLeft = CombatManager.Instance.DefeatDelay - (Time.time - started);
+            if (defeatLeft > 0f) yield return new WaitForSeconds(defeatLeft);
+
             ActiveUnit = null;
             isBusy = false;
             NextTurn();
@@ -460,7 +474,6 @@ public class TurnManager : MonoBehaviour
         }
 
         isBusy = false;
-
         if (ActiveUnit != null && HasMoved(ActiveUnit)) Debug.Log("Moved and attacked. Press Space to end turn");
     }
 

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -151,14 +150,14 @@ public class CardInspector : MonoBehaviour
         text.AppendLine($"{data.characterClass}  -  {OwnerText(card)}");
         text.AppendLine();
         text.AppendLine(onBoard ? $"HP {card.currentHP}/{data.maxHP}" : $"HP {data.maxHP}");
-        text.AppendLine($"Phys Def {Stat(data.physicalDefense, onBoard ? card.PhysicalDefense : data.physicalDefense)}    " +
-                        $"Mag Def {Stat(data.magicDefense, onBoard ? card.MagicDefense : data.magicDefense)}");
-        text.AppendLine($"Speed {Stat(data.speed, onBoard ? card.Speed : data.speed)}    " +
-                        $"Move {Stat(data.moveSpaces, onBoard ? card.MoveSpaces : data.moveSpaces)}{(data.canMoveDiagonally ? ", diagonal" : "")}");
+        text.AppendLine($"Phys Def {CardText.Stat(data.physicalDefense, onBoard ? card.PhysicalDefense : data.physicalDefense)}    " +
+                        $"Mag Def {CardText.Stat(data.magicDefense, onBoard ? card.MagicDefense : data.magicDefense)}");
+        text.AppendLine($"Speed {CardText.Stat(data.speed, onBoard ? card.Speed : data.speed)}    " +
+                        $"Move {CardText.Stat(data.moveSpaces, onBoard ? card.MoveSpaces : data.moveSpaces)}{(data.canMoveDiagonally ? ", diagonal" : "")}");
 
         if (onBoard)
         {
-            text.AppendLine($"Status: {EffectsText(card)}");
+            text.AppendLine($"Status: {CardText.ActiveEffects(card)}");
             text.AppendLine($"Cooldown: {(card.lastAttackUsed != null ? card.lastAttackUsed.attackName : "none")}");
         }
 
@@ -166,7 +165,7 @@ public class CardInspector : MonoBehaviour
         text.AppendLine("<b>Attacks</b>");
         AttackData[] attacks = { data.attack1, data.attack2, data.attack3, data.attack4 };
         for (int i = 0; i < attacks.Length; i++)
-            text.AppendLine(AttackText(i + 1, attacks[i], card, onBoard));
+            text.AppendLine(CardText.Attack(i + 1, attacks[i], onBoard ? card : null));
 
         text.AppendLine();
         text.Append("<size=70%>Right-click to close</size>");
@@ -177,106 +176,6 @@ public class CardInspector : MonoBehaviour
     {
         if (DraftManager.Instance != null && DraftManager.Instance.IsUndrafted(inspected)) return "Not drafted";
         return card != null ? $"Player {card.owner}" : "No owner";
-    }
-
-    // Base stat, plus the changed value in green (buffed) or red (debuffed)
-    string Stat(int baseValue, int current)
-    {
-        if (current == baseValue) return baseValue.ToString();
-        string color = current > baseValue ? "#66FF66" : "#FF6666";
-        return $"{baseValue} <color={color}>({current})</color>";
-    }
-
-    // Active effects with amount and turns left, e.g. "MagicDefenseDown 80 (2)"
-    string EffectsText(CardInstance card)
-    {
-        List<string> effects = new List<string>();
-        foreach (StatusEffectInstance effect in card.statusEffects.ActiveEffects)
-        {
-            string amount = effect.amount > 0 ? $" {effect.amount}" : "";
-            effects.Add($"{effect.type}{amount} ({effect.turnsRemaining})");
-        }
-        return effects.Count > 0 ? string.Join(", ", effects) : "none";
-    }
-
-    // What an attack applies, with the real amount and duration, e.g. "MagicDefenseDown 80 for 3 turns"
-    string ApplicationsText(StatusEffectApplication[] applications)
-    {
-        List<string> parts = new List<string>();
-        foreach (StatusEffectApplication effect in applications)
-        {
-            int amount = effect.amount > 0 ? effect.amount : StatusEffectHandler.GetDefaultAmount(effect.type);
-            int duration = effect.duration > 0 ? effect.duration
-                : effect.type == StatusEffectType.Stun ? StatusEffectHandler.StunDuration : StatusEffectHandler.DefaultDuration;
-            string amountText = amount > 0 ? $" {amount}" : "";
-            parts.Add($"{effect.type}{amountText} for {duration} turn{(duration == 1 ? "" : "s")}");
-        }
-        return string.Join(", ", parts);
-    }
-
-    string AttackText(int number, AttackData attack, CardInstance card, bool onBoard)
-    {
-        if (attack == null) return $"{number}. (empty)";
-
-        string damage;
-        if (attack.damageType == DamageType.Heal) damage = $"Heals {attack.damage}";
-        else if (attack.damage == 0) damage = "No damage";
-        else damage = $"{Stat(attack.damage, onBoard ? card.GetAttackPower(attack) : attack.damage)} {attack.damageType}";
-
-        string cooldown = onBoard && card.lastAttackUsed == attack ? "  <color=#FF6666>[cooldown]</color>" : "";
-        string line = $"{number}. <b>{attack.attackName}</b> - {damage}{cooldown}";
-
-        // Extra effects on a second, smaller line
-        List<string> extras = new List<string>();
-        if (attack.range > 0) extras.Add($"Range {attack.range}");
-        int width = attack.areaSize * 2 + 1;
-        if (attack.area == AttackArea.AroundTarget) extras.Add($"Hits {attack.areaAffects.ToString().ToLower()} in a {width}x{width} around the target");
-        if (attack.area == AttackArea.AroundSelf) extras.Add($"Hits {attack.areaAffects.ToString().ToLower()} within {attack.areaSize} space(s)");
-        if (attack.area == AttackArea.Self) extras.Add("Self only");
-        if (attack.positionalBonus != PositionalBonus.None) extras.Add($"x{attack.positionalMultiplier} from {attack.positionalBonus}");
-        if (attack.hasClassBonus) extras.Add($"x{attack.classMultiplier} vs {attack.classBonusTarget}");
-        if (attack.hasKnockback && attack.area == AttackArea.Single) extras.Add($"Knockback ({attack.knockbackCollisionDamage} if it hits something)");
-        if (attack.ignoresDefense) extras.Add("Ignores defense");
-        if (attack.executeAtOrBelowHP > 0) extras.Add($"Defeats enemies at {attack.executeAtOrBelowHP} HP or less");
-        if (attack.targetStatusEffects != null && attack.targetStatusEffects.Length > 0) extras.Add("Applies " + ApplicationsText(attack.targetStatusEffects));
-        if (attack.selfStatusEffects != null && attack.selfStatusEffects.Length > 0) extras.Add("Self " + ApplicationsText(attack.selfStatusEffects));
-        if (attack.whileOnCooldown == CooldownPassive.DamageAttackers) extras.Add($"On cooldown: attackers take {attack.passiveDamage}");
-        if (attack.whileOnCooldown == CooldownPassive.KnockbackImmune) extras.Add("On cooldown: can't be knocked back");
-        if (attack.bonuses != null)
-            foreach (AttackBonus bonus in attack.bonuses)
-                extras.Add(BonusText(bonus, attack.damageType == DamageType.Heal));
-
-        return extras.Count == 0 ? line : $"{line}\n    <size=85%>{string.Join(", ", extras)}</size>";
-    }
-
-    // e.g. "+120 if target has Hindered", "Applies Speed Down if Fjora is in play"
-    string BonusText(AttackBonus bonus, bool isHeal)
-    {
-        List<string> rewards = new List<string>();
-        if (bonus.bonusDamage > 0)
-        {
-            string each = bonus.condition == BonusCondition.TargetDebuffCount ? " per debuff on target" : "";
-            rewards.Add($"+{bonus.bonusDamage}{(isHeal ? " healing" : "")}{each}");
-        }
-        if (bonus.extraTargetEffects != null && bonus.extraTargetEffects.Length > 0) rewards.Add("applies " + ApplicationsText(bonus.extraTargetEffects));
-        if (bonus.extraSelfEffects != null && bonus.extraSelfEffects.Length > 0) rewards.Add("self " + ApplicationsText(bonus.extraSelfEffects));
-
-        string hp = bonus.hpIsPercent ? $"{bonus.hp}% HP" : $"{bonus.hp} HP";
-        string condition;
-        switch (bonus.condition)
-        {
-            case BonusCondition.TargetHasStatus:   condition = $"if target has {bonus.status}"; break;
-            case BonusCondition.TargetDebuffCount: condition = ""; break;
-            case BonusCondition.AttackerHasStatus: condition = $"if this card has {bonus.status}"; break;
-            case BonusCondition.AllyInPlay:        condition = $"if {(bonus.ally != null ? bonus.ally.cardName : "?")} is in play"; break;
-            case BonusCondition.AttackOnCooldown:  condition = $"if {(bonus.otherAttack != null ? bonus.otherAttack.attackName : "?")} is on cooldown"; break;
-            case BonusCondition.FromSide:          condition = $"from the {bonus.side.ToString().ToLower()}"; break;
-            case BonusCondition.TargetClass:       condition = $"vs {bonus.targetClass}"; break;
-            case BonusCondition.AttackerHPBelow:   condition = $"if below {hp}"; break;
-            case BonusCondition.AttackerHPAbove:   condition = $"if above {hp}"; break;
-            default:                               condition = ""; break;
-        }
-        return $"{string.Join(" and ", rewards)} {condition}".Trim();
     }
 
     // ---- Building the UI ----

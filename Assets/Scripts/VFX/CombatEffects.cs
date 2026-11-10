@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -524,20 +523,12 @@ public class CombatEffects : MonoBehaviour
         return Mathf.Abs(a.row - b.row) + Mathf.Abs(a.column - b.column);
     }
 
-    // "MagicDefenseDown" -> "Magic Defense Down". Stun shows whether it landed or only staggered
+    // "Magic Defense Down". Stun shows whether it landed or only staggered
     string EffectName(StatusEffectType type, CardInstance card)
     {
         if (type == StatusEffectType.Stun)
             return card != null && card.statusEffects.Has(StatusEffectType.Stun) ? "Stunned!" : "Staggered";
-
-        string name = type.ToString();
-        StringBuilder spaced = new StringBuilder();
-        for (int i = 0; i < name.Length; i++)
-        {
-            if (i > 0 && char.IsUpper(name[i])) spaced.Append(' ');
-            spaced.Append(name[i]);
-        }
-        return spaced.ToString();
+        return CardText.Name(type);
     }
 
     Color EffectColor(StatusEffectType type)
