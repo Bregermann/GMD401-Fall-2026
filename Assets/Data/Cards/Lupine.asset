@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardName: Lupine
   characterClass: 2
-  artwork: {fileID: 0}
+  artwork: {fileID: -1779734815049996001, guid: 8ade71e93e996504ebe354b28fd1257d, type: 3}
   maxHP: 1310
   physicalDefense: 30
   magicDefense: 20

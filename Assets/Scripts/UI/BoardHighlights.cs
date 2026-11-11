@@ -86,7 +86,7 @@ public class BoardHighlights : MonoBehaviour
             overlays.Remove(unit);
         }
 
-        foreach (CardUnit unit in FindObjectsByType<CardUnit>(FindObjectsSortMode.None))
+        foreach (CardUnit unit in FindObjectsByType<CardUnit>())
         {
             if (unit.Instance == null || !unit.HasOwner || overlays.ContainsKey(unit)) continue;
             overlays[unit] = CreateOverlay(unit);

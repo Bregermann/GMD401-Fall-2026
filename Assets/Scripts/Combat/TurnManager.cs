@@ -76,7 +76,7 @@ public class TurnManager : MonoBehaviour
         if (DevSetup.Instance != null) yield break;
 
         // No draft in the scene (testing), so use the cards already in the scene
-        StartPlacement(new List<CardUnit>(FindObjectsByType<CardUnit>(FindObjectsSortMode.None)), 1);
+        StartPlacement(new List<CardUnit>(FindObjectsByType<CardUnit>()), 1);
     }
 
     // Called by the draft when it's done, or by Start when there's no draft

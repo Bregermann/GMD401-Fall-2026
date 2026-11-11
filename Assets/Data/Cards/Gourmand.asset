@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardName: Gourmand
   characterClass: 3
-  artwork: {fileID: 0}
+  artwork: {fileID: 7101218235656426709, guid: eb7f982edfc4a8740be2e8e6b395a1b9, type: 3}
   maxHP: 1310
   physicalDefense: 30
   magicDefense: 30
