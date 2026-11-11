@@ -79,6 +79,26 @@ public class CardGridMovementTests
     }
 
     [Test]
+    public void GetValidSlots_ListsEveryLegalMove()
+    {
+        // 1 move, no diagonals, from the middle: up, down, left, right, plus staying put
+        CardData data = Card(moveSpaces: 1);
+        var slots = grid.GetValidSlots(data, 1, 1, grid.GetSlot(3, 3));
+        Assert.AreEqual(5, slots.Count);
+        Assert.Contains(grid.GetSlot(4, 3), slots);
+        Assert.Contains(grid.GetSlot(3, 3), slots);
+
+        Occupy(4, 3);
+        Assert.AreEqual(4, grid.GetValidSlots(data, 1, 1, grid.GetSlot(3, 3)).Count, "Taken slot left out");
+    }
+
+    [Test]
+    public void GetValidSlots_PlacementIsBothOwnRows()
+    {
+        Assert.AreEqual(2 * BoardState.Columns, grid.GetValidSlots(Card(), 2, 1, null).Count);
+    }
+
+    [Test]
     public void FirstPlacement_OnlyInOwnRows()
     {
         Assert.IsTrue(CanMove(-1, -1, 1, 4, owner: 1));

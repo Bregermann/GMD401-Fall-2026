@@ -145,6 +145,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardView
   artRenderer: {fileID: 7850445798321532187}
   artSize: {x: 10.4, y: 10.4}
+  cardBack: {fileID: -8315457283496151619, guid: c6a320ec2e0210744b37ea015731e1a2, type: 3}
 --- !u!1 &3338462316023839949
 GameObject:
   m_ObjectHideFlags: 0

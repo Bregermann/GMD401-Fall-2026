@@ -915,7 +915,7 @@ MonoBehaviour:
   selectedScale: 1.2
   slideSpeed: 10
   playOpeningAnimation: 1
-  showBacksWhileShuffling: 0
+  showBacksWhileShuffling: 1
   shuffleCount: 3
   gatherTime: 0.4
   splitTime: 0.2

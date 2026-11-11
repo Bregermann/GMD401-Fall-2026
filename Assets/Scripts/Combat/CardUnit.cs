@@ -8,6 +8,9 @@ public class CardUnit : MonoBehaviour
     [SerializeField] private int owner = 1; // Player 1 or 2. Only used for cards placed by hand in the scene
 
     public CardInstance Instance { get; private set; }
+    public bool HasOwner { get; private set; } // False for cards still in the draft pool
+
+    private bool ownerPending; // Spawned for the draft, gets its owner when picked
 
     // Spawns a card from the prefab with its data, adding a CardUnit if the prefab doesn't have one.
     // owner 0 = belongs to nobody yet (draft pool), call Setup when it's picked
@@ -25,6 +28,7 @@ public class CardUnit : MonoBehaviour
         unit.ApplyArt(data);
 
         if (owner > 0) unit.Setup(data, owner);
+        else unit.ownerPending = true;
         return unit;
     }
 
@@ -48,6 +52,8 @@ public class CardUnit : MonoBehaviour
         ApplyArt(data);
         // Row/column are set when the card is placed on the board
         Instance = new CardInstance(data, owner, -1, -1);
+        HasOwner = true;
+        ownerPending = false;
     }
 
     // Cards placed by hand in the scene use the Inspector owner and CardMover's data
@@ -63,6 +69,7 @@ public class CardUnit : MonoBehaviour
         }
         ApplyArt(mover.data);
         Instance = new CardInstance(mover.data, owner, -1, -1);
+        HasOwner = !ownerPending; // Draft pool cards get stats for the inspector, but no owner yet
     }
     void ApplyArt(CardData data)
 {

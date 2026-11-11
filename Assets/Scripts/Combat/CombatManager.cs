@@ -27,6 +27,10 @@ public class CombatManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+
+        // Combat visuals live next to CombatManager. Added here so no scene can be missing them
+        if (GetComponent<CombatEffects>() == null) gameObject.AddComponent<CombatEffects>();
+        if (GetComponent<BoardHighlights>() == null) gameObject.AddComponent<BoardHighlights>();
     }
 
     void Start()

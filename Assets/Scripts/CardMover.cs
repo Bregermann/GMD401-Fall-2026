@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System.Collections.Generic;
 
 public class CardMover : MonoBehaviour
 {
@@ -18,9 +19,15 @@ public class CardMover : MonoBehaviour
     private CardGrid grid;
     private Plane dragPlane;
     private Coroutine snapCoroutine;  
-    private Transform currentSlot;   
+    private Transform currentSlot;
+    private Vector3 dragStartPosition;
+    private Quaternion dragStartRotation;
     public bool hasMoved = false;
     public bool IsBusy => isDragging || isSnapping; // Being dragged or still snapping
+
+    // Fired when any card is picked up or let go (used to light up legal slots)
+    public static event System.Action<CardMover> DragStarted;
+    public static event System.Action<CardMover> DragEnded;
 
     void Start()
     {
@@ -86,6 +93,8 @@ public class CardMover : MonoBehaviour
         snapCoroutine = null;
     }
         currentSlot = transform.parent;
+        dragStartPosition = transform.position; // Where an unplaced card goes back to after an illegal drop
+        dragStartRotation = transform.rotation;
 
         isSnapping = false;
         isDragging = true;
@@ -103,6 +112,7 @@ public class CardMover : MonoBehaviour
             dragOffset = transform.position - hitPoint;
         }
         Debug.Log($"{name} started drag. currentSlot = {(currentSlot != null ? currentSlot.name : "NULL")} | data = {(data != null ? data.name : "NULL")}");
+        DragStarted?.Invoke(this);
     }
 
     void Drag()
@@ -121,18 +131,32 @@ public class CardMover : MonoBehaviour
     void EndDrag()
     {
         isDragging = false;
+        DragEnded?.Invoke(this);
         TrySnap();
+    }
+
+    // Slots this card can move to right now (only meaningful while it's being dragged)
+    public List<Transform> GetLegalSlots()
+    {
+        if (grid == null || data == null) return new List<Transform>();
+        GetMoveRules(out int moveSpaces, out int owner);
+        return grid.GetValidSlots(data, moveSpaces, owner, currentSlot);
+    }
+
+    // Move spaces with status effects (or the base stat without a CardUnit), and the owner for placement rows (0 = anywhere)
+    void GetMoveRules(out int moveSpaces, out int owner)
+    {
+        CardUnit unit = GetComponent<CardUnit>();
+        bool hasInstance = unit != null && unit.Instance != null;
+        moveSpaces = hasInstance ? unit.Instance.MoveSpaces : data.moveSpaces;
+        owner = hasInstance ? unit.Instance.owner : 0;
     }
 
     void TrySnap()
 {
     if (grid == null || isSnapping || data == null) return;
 
-    // Uses the card's move spaces with status effects, or the base stat if it has no CardUnit
-    CardUnit unit = GetComponent<CardUnit>();
-    int moveSpaces = unit != null && unit.Instance != null ? unit.Instance.MoveSpaces : data.moveSpaces;
-    // Owner limits first placement to that player's rows (0 = anywhere)
-    int owner = unit != null && unit.Instance != null ? unit.Instance.owner : 0;
+    GetMoveRules(out int moveSpaces, out int owner);
 
     // Look for a legal slot near where the player released the mouse
     Transform nearestValid = grid.GetNearestValidSlot(
@@ -155,8 +179,31 @@ public class CardMover : MonoBehaviour
         Debug.Log($"{name} – illegal drop, returning to original slot");
         snapCoroutine = StartCoroutine(SmoothSnap(currentSlot));
     }
-    
+    else
+    {
+        // Not placed yet (e.g. waiting at the side after the draft), slide back to where it was picked up
+        Debug.Log($"{name} – illegal drop, returning to where it was picked up");
+        snapCoroutine = StartCoroutine(SlideBack());
+    }
 }
+
+    // Like SmoothSnap but back to a spot off the board, so nothing changes on the board or the turn
+    IEnumerator SlideBack()
+    {
+        isSnapping = true;
+
+        while (Vector3.Distance(transform.position, dragStartPosition) > 0.01f)
+        {
+            transform.position = Vector3.Lerp(transform.position, dragStartPosition, Time.deltaTime * snapSpeed);
+            transform.rotation = Quaternion.Slerp(transform.rotation, dragStartRotation, Time.deltaTime * snapSpeed);
+            yield return null;
+        }
+
+        transform.position = dragStartPosition;
+        transform.rotation = dragStartRotation;
+        isSnapping = false;
+        snapCoroutine = null;
+    }
     IEnumerator SmoothSnap(Transform targetSlot)
     {
         isSnapping = true;

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CardGrid : MonoBehaviour
@@ -48,78 +49,12 @@ public class CardGrid : MonoBehaviour
    //moveSpaces is passed in so Haste and Hindered change how far the card can go
    //owner limits first placement to that player's rows (0 = anywhere)
    public Transform GetNearestValidSlot(Vector3 worldPosition, CardData data, int moveSpaces, int owner, Transform currentSlot, float maxDistance = 999f)
-{
-    if (slots == null || data == null) return null;
-
-    int arrayRows = slots.GetLength(0);
-    int arrayCols = slots.GetLength(1);
-
-    // Find where the card currently is
-    int currentRow = -1;
-    int currentCol = -1;
-
-    if (currentSlot != null)
     {
-        for (int r = 0; r < arrayRows; r++)
+        Transform nearest = null;
+        float closestDist = float.MaxValue;
+
+        foreach (Transform slot in GetValidSlots(data, moveSpaces, owner, currentSlot))
         {
-            for (int c = 0; c < arrayCols; c++)
-            {
-                if (slots[r, c] == currentSlot)
-                {
-                    currentRow = r;
-                    currentCol = c;
-                    break;
-                }
-            }
-            if (currentRow != -1) break;
-        }
-    }
-
-    Transform nearest = null;
-    float closestDist = float.MaxValue;
-
-    for (int r = 0; r < arrayRows; r++)
-    {
-        for (int c = 0; c < arrayCols; c++)
-        {
-            Transform slot = slots[r, c];
-            if (slot == null || slot.childCount > 0) continue;
-
-            int rowDiff = currentRow == -1 ? 0 : Mathf.Abs(r - currentRow);
-            int colDiff = currentCol == -1 ? 0 : Mathf.Abs(c - currentCol);
-
-            
-            int steps = Mathf.Max(rowDiff, colDiff);
-
-           
-            if (steps > moveSpaces) continue;
-
-            bool isOrthogonal = rowDiff == 0 || colDiff == 0;   // pure up/down/left/right
-            bool isDiagonal   = rowDiff == colDiff;             // pure diagonal
-
-            bool allowed = false;
-
-            if (currentRow == -1)
-            {
-                // First placement only in the player's own rows
-                allowed = BoardState.IsInPlacementZone(r, owner);
-            }
-            else if (isOrthogonal)
-            {
-                //To move the card forward backward and side to side
-                allowed = true;
-            }
-            else if (isDiagonal && data.canMoveDiagonally)
-            {
-                // Diagonal only if the card allows it
-                allowed = true;
-            }
-
-            if (!allowed) continue;
-
-            // Cards can't move through other cards
-            if (currentRow != -1 && !IsPathClear(currentRow, currentCol, r, c)) continue;
-
             float dist = Vector3.Distance(worldPosition, slot.position);
             if (dist < closestDist && dist <= maxDistance)
             {
@@ -127,10 +62,70 @@ public class CardGrid : MonoBehaviour
                 nearest = slot;
             }
         }
+        return nearest;
     }
 
-    return nearest;
-}
+    //Every empty slot the card can move to, or be placed on if it isn't on the board yet (currentSlot null)
+    public List<Transform> GetValidSlots(CardData data, int moveSpaces, int owner, Transform currentSlot)
+    {
+        List<Transform> valid = new List<Transform>();
+        if (slots == null || data == null) return valid;
+
+        // Find where the card currently is
+        FindSlot(currentSlot, out int currentRow, out int currentCol);
+
+        for (int r = 0; r < slots.GetLength(0); r++)
+        {
+            for (int c = 0; c < slots.GetLength(1); c++)
+            {
+                Transform slot = slots[r, c];
+                if (slot == null || slot.childCount > 0) continue;
+
+                int rowDiff = currentRow == -1 ? 0 : Mathf.Abs(r - currentRow);
+                int colDiff = currentCol == -1 ? 0 : Mathf.Abs(c - currentCol);
+                int steps = Mathf.Max(rowDiff, colDiff);
+                if (steps > moveSpaces) continue;
+
+                bool isOrthogonal = rowDiff == 0 || colDiff == 0;   // pure up/down/left/right
+                bool isDiagonal   = rowDiff == colDiff;             // pure diagonal
+
+                bool allowed;
+                if (currentRow == -1)
+                    allowed = BoardState.IsInPlacementZone(r, owner); // First placement only in the player's own rows
+                else if (isOrthogonal)
+                    allowed = true;                                   //To move the card forward backward and side to side
+                else
+                    allowed = isDiagonal && data.canMoveDiagonally;   // Diagonal only if the card allows it
+
+                if (!allowed) continue;
+
+                // Cards can't move through other cards
+                if (currentRow != -1 && !IsPathClear(currentRow, currentCol, r, c)) continue;
+
+                valid.Add(slot);
+            }
+        }
+        return valid;
+    }
+
+    //Row and column of a slot, or -1, -1 if it isn't one of this grid's slots
+    void FindSlot(Transform slot, out int row, out int col)
+    {
+        row = -1;
+        col = -1;
+        if (slot == null || slots == null) return;
+
+        for (int r = 0; r < slots.GetLength(0); r++)
+        {
+            for (int c = 0; c < slots.GetLength(1); c++)
+            {
+                if (slots[r, c] != slot) continue;
+                row = r;
+                col = c;
+                return;
+            }
+        }
+    }
 
     //True if every slot between the two (not counting either end) is empty. Moves are straight lines so this steps along one
     bool IsPathClear(int fromRow, int fromCol, int toRow, int toCol)
