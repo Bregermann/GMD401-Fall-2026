@@ -33,6 +33,14 @@ public class TurnManager : MonoBehaviour
     public event System.Action<CardUnit, int> CardPoisoned;
     public event System.Action<CardUnit, int> CardRegenerated;
 
+    // Match flow, for the game log and UI
+    public event System.Action<int> PlacementStarted; // Player who places first
+    public event System.Action<CardUnit> CardPlaced;
+    public event System.Action BattleStarted;
+    public event System.Action<int> RoundStarted;     // Round number
+    public event System.Action<CardUnit> TurnStarted; // Only for cards that get to act (not stunned or defeated)
+    public event System.Action<int> GameEnded;        // Winner
+
     public GamePhase Phase { get; private set; } = GamePhase.Draft;
     public int PlacingPlayer { get; private set; } = 1;
     public CardUnit ActiveUnit { get; private set; } // Card taking its turn
@@ -93,6 +101,7 @@ public class TurnManager : MonoBehaviour
             return;
         }
         Debug.Log($"Placement phase. Player {PlacingPlayer} places first");
+        PlacementStarted?.Invoke(PlacingPlayer);
     }
 
     // Turns keyboard and mouse input into commands
@@ -161,6 +170,7 @@ public class TurnManager : MonoBehaviour
         if (Phase == GamePhase.Placement && IsPlaced(unit))
         {
             Debug.Log($"Player {unit.Instance.owner} placed {unit.Instance.data.cardName}");
+            CardPlaced?.Invoke(unit);
             NextPlacingPlayer();
         }
         else if (Phase == GamePhase.Battle && unit == ActiveUnit && hasAttacked && HasMoved(unit))
@@ -201,6 +211,7 @@ public class TurnManager : MonoBehaviour
     {
         Phase = GamePhase.Battle;
         Debug.Log("All cards placed. Battle starts");
+        BattleStarted?.Invoke();
         StartRound();
         NextTurn();
     }
@@ -244,6 +255,7 @@ public class TurnManager : MonoBehaviour
         foreach (CardUnit unit in LivingUnits())
             coinFlips[unit.Instance] = Random.value; // Coin flip for full ties
         Debug.Log($"Round {Round}");
+        RoundStarted?.Invoke(Round);
     }
 
     void NextTurn()
@@ -335,6 +347,7 @@ public class TurnManager : MonoBehaviour
         isBusy = false;
         Debug.Log($"Player {card.owner}: {card.data.cardName}'s turn (speed {card.Speed}, HP {card.currentHP}/{card.data.maxHP}). " +
                   "Drag to move, 1-4 to pick an attack, Space to end turn");
+        TurnStarted?.Invoke(unit);
     }
 
     IEnumerator EndCardTurn()
@@ -378,6 +391,7 @@ public class TurnManager : MonoBehaviour
         ActiveUnit = null;
         Winner = player1Alive ? 1 : 2;
         Debug.Log($"Player {Winner} wins!");
+        GameEnded?.Invoke(Winner);
 
         // Finds it if the slot is empty. Scenes without one (TestScene) just skip the win panel
         if (optionsManager == null) optionsManager = FindAnyObjectByType<OptionsManager>();

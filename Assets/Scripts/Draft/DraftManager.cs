@@ -49,6 +49,7 @@ public class DraftManager : MonoBehaviour
     public event System.Action<CardUnit> CardSelected;
     public event System.Action<CardUnit, int> CardDrafted; // Card and the player who picked it
     public event System.Action DraftFinished;
+    public event System.Action<int> DraftStarted; // Player who won the coin flip and picks first
 
     public bool IsDrafting { get; private set; }
     public bool IsDealing { get; private set; } // Opening shuffle and deal is playing
@@ -160,6 +161,7 @@ public class DraftManager : MonoBehaviour
         firstPicker = Random.value < 0.5f ? 1 : 2;
         PickingPlayer = firstPicker;
         Debug.Log($"Draft started. Coin flip: Player {firstPicker} picks first");
+        DraftStarted?.Invoke(firstPicker);
         Debug.Log($"Player {PickingPlayer}'s pick. Click a card, Space to confirm");
     }
 

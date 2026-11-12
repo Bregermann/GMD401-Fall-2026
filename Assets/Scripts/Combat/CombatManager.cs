@@ -12,6 +12,7 @@ public class CombatManager : MonoBehaviour
     [SerializeField] private float defeatDelay = 1.5f;       // How long a defeated card stays for the CARD DEFEATED popup
     public float DefeatDelay => defeatDelay;
     public float CardHeightOffset => cardHeightOffset;       // How far cards sit above their slot
+    public Vector3 LastKnockbackFrom { get; private set; }   // Where the last knocked-back card was before it moved
 
     // UI hook for the CARD DEFEATED popup. The card is already off the board when this fires
     public event System.Action<CardUnit> CardDefeated;
@@ -31,6 +32,8 @@ public class CombatManager : MonoBehaviour
         // Combat visuals live next to CombatManager. Added here so no scene can be missing them
         if (GetComponent<CombatEffects>() == null) gameObject.AddComponent<CombatEffects>();
         if (GetComponent<BoardHighlights>() == null) gameObject.AddComponent<BoardHighlights>();
+        if (GetComponent<SpaceBackground>() == null) gameObject.AddComponent<SpaceBackground>();
+        if (GetComponent<BoardStyle>() == null) gameObject.AddComponent<BoardStyle>();
     }
 
     void Start()
@@ -94,7 +97,10 @@ public class CombatManager : MonoBehaviour
         if (result == null) return null;
 
         if (result.wasKnockedBack)
+        {
+            LastKnockbackFrom = target.transform.position; // So the effects can slide it instead of teleporting
             SnapToSlot(target);
+        }
 
         AttackResolved?.Invoke(attacker, attack, target, result);
 

@@ -7,6 +7,7 @@ public class CardData : ScriptableObject
     public string cardName;
     public CharacterClass characterClass;
     public Sprite artwork;
+    public bool artHasText; // Name, stats and attacks are already printed on the art. Off = they're written on in-game
 
     [Header("Stats")]
     public int maxHP;

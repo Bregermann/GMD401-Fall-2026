@@ -15,6 +15,7 @@ MonoBehaviour:
   cardName: Chandra
   characterClass: 4
   artwork: {fileID: 1371347551380637131, guid: a47baddc42fea044bb44c482835ea979, type: 3}
+  artHasText: 1
   maxHP: 3200
   physicalDefense: 40
   magicDefense: 60

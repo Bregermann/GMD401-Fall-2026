@@ -91,7 +91,7 @@ public class CardInspector : MonoBehaviour
         copy = Instantiate(card.gameObject, copySpot, card.transform.rotation);
         copy.transform.localScale = card.transform.lossyScale;
         foreach (MonoBehaviour script in copy.GetComponentsInChildren<MonoBehaviour>())
-            Destroy(script);
+            if (!(script is TMP_Text)) Destroy(script); // Keep text written on the card
         foreach (Collider collider in copy.GetComponentsInChildren<Collider>())
             Destroy(collider);
 

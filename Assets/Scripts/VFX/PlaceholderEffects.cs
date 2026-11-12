@@ -2,27 +2,32 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-// Simple effects built in code so combat has feedback before real art exists.
-// Each one has its own texture, shape and movement so they're easy to tell apart.
+// Effects built in code so combat has feedback before real art exists. CombatEffects decides when they play.
+// Built from layers: a bright glowing core (additive), coloured sparks or shapes, a shockwave, smoke or embers, and a light flash.
+// Bursts spray away from the attacker, and k (intensity) scales hits with damage so big hits look big.
 // Movement goes across the screen (the camera looks straight down, so "up" in the world can't be seen).
-// Swap them out per attack with the effect prefab slots on AttackData, or replace these later.
+// Swap any of them out with the Effect Library or the effect prefab slots on AttackData.
 public static class PlaceholderEffects
 {
     // Colours match the card colour coding (red physical, blue magic, green heal)
-    public static readonly Color PhysicalColor = new Color(1f, 0.35f, 0.25f);
-    public static readonly Color MagicColor = new Color(0.35f, 0.6f, 1f);
-    public static readonly Color HealColor = new Color(0.35f, 1f, 0.45f);
+    public static readonly Color PhysicalColor = new Color(1f, 0.45f, 0.2f);
+    public static readonly Color MagicColor = new Color(0.55f, 0.5f, 1f);
+    public static readonly Color HealColor = new Color(0.35f, 1f, 0.5f);
     public static readonly Color BurnColor = new Color(1f, 0.55f, 0.1f);
     public static readonly Color PoisonColor = new Color(0.6f, 0.9f, 0.15f);
     public static readonly Color StunColor = new Color(1f, 0.9f, 0.25f);
     public static readonly Color BuffColor = new Color(0.4f, 1f, 0.9f);
     public static readonly Color DebuffColor = new Color(0.85f, 0.45f, 1f);
     public static readonly Color DefeatColor = new Color(0.85f, 0.85f, 0.85f);
+    public static readonly Color BonusColor = new Color(1f, 0.85f, 0.2f);
 
     private static readonly Color PoisonPurple = new Color(0.6f, 0.3f, 0.9f);
+    private static readonly Color MagicViolet = new Color(0.8f, 0.4f, 1f);
+    private static readonly Color SmokeColor = new Color(0.35f, 0.33f, 0.32f);
 
-    private enum Shape { Dot, Ring, Star, Plus, Shard, Arrow, Cross, Link }
-    private static readonly Dictionary<Shape, Material> materials = new Dictionary<Shape, Material>();
+    private enum Shape { Dot, Ring, Star, Plus, Shard, Arrow, Cross, Link, Slash, Rune }
+    private static readonly Dictionary<(Shape, bool), Material> materials = new Dictionary<(Shape, bool), Material>();
+    private static readonly Dictionary<Shape, Texture2D> textures = new Dictionary<Shape, Texture2D>();
 
     public static Color ColorFor(DamageType type)
     {
@@ -36,99 +41,195 @@ public static class PlaceholderEffects
 
     // ---- Attack hits ----
 
-    // Fast sparks streaking outward with a quick white flash
-    public static GameObject PhysicalHit(Vector3 position)
+    // White-hot flash, a slash arc, sparks spraying away from the attacker, a shockwave, debris and smoke
+    public static GameObject PhysicalHit(Vector3 position, Vector3 direction, float k)
     {
-        ParticleSystem sparks = NewSystem("Hit_Physical", position, Shape.Dot);
-        ParticleSystem.MainModule main = sparks.main;
-        main.startLifetime = Range(0.12f, 0.28f);
-        main.startSpeed = Range(3f, 6f);
-        main.startSize = Range(0.05f, 0.09f);
-        ScreenCircle(sparks, 0.05f);
-        Burst(sparks, 22);
-        Fade(sparks, Gradient(new[] { Color.white, PhysicalColor, PhysicalColor * 0.6f }, new[] { 1f, 1f, 0f }));
+        ParticleSystem flash = Flash(position, Color.white, 1f * k, 0.09f, null);
+        Transform root = flash.transform;
+        Flash(position, PhysicalColor, 0.55f * k, 0.18f, root);
 
-        ParticleSystemRenderer renderer = sparks.GetComponent<ParticleSystemRenderer>();
-        renderer.renderMode = ParticleSystemRenderMode.Stretch; // Streaks along their direction
-        renderer.lengthScale = 2f;
-        renderer.velocityScale = 0.06f;
+        // Slash arc across the hit, bulging toward the target
+        ParticleSystem slash = NewSystem("Hit_Slash", position, Shape.Slash, root, true);
+        ParticleSystem.MainModule slashMain = slash.main;
+        slashMain.startLifetime = 0.2f;
+        slashMain.startSize = 1.3f * k;
+        slashMain.startRotation = ScreenAngle(direction);
+        Burst(slash, 1);
+        SizeCurve(slash, new AnimationCurve(new Keyframe(0f, 0.7f), new Keyframe(1f, 1.15f)));
+        Fade(slash, Gradient(new[] { Color.white, PhysicalColor }, new[] { 1f, 0f }));
+        slash.Play();
 
-        Flash(position, Color.white, 0.9f, sparks.transform);
-        return Finish(sparks);
+        Sparks(position, direction, Color.white, PhysicalColor, Mathf.RoundToInt(10 + 8 * k), 3f * k, 7f * k, root);
+        Shockwave(position, PhysicalColor, 1.1f * k, 0.25f, root, true);
+        Debris(position, direction, new Color(0.55f, 0.35f, 0.25f), Mathf.RoundToInt(3 + 3 * k), root);
+        Smoke(position, 3, 0.35f * k, root);
+        LightFlash(position, new Color(1f, 0.6f, 0.3f), 3f * k, 2.5f, 0.25f);
+        return Finish(flash);
     }
 
-    // Blue shockwave ring with orbs swirling out
-    public static GameObject MagicHit(Vector3 position)
+    // Violet flash, spinning rune circles, sparkles spraying and swirling, a soft light
+    public static GameObject MagicHit(Vector3 position, Vector3 direction, float k)
     {
-        ParticleSystem ring = Shockwave(position, MagicColor, 1.6f, 0.45f, null);
+        ParticleSystem flash = Flash(position, new Color(0.9f, 0.85f, 1f), 1.1f * k, 0.1f, null);
+        Transform root = flash.transform;
+        Flash(position, MagicColor, 0.7f * k, 0.25f, root);
 
-        ParticleSystem orbs = NewSystem("Hit_Magic_Orbs", position, Shape.Dot, ring.transform);
-        ParticleSystem.MainModule main = orbs.main;
-        main.startLifetime = Range(0.4f, 0.6f);
-        main.startSize = Range(0.08f, 0.14f);
-        ScreenCircle(orbs, 0.2f);
-        Burst(orbs, 14);
-        Swirl(orbs, 8f, 1.2f);
-        Fade(orbs, Gradient(new[] { Color.white, MagicColor }, new[] { 1f, 0f }));
-        orbs.Play();
+        Rune(position, MagicColor, 1.4f * k, 0.5f, 2.5f, root);
+        Rune(position, MagicViolet, 0.9f * k, 0.4f, -3.5f, root);
 
-        return Finish(ring);
+        ParticleSystem sparkles = NewSystem("Hit_Magic_Sparkles", position, Shape.Star, root, true);
+        ParticleSystem.MainModule main = sparkles.main;
+        main.startLifetime = Range(0.4f, 0.7f);
+        main.startSpeed = Range(1.5f * k, 3.5f * k);
+        main.startSize = Range(0.08f, 0.15f);
+        Cone(sparkles, direction, 60f, 0.1f);
+        Burst(sparkles, Mathf.RoundToInt(12 + 8 * k));
+        Swirl(sparkles, 3f, 0f);
+        Spin(sparkles, 4f);
+        Slow(sparkles, 0.12f);
+        Fade(sparkles, Gradient(new[] { Color.white, MagicColor, MagicViolet }, new[] { 1f, 1f, 0f }));
+        sparkles.Play();
+
+        Shockwave(position, MagicViolet, 1.2f * k, 0.35f, root, true);
+        LightFlash(position, new Color(0.55f, 0.55f, 1f), 3f * k, 2.5f, 0.35f);
+        return Finish(flash);
     }
 
-    // Burst of green plus signs drifting up, with a soft pulse
-    public static GameObject HealHit(Vector3 position)
+    // Soft green glow, rising plus signs, a gentle ring
+    public static GameObject HealHit(Vector3 position, float k)
     {
-        ParticleSystem pluses = NewSystem("Hit_Heal", position, Shape.Plus);
+        ParticleSystem glow = NewSystem("Hit_Heal", position, Shape.Dot, null, true);
+        ParticleSystem.MainModule glowMain = glow.main;
+        glowMain.startLifetime = 0.45f;
+        glowMain.startSize = 1.2f * k;
+        Burst(glow, 1);
+        Fade(glow, Gradient(new[] { HealColor, HealColor }, new[] { 0f, 0.8f, 0f }));
+        Transform root = glow.transform;
+
+        ParticleSystem pluses = NewSystem("Hit_Heal_Pluses", position, Shape.Plus, root, true);
         ParticleSystem.MainModule main = pluses.main;
-        main.startLifetime = Range(0.6f, 0.9f);
-        main.startSpeed = Range(0.5f, 1.2f);
+        main.startLifetime = Range(0.7f, 1.1f);
+        main.startSpeed = Range(0.2f, 0.6f);
         main.startSize = Range(0.1f, 0.16f);
-        ScreenCircle(pluses, 0.1f);
-        Burst(pluses, 12);
-        Drift(pluses, 0.6f);
+        ScreenCircle(pluses, 0.3f);
+        Burst(pluses, Mathf.RoundToInt(10 + 6 * k));
+        Drift(pluses, 0.8f);
         Fade(pluses, Gradient(new[] { Color.white, HealColor }, new[] { 0f, 1f, 1f, 0f }));
+        pluses.Play();
 
-        Shockwave(position, HealColor, 1f, 0.5f, pluses.transform);
-        return Finish(pluses);
+        Shockwave(position, HealColor, 1f * k, 0.5f, root, true);
+        LightFlash(position, HealColor, 2f * k, 2f, 0.4f);
+        return Finish(glow);
     }
 
     // Expanding ring, e.g. for attacks centred on the user
     public static GameObject Pulse(Vector3 position, Color color, float size)
     {
-        return Finish(Shockwave(position, color, size, 0.5f, null));
+        ParticleSystem ring = Shockwave(position, color, size, 0.5f, null, true);
+        Rune(position, color, size * 0.6f, 0.5f, 2f, ring.transform);
+        LightFlash(position, color, 2f, size, 0.4f);
+        return Finish(ring);
+    }
+
+    // Particles pulled in to a growing glow over 'duration', the wind-up before a ranged or magic attack
+    public static GameObject Charge(Vector3 position, DamageType type, float duration)
+    {
+        Color color = ColorFor(type);
+        ParticleSystem core = NewSystem("Charge", position, Shape.Dot, null, true);
+        ParticleSystem.MainModule coreMain = core.main;
+        coreMain.startLifetime = duration + 0.05f;
+        coreMain.startSize = 0.45f;
+        Burst(core, 1);
+        SizeCurve(core, new AnimationCurve(new Keyframe(0f, 0.1f), new Keyframe(0.85f, 1f), new Keyframe(1f, 0.6f)));
+        Fade(core, Gradient(new[] { color, Color.white }, new[] { 0.3f, 1f, 0.6f }));
+
+        // Motes start on a ring and fly inward
+        ParticleSystem motes = NewSystem("Charge_Motes", position, type == DamageType.Heal ? Shape.Plus : Shape.Dot, core.transform, true);
+        ParticleSystem.MainModule main = motes.main;
+        main.loop = false;
+        main.duration = Mathf.Max(0.05f, duration * 0.7f);
+        main.startLifetime = duration * 0.6f;
+        main.startSize = Range(0.05f, 0.09f);
+        ScreenCircle(motes, 0.7f);
+        ParticleSystem.ShapeModule shape = motes.shape;
+        shape.radiusThickness = 0f;
+        ParticleSystem.VelocityOverLifetimeModule velocity = motes.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        velocity.radial = -0.7f / (duration * 0.6f); // Arrive at the centre as they die
+        SetRate(motes, 30f / duration);
+        Fade(motes, Gradient(new[] { color, Color.white }, new[] { 0f, 1f, 1f }));
+        motes.Play();
+
+        core.Play();
+        Object.Destroy(core.gameObject, duration + 1f);
+        return core.gameObject;
+    }
+
+    // Puff kicked up behind a card that's knocked back
+    public static GameObject Dust(Vector3 position, Vector3 direction)
+    {
+        ParticleSystem dust = NewSystem("Dust", position, Shape.Dot, null, false);
+        ParticleSystem.MainModule main = dust.main;
+        main.startLifetime = Range(0.4f, 0.7f);
+        main.startSpeed = Range(0.5f, 1.5f);
+        main.startSize = Range(0.15f, 0.3f);
+        Cone(dust, -direction, 50f, 0.2f);
+        Burst(dust, 8);
+        Slow(dust, 0.15f);
+        SizeCurve(dust, new AnimationCurve(new Keyframe(0f, 0.6f), new Keyframe(1f, 1.4f)));
+        Fade(dust, Gradient(new[] { new Color(0.75f, 0.68f, 0.55f), new Color(0.6f, 0.55f, 0.45f) }, new[] { 0.55f, 0f }));
+        return Finish(dust);
     }
 
     // ---- Status effects (loop = keep going as an aura) ----
 
-    // Flickering flames licking up the screen, yellow to orange to red to smoke
+    // Glowing flames licking up the screen, embers, smoke, and a flickering light while it lasts
     public static GameObject Burn(Vector3 position, bool loop)
     {
-        ParticleSystem flames = NewSystem(loop ? "Aura_Burn" : "Burn", position, Shape.Dot);
+        ParticleSystem flames = NewSystem(loop ? "Aura_Burn" : "Burn", position, Shape.Dot, null, true);
         ParticleSystem.MainModule main = flames.main;
         main.startLifetime = Range(0.35f, 0.6f);
         main.startSpeed = Range(0.6f, 1.2f);
-        main.startSize = Range(0.12f, 0.22f);
-
-        ParticleSystem.ShapeModule shape = flames.shape;
-        shape.enabled = true;
-        shape.shapeType = ParticleSystemShapeType.Cone;
-        shape.angle = 18f;
-        shape.radius = 0.15f;
-        shape.rotation = Quaternion.LookRotation(ScreenUp()).eulerAngles; // Cone points up the screen
-
+        main.startSize = Range(0.14f, 0.24f);
+        Cone(flames, ScreenUp(), 18f, 0.15f);
         Fade(flames, Gradient(
-            new[] { new Color(1f, 0.95f, 0.5f), new Color(1f, 0.55f, 0.1f), new Color(0.8f, 0.15f, 0.05f), new Color(0.25f, 0.25f, 0.25f) },
+            new[] { new Color(1f, 0.95f, 0.6f), new Color(1f, 0.55f, 0.1f), new Color(0.9f, 0.15f, 0.05f) },
             new[] { 1f, 0.9f, 0f }));
         SizeCurve(flames, new AnimationCurve(new Keyframe(0f, 0.6f), new Keyframe(0.3f, 1f), new Keyframe(1f, 0.2f)));
         Wobble(flames, 0.4f, 3f);
 
+        // Embers: tiny bright sparks rising further
+        ParticleSystem embers = NewSystem("Burn_Embers", position, Shape.Dot, flames.transform, true);
+        ParticleSystem.MainModule emberMain = embers.main;
+        emberMain.loop = loop;
+        emberMain.startLifetime = Range(0.6f, 1f);
+        emberMain.startSpeed = Range(0.8f, 1.6f);
+        emberMain.startSize = Range(0.03f, 0.06f);
+        Cone(embers, ScreenUp(), 30f, 0.25f);
+        Wobble(embers, 0.6f, 2f);
+        Fade(embers, Gradient(new[] { new Color(1f, 0.85f, 0.4f), BurnColor }, new[] { 1f, 0f }));
+        if (loop) SetRate(embers, 8f); else Burst(embers, 12);
+        embers.Play();
+
+        Smoke(position + ScreenUp() * 0.2f, loop ? 0 : 3, 0.3f, flames.transform);
+
+        if (loop)
+        {
+            // Light that stays and flickers while the card burns
+            Light light = LightFlash(position, BurnColor, 1.2f, 1.5f, 0f);
+            light.GetComponent<FadeLight>().flicker = 0.45f;
+            light.transform.SetParent(flames.transform, true);
+        }
+        else LightFlash(position, BurnColor, 2.5f, 2f, 0.35f);
+
         return Emit(flames, loop, 18f, 30);
     }
 
-    // Slow bubble rings that wobble, grow and pop
+    // Bubble rings that wobble, grow and pop, inside a drifting green mist
     public static GameObject Poison(Vector3 position, bool loop)
     {
-        ParticleSystem bubbles = NewSystem(loop ? "Aura_Poison" : "Poison", position, Shape.Ring);
+        ParticleSystem bubbles = NewSystem(loop ? "Aura_Poison" : "Poison", position, Shape.Ring, null, false);
         ParticleSystem.MainModule main = bubbles.main;
         main.startLifetime = Range(0.8f, 1.3f);
         main.startSpeed = Range(0.05f, 0.15f);
@@ -139,13 +240,27 @@ public static class PlaceholderEffects
         SizeCurve(bubbles, new AnimationCurve(new Keyframe(0f, 0.3f), new Keyframe(0.85f, 1f), new Keyframe(1f, 1.4f))); // Pops at the end
         Wobble(bubbles, 0.15f, 1.5f);
 
+        // Mist: big soft clouds, very faint
+        ParticleSystem mist = NewSystem("Poison_Mist", position, Shape.Dot, bubbles.transform, false);
+        ParticleSystem.MainModule mistMain = mist.main;
+        mistMain.loop = loop;
+        mistMain.startLifetime = Range(1.2f, 1.8f);
+        mistMain.startSize = Range(0.5f, 0.8f);
+        ScreenCircle(mist, 0.3f);
+        Drift(mist, 0.12f);
+        Wobble(mist, 0.1f, 0.5f);
+        Fade(mist, Gradient(new[] { PoisonColor, PoisonPurple }, new[] { 0f, 0.25f, 0f }));
+        if (loop) SetRate(mist, 2f); else Burst(mist, 5);
+        mist.Play();
+
+        if (!loop) LightFlash(position, PoisonColor, 1.5f, 1.8f, 0.4f);
         return Emit(bubbles, loop, 5f, 12);
     }
 
-    // Twinkling plus signs drifting up the screen
+    // Glowing plus signs twinkling up the screen
     public static GameObject Regeneration(Vector3 position, bool loop)
     {
-        ParticleSystem pluses = NewSystem(loop ? "Aura_Regeneration" : "Regeneration", position, Shape.Plus);
+        ParticleSystem pluses = NewSystem(loop ? "Aura_Regeneration" : "Regeneration", position, Shape.Plus, null, true);
         ParticleSystem.MainModule main = pluses.main;
         main.startLifetime = Range(0.9f, 1.3f);
         main.startSize = Range(0.07f, 0.12f);
@@ -153,17 +268,21 @@ public static class PlaceholderEffects
         Drift(pluses, 0.35f);
         Fade(pluses, Gradient(new[] { Color.white, HealColor }, new[] { 0f, 1f, 0.3f, 1f, 0.3f, 0f })); // Twinkle
 
-        if (!loop) Shockwave(position, HealColor, 1.2f, 0.6f, pluses.transform);
+        if (!loop)
+        {
+            Shockwave(position, HealColor, 1.2f, 0.6f, pluses.transform, true);
+            LightFlash(position, HealColor, 2f, 2f, 0.4f);
+        }
         return Emit(pluses, loop, 4f, 14);
     }
 
-    // Stars circling the card. faint = Stagger (fewer, dimmer, slower)
+    // Glowing stars circling the card. faint = Stagger (fewer, dimmer, slower). Stun also gets a halo
     public static GameObject Stars(Vector3 position, bool loop, bool faint)
     {
-        ParticleSystem stars = NewSystem(faint ? "Aura_Stagger" : loop ? "Aura_Stun" : "Stun", position, Shape.Star);
+        ParticleSystem stars = NewSystem(faint ? "Aura_Stagger" : loop ? "Aura_Stun" : "Stun", position, Shape.Star, null, true);
         ParticleSystem.MainModule main = stars.main;
         main.startLifetime = loop ? Range(1f, 1.2f) : Range(0.7f, 0.9f);
-        main.startSize = faint ? Range(0.08f, 0.1f) : Range(0.13f, 0.18f);
+        main.startSize = faint ? Range(0.08f, 0.1f) : Range(0.14f, 0.2f);
         main.startColor = faint ? new Color(1f, 1f, 1f, 0.6f) : Color.white;
 
         ScreenCircle(stars, 0.35f);
@@ -173,6 +292,22 @@ public static class PlaceholderEffects
         Swirl(stars, faint ? 2f : 4f, loop ? 0f : 0.8f);
         Spin(stars, 3f);
         Fade(stars, Gradient(new[] { Color.white, StunColor }, new[] { 0f, 1f, 0.6f, 1f, 0f }));
+
+        if (!faint)
+        {
+            // Halo: a slowly turning rune ring that moves with the card
+            ParticleSystem halo = NewSystem("Stun_Halo", position, Shape.Rune, stars.transform, true);
+            ParticleSystem.MainModule haloMain = halo.main;
+            haloMain.loop = loop;
+            haloMain.simulationSpace = ParticleSystemSimulationSpace.Local;
+            haloMain.startLifetime = 1.4f;
+            haloMain.startSize = 0.9f;
+            if (loop) SetRate(halo, 1f); else Burst(halo, 1);
+            Spin(halo, 1.5f);
+            Fade(halo, Gradient(new[] { StunColor, StunColor }, new[] { 0f, 0.5f, 0.5f, 0f }));
+            halo.Play();
+        }
+        if (!loop) LightFlash(position, StunColor, 2f, 2f, 0.35f);
 
         return Emit(stars, loop, faint ? 1.5f : 5f, 8);
     }
@@ -188,24 +323,24 @@ public static class PlaceholderEffects
     private static readonly Color HinderedColor = new Color(0.65f, 0.65f, 0.7f);
     private static readonly Color HealBlockColor = new Color(1f, 0.25f, 0.3f);
 
-    // Orange arrows rising up the screen
+    // Glowing orange arrows rising up the screen
     public static GameObject AttackUp(Vector3 position)
     {
-        return Arrows("Aura_AttackUp", position, AttackUpColor, 0.5f);
+        return Arrows("Aura_AttackUp", position, AttackUpColor, 0.5f, true);
     }
 
     // Dark red arrows sinking down the screen
     public static GameObject AttackDown(Vector3 position)
     {
-        return Arrows("Aura_AttackDown", position, AttackDownColor, -0.4f);
+        return Arrows("Aura_AttackDown", position, AttackDownColor, -0.4f, false);
     }
 
     // Gold ring around the card that slowly pulses, with sparkles on its edge
     public static GameObject DefenseUp(Vector3 position)
     {
-        ParticleSystem ring = ShieldRing("Aura_DefenseUp", position, DefenseUpColor, new[] { 0f, 0.7f, 0.7f, 0f });
+        ParticleSystem ring = ShieldRing("Aura_DefenseUp", position, DefenseUpColor, new[] { 0f, 0.7f, 0.7f, 0f }, true);
 
-        ParticleSystem sparkles = NewSystem("Aura_DefenseUp_Sparkles", position, Shape.Star, ring.transform);
+        ParticleSystem sparkles = NewSystem("Aura_DefenseUp_Sparkles", position, Shape.Star, ring.transform, true);
         ParticleSystem.MainModule main = sparkles.main;
         main.loop = true;
         main.startLifetime = Range(0.4f, 0.6f);
@@ -223,9 +358,9 @@ public static class PlaceholderEffects
     // Grey ring that flickers like it's breaking, with shards falling off
     public static GameObject DefenseDown(Vector3 position)
     {
-        ParticleSystem ring = ShieldRing("Aura_DefenseDown", position, DefenseDownColor, new[] { 0f, 0.6f, 0.1f, 0.5f, 0f, 0.4f, 0f });
+        ParticleSystem ring = ShieldRing("Aura_DefenseDown", position, DefenseDownColor, new[] { 0f, 0.6f, 0.1f, 0.5f, 0f, 0.4f, 0f }, false);
 
-        ParticleSystem shards = NewSystem("Aura_DefenseDown_Shards", position, Shape.Shard, ring.transform);
+        ParticleSystem shards = NewSystem("Aura_DefenseDown_Shards", position, Shape.Shard, ring.transform, false);
         ParticleSystem.MainModule main = shards.main;
         main.loop = true;
         main.startLifetime = Range(0.7f, 1f);
@@ -243,23 +378,16 @@ public static class PlaceholderEffects
         return ring.gameObject;
     }
 
-    // Cyan speed lines streaking sideways across the card
+    // Glowing cyan speed lines streaking sideways across the card
     public static GameObject SpeedUp(Vector3 position)
     {
-        ParticleSystem lines = NewSystem("Aura_SpeedUp", position, Shape.Dot);
+        ParticleSystem lines = NewSystem("Aura_SpeedUp", position, Shape.Dot, null, true);
         ParticleSystem.MainModule main = lines.main;
         main.loop = true;
         main.startLifetime = Range(0.15f, 0.3f);
         main.startSpeed = Range(2.5f, 3.5f);
         main.startSize = Range(0.03f, 0.05f);
-
-        // Flat cone pointing screen-right, so lines start spread out up and down the card
-        ParticleSystem.ShapeModule shape = lines.shape;
-        shape.enabled = true;
-        shape.shapeType = ParticleSystemShapeType.Cone;
-        shape.angle = 0f;
-        shape.radius = 0.4f;
-        shape.rotation = Quaternion.LookRotation(ScreenRight(), ScreenUp()).eulerAngles;
+        Cone(lines, ScreenRight(), 0f, 0.4f); // Lines start spread up and down the card
 
         ParticleSystemRenderer renderer = lines.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Stretch;
@@ -275,7 +403,7 @@ public static class PlaceholderEffects
     // Slow heavy blue drips sinking down
     public static GameObject SpeedDown(Vector3 position)
     {
-        ParticleSystem drips = NewSystem("Aura_SpeedDown", position, Shape.Dot);
+        ParticleSystem drips = NewSystem("Aura_SpeedDown", position, Shape.Dot, null, false);
         ParticleSystem.MainModule main = drips.main;
         main.loop = true;
         main.startLifetime = Range(1f, 1.4f);
@@ -292,7 +420,7 @@ public static class PlaceholderEffects
     // Grey chain links circling slowly around the card
     public static GameObject Hindered(Vector3 position)
     {
-        ParticleSystem links = NewSystem("Aura_Hindered", position, Shape.Link);
+        ParticleSystem links = NewSystem("Aura_Hindered", position, Shape.Link, null, false);
         ParticleSystem.MainModule main = links.main;
         main.loop = true;
         main.startLifetime = Range(1.3f, 1.6f);
@@ -309,10 +437,10 @@ public static class PlaceholderEffects
         return links.gameObject;
     }
 
-    // Red X marks pulsing over the card
+    // Glowing red X marks pulsing over the card
     public static GameObject HealBlock(Vector3 position)
     {
-        ParticleSystem crosses = NewSystem("Aura_HealBlock", position, Shape.Cross);
+        ParticleSystem crosses = NewSystem("Aura_HealBlock", position, Shape.Cross, null, true);
         ParticleSystem.MainModule main = crosses.main;
         main.loop = true;
         main.startLifetime = Range(0.9f, 1.1f);
@@ -326,9 +454,9 @@ public static class PlaceholderEffects
     }
 
     // Arrows drifting up (positive speed) or down (negative, flipped to point down)
-    private static GameObject Arrows(string name, Vector3 position, Color color, float speed)
+    private static GameObject Arrows(string name, Vector3 position, Color color, float speed, bool glow)
     {
-        ParticleSystem arrows = NewSystem(name, position, Shape.Arrow);
+        ParticleSystem arrows = NewSystem(name, position, Shape.Arrow, null, glow);
         ParticleSystem.MainModule main = arrows.main;
         main.loop = true;
         main.startLifetime = Range(0.8f, 1.1f);
@@ -343,9 +471,9 @@ public static class PlaceholderEffects
     }
 
     // Big ring around the card that follows it, alpha keys set the pulse or flicker
-    private static ParticleSystem ShieldRing(string name, Vector3 position, Color color, float[] alphas)
+    private static ParticleSystem ShieldRing(string name, Vector3 position, Color color, float[] alphas, bool glow)
     {
-        ParticleSystem ring = NewSystem(name, position, Shape.Ring);
+        ParticleSystem ring = NewSystem(name, position, Shape.Ring, null, glow);
         ParticleSystem.MainModule main = ring.main;
         main.loop = true;
         main.simulationSpace = ParticleSystemSimulationSpace.Local; // Moves with the card
@@ -360,10 +488,13 @@ public static class PlaceholderEffects
 
     // ---- Defeat ----
 
-    // Grey shards spinning and scattering
+    // Bright flash, grey shards spinning out, a ring and a puff of smoke
     public static GameObject Shatter(Vector3 position)
     {
-        ParticleSystem shards = NewSystem("Defeat_Shatter", position, Shape.Shard);
+        ParticleSystem flash = Flash(position, Color.white, 1.4f, 0.15f, null);
+        Transform root = flash.transform;
+
+        ParticleSystem shards = NewSystem("Defeat_Shatter", position, Shape.Shard, root, false);
         ParticleSystem.MainModule main = shards.main;
         main.startLifetime = Range(0.6f, 1f);
         main.startSpeed = Range(1.2f, 3f);
@@ -372,68 +503,65 @@ public static class PlaceholderEffects
         ScreenCircle(shards, 0.2f);
         Burst(shards, 30);
         Spin(shards, 6f);
+        Slow(shards, 0.15f);
         Fade(shards, Gradient(new[] { DefeatColor, new Color(0.35f, 0.35f, 0.35f) }, new[] { 1f, 1f, 0f }));
+        shards.Play();
 
-        ParticleSystem.LimitVelocityOverLifetimeModule slow = shards.limitVelocityOverLifetime;
-        slow.enabled = true;
-        slow.limit = 0.3f;
-        slow.dampen = 0.15f; // Shards slow down as they fly
-
-        Flash(position, Color.white, 1f, shards.transform);
-        return Finish(shards);
+        Shockwave(position, Color.white, 1.8f, 0.4f, root, true);
+        Smoke(position, 6, 0.5f, root);
+        LightFlash(position, Color.white, 4f, 3f, 0.4f);
+        return Finish(flash);
     }
 
     // ---- Projectiles ----
 
-    // Physical is a short fast streak. Magic and heals are a glowing orb with a sparkly trail.
+    // Glowing head with a smooth trail and sparkles behind. Physical is small and fast-looking, magic and heals are orbs.
     // CombatEffects moves it, then calls Stop
     public static GameObject Projectile(Vector3 position, DamageType type)
     {
         GameObject root = new GameObject("Projectile");
         root.transform.position = position;
         Color color = ColorFor(type);
+        bool physical = type == DamageType.Physical;
 
-        if (type == DamageType.Physical)
-        {
-            ParticleSystem streak = NewSystem("Projectile_Streak", position, Shape.Dot, root.transform);
-            ParticleSystem.MainModule streakMain = streak.main;
-            streakMain.loop = true;
-            streakMain.startLifetime = 0.1f;
-            streakMain.startSize = Range(0.1f, 0.14f);
-            SetRate(streak, 150f);
-            Fade(streak, Gradient(new[] { Color.white, color }, new[] { 1f, 0f }));
-            streak.Play();
-            return root;
-        }
+        // Smooth trail
+        TrailRenderer trail = root.AddComponent<TrailRenderer>();
+        trail.sharedMaterial = GetMaterial(Shape.Dot, true);
+        trail.time = physical ? 0.12f : 0.25f;
+        trail.minVertexDistance = 0.02f;
+        trail.widthCurve = new AnimationCurve(new Keyframe(0f, physical ? 0.14f : 0.22f), new Keyframe(1f, 0f));
+        trail.colorGradient = Gradient(new[] { Color.white, color }, new[] { 1f, 0f });
 
         // Bright core that stays on the projectile
-        ParticleSystem core = NewSystem("Projectile_Core", position, Shape.Dot, root.transform);
+        ParticleSystem core = NewSystem("Projectile_Core", position, Shape.Dot, root.transform, true);
         ParticleSystem.MainModule coreMain = core.main;
         coreMain.loop = true;
         coreMain.simulationSpace = ParticleSystemSimulationSpace.Local;
         coreMain.startLifetime = 0.08f;
-        coreMain.startSize = 0.35f;
+        coreMain.startSize = physical ? 0.25f : 0.4f;
         coreMain.startColor = Color.Lerp(color, Color.white, 0.5f);
         SetRate(core, 60f);
         core.Play();
 
         // Sparkles left behind
-        ParticleSystem sparkles = NewSystem("Projectile_Trail", position, type == DamageType.Heal ? Shape.Plus : Shape.Star, root.transform);
-        ParticleSystem.MainModule sparkleMain = sparkles.main;
-        sparkleMain.loop = true;
-        sparkleMain.startLifetime = Range(0.3f, 0.5f);
-        sparkleMain.startSpeed = Range(0.2f, 0.5f);
-        sparkleMain.startSize = Range(0.06f, 0.1f);
-        ScreenCircle(sparkles, 0.05f);
-        Spin(sparkles, 4f);
-        SetRate(sparkles, 40f);
-        Fade(sparkles, Gradient(new[] { Color.white, color }, new[] { 1f, 0f }));
-        sparkles.Play();
-
+        if (!physical)
+        {
+            ParticleSystem sparkles = NewSystem("Projectile_Trail", position, type == DamageType.Heal ? Shape.Plus : Shape.Star, root.transform, true);
+            ParticleSystem.MainModule sparkleMain = sparkles.main;
+            sparkleMain.loop = true;
+            sparkleMain.startLifetime = Range(0.3f, 0.5f);
+            sparkleMain.startSpeed = Range(0.2f, 0.5f);
+            sparkleMain.startSize = Range(0.06f, 0.1f);
+            ScreenCircle(sparkles, 0.05f);
+            Spin(sparkles, 4f);
+            SetRate(sparkles, 40f);
+            Fade(sparkles, Gradient(new[] { Color.white, color }, new[] { 1f, 0f }));
+            sparkles.Play();
+        }
         return root;
     }
 
-    // Stops a looping effect (aura or projectile) and removes it once its particles fade
+    // Stops a looping effect (aura or projectile) and removes it once its particles and trail fade
     public static void Stop(GameObject effect)
     {
         if (effect == null) return;
@@ -441,7 +569,31 @@ public static class PlaceholderEffects
         ParticleSystem[] systems = effect.GetComponentsInChildren<ParticleSystem>();
         foreach (ParticleSystem particles in systems)
             particles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        Object.Destroy(effect, systems.Length > 0 ? 1.5f : 0f); // Nothing to fade without particles
+        foreach (TrailRenderer trail in effect.GetComponentsInChildren<TrailRenderer>())
+            trail.emitting = false;
+        foreach (Light light in effect.GetComponentsInChildren<Light>())
+            Object.Destroy(light.gameObject);
+
+        bool fades = systems.Length > 0 || effect.GetComponentInChildren<TrailRenderer>() != null;
+        Object.Destroy(effect, fades ? 1.5f : 0f); // Nothing to fade otherwise
+    }
+
+    // ---- Lights ----
+
+    // A point light that flashes and fades over 'duration' (0 = stays, for auras)
+    public static Light LightFlash(Vector3 position, Color color, float intensity, float range, float duration)
+    {
+        GameObject lightObject = new GameObject("Effect_Light");
+        lightObject.transform.position = position + Vector3.up * 0.4f; // A little above so it lights the card and board
+        Light light = lightObject.AddComponent<Light>();
+        light.type = LightType.Point;
+        light.color = color;
+        light.intensity = intensity;
+        light.range = range;
+        light.shadows = LightShadows.None;
+        FadeLight fade = lightObject.AddComponent<FadeLight>();
+        fade.duration = duration > 0f ? duration : 1f;
+        return light;
     }
 
     // ---- Text ----
@@ -467,8 +619,8 @@ public static class PlaceholderEffects
 
     // ---- Building blocks ----
 
-    // A stopped particle system so settings can be changed, then each effect plays it
-    private static ParticleSystem NewSystem(string name, Vector3 position, Shape texture, Transform parent = null)
+    // A stopped particle system so settings can be changed, then each effect plays it. glow = additive (bright, adds light)
+    private static ParticleSystem NewSystem(string name, Vector3 position, Shape texture, Transform parent, bool glow)
     {
         GameObject effectObject = new GameObject(name);
         effectObject.transform.position = position;
@@ -491,14 +643,28 @@ public static class PlaceholderEffects
         ParticleSystem.ShapeModule shape = particles.shape;
         shape.enabled = false; // Effects that need a shape turn it on
 
-        effectObject.GetComponent<ParticleSystemRenderer>().material = GetMaterial(texture);
+        effectObject.GetComponent<ParticleSystemRenderer>().material = GetMaterial(texture, glow);
         return particles;
     }
 
-    // Expanding ring that fades out
-    private static ParticleSystem Shockwave(Vector3 position, Color color, float size, float lifetime, Transform parent)
+    // Single quick bright dot
+    private static ParticleSystem Flash(Vector3 position, Color color, float size, float lifetime, Transform parent)
     {
-        ParticleSystem ring = NewSystem("Shockwave", position, Shape.Ring, parent);
+        ParticleSystem flash = NewSystem("Flash", position, Shape.Dot, parent, true);
+        ParticleSystem.MainModule main = flash.main;
+        main.startLifetime = lifetime;
+        main.startSize = size;
+        Burst(flash, 1);
+        SizeCurve(flash, new AnimationCurve(new Keyframe(0f, 0.7f), new Keyframe(1f, 1.2f)));
+        Fade(flash, Gradient(new[] { color, color }, new[] { 1f, 0f }));
+        flash.Play();
+        return flash;
+    }
+
+    // Expanding ring that fades out
+    private static ParticleSystem Shockwave(Vector3 position, Color color, float size, float lifetime, Transform parent, bool glow)
+    {
+        ParticleSystem ring = NewSystem("Shockwave", position, Shape.Ring, parent, glow);
         ParticleSystem.MainModule main = ring.main;
         main.startLifetime = lifetime;
         main.startSize = size;
@@ -509,16 +675,75 @@ public static class PlaceholderEffects
         return ring;
     }
 
-    // Single quick bright dot
-    private static void Flash(Vector3 position, Color color, float size, Transform parent)
+    // Spinning rune circle (spin is radians per second, negative turns the other way)
+    private static void Rune(Vector3 position, Color color, float size, float lifetime, float spin, Transform parent)
     {
-        ParticleSystem flash = NewSystem("Flash", position, Shape.Dot, parent);
-        ParticleSystem.MainModule main = flash.main;
-        main.startLifetime = 0.12f;
+        ParticleSystem rune = NewSystem("Rune", position, Shape.Rune, parent, true);
+        ParticleSystem.MainModule main = rune.main;
+        main.startLifetime = lifetime;
         main.startSize = size;
-        Burst(flash, 1);
-        Fade(flash, Gradient(new[] { color, color }, new[] { 0.9f, 0f }));
-        flash.Play();
+        Burst(rune, 1);
+        ParticleSystem.RotationOverLifetimeModule rotation = rune.rotationOverLifetime;
+        rotation.enabled = true;
+        rotation.z = spin;
+        SizeCurve(rune, new AnimationCurve(new Keyframe(0f, 0.4f, 0f, 2.5f), new Keyframe(1f, 1f)));
+        Fade(rune, Gradient(new[] { Color.white, color }, new[] { 1f, 0.8f, 0f }));
+        rune.Play();
+    }
+
+    // Glowing streaks spraying away from the attacker in a cone
+    private static void Sparks(Vector3 position, Vector3 direction, Color from, Color to, int count, float minSpeed, float maxSpeed, Transform parent)
+    {
+        ParticleSystem sparks = NewSystem("Sparks", position, Shape.Dot, parent, true);
+        ParticleSystem.MainModule main = sparks.main;
+        main.startLifetime = Range(0.12f, 0.3f);
+        main.startSpeed = Range(minSpeed, maxSpeed);
+        main.startSize = Range(0.04f, 0.07f);
+        Cone(sparks, direction, 35f, 0.05f);
+        Burst(sparks, count);
+        Slow(sparks, 0.2f);
+        Fade(sparks, Gradient(new[] { from, to, to * 0.6f }, new[] { 1f, 1f, 0f }));
+
+        ParticleSystemRenderer renderer = sparks.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Stretch; // Streaks along their direction
+        renderer.lengthScale = 2.5f;
+        renderer.velocityScale = 0.06f;
+        sparks.Play();
+    }
+
+    // Small chunks tumbling away from the hit
+    private static void Debris(Vector3 position, Vector3 direction, Color color, int count, Transform parent)
+    {
+        ParticleSystem debris = NewSystem("Debris", position, Shape.Shard, parent, false);
+        ParticleSystem.MainModule main = debris.main;
+        main.startLifetime = Range(0.4f, 0.6f);
+        main.startSpeed = Range(1.5f, 3f);
+        main.startSize = Range(0.04f, 0.08f);
+        main.startRotation = Range(0f, Mathf.PI * 2f);
+        Cone(debris, direction, 45f, 0.05f);
+        Burst(debris, count);
+        Spin(debris, 8f);
+        Slow(debris, 0.2f);
+        Fade(debris, Gradient(new[] { color, color }, new[] { 1f, 0f }));
+        debris.Play();
+    }
+
+    // Soft grey puffs drifting up and fading (count 0 = keep emitting, for auras)
+    private static void Smoke(Vector3 position, int count, float size, Transform parent)
+    {
+        ParticleSystem smoke = NewSystem("Smoke", position, Shape.Dot, parent, false);
+        ParticleSystem.MainModule main = smoke.main;
+        main.loop = count == 0;
+        main.startLifetime = Range(0.7f, 1.1f);
+        main.startSize = Range(size * 0.7f, size);
+        main.startRotation = Range(0f, Mathf.PI * 2f);
+        ScreenCircle(smoke, 0.15f);
+        Drift(smoke, 0.3f);
+        Wobble(smoke, 0.15f, 1f);
+        SizeCurve(smoke, new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(1f, 1.5f)));
+        Fade(smoke, Gradient(new[] { SmokeColor, SmokeColor }, new[] { 0f, 0.35f, 0f }));
+        if (count == 0) SetRate(smoke, 3f); else Burst(smoke, count);
+        smoke.Play();
     }
 
     // Plays as a one-off burst (removes itself) or a looping aura
@@ -547,7 +772,7 @@ public static class PlaceholderEffects
     private static void Burst(ParticleSystem particles, int count)
     {
         ParticleSystem.EmissionModule emission = particles.emission;
-        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)count) });
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)Mathf.Max(1, count)) });
     }
 
     private static void SetRate(ParticleSystem particles, float rate)
@@ -566,7 +791,19 @@ public static class PlaceholderEffects
         shape.rotation = ScreenRotation().eulerAngles;
     }
 
-    // Constant drift up the screen
+    // Emits in a cone pointing along a direction (e.g. away from the attacker)
+    private static void Cone(ParticleSystem particles, Vector3 direction, float angle, float radius)
+    {
+        if (direction.sqrMagnitude < 0.0001f) direction = ScreenUp();
+        ParticleSystem.ShapeModule shape = particles.shape;
+        shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = angle;
+        shape.radius = radius;
+        shape.rotation = Quaternion.LookRotation(direction.normalized).eulerAngles;
+    }
+
+    // Constant drift up the screen (negative = down)
     private static void Drift(ParticleSystem particles, float speed)
     {
         Vector3 up = ScreenUp() * speed;
@@ -589,6 +826,15 @@ public static class PlaceholderEffects
         velocity.orbitalY = axis.y;
         velocity.orbitalZ = axis.z;
         velocity.radial = outward;
+    }
+
+    // Particles slow down over their life (drag)
+    private static void Slow(ParticleSystem particles, float dampen)
+    {
+        ParticleSystem.LimitVelocityOverLifetimeModule limit = particles.limitVelocityOverLifetime;
+        limit.enabled = true;
+        limit.limit = 0f;
+        limit.dampen = dampen;
     }
 
     // Each particle spins, random direction
@@ -645,20 +891,37 @@ public static class PlaceholderEffects
     private static Vector3 ScreenUp() => Camera.main != null ? Camera.main.transform.up : Vector3.forward;
     private static Vector3 ScreenRight() => Camera.main != null ? Camera.main.transform.right : Vector3.right;
 
-    // ---- Textures ----
-
-    // Sprites/Default is always included in builds and tints by particle colour
-    private static Material GetMaterial(Shape shape)
+    // Particle rotation (radians) that turns a texture's "up" to face a world direction on screen
+    private static float ScreenAngle(Vector3 direction)
     {
-        if (materials.TryGetValue(shape, out Material existing) && existing != null) return existing;
+        float x = Vector3.Dot(direction, ScreenRight());
+        float y = Vector3.Dot(direction, ScreenUp());
+        return Mathf.PI / 2f - Mathf.Atan2(y, x);
+    }
 
-        Shader shader = Shader.Find("Sprites/Default");
-        if (shader == null) shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+    // ---- Materials and textures ----
 
-        Material material = new Material(shader);
-        material.mainTexture = MakeTexture(shape);
-        materials[shape] = material;
+    // Normal (Sprites/Default, always in builds) or glow (additive, Resources/VFX/VFX_Glow). Glow falls back to normal if missing
+    private static Material GetMaterial(Shape shape, bool glow)
+    {
+        if (materials.TryGetValue((shape, glow), out Material existing) && existing != null) return existing;
+
+        Material baseMaterial = glow ? Resources.Load<Material>("VFX/VFX_Glow") : null;
+        Material material = baseMaterial != null ? new Material(baseMaterial) : new Material(Shader.Find("Sprites/Default"));
+        Texture2D texture = GetTexture(shape);
+        material.mainTexture = texture;
+        if (material.HasProperty("_BaseMap")) material.SetTexture("_BaseMap", texture);
+
+        materials[(shape, glow)] = material;
         return material;
+    }
+
+    private static Texture2D GetTexture(Shape shape)
+    {
+        if (textures.TryGetValue(shape, out Texture2D existing) && existing != null) return existing;
+        Texture2D texture = MakeTexture(shape);
+        textures[shape] = texture;
+        return texture;
     }
 
     // Draws each shape into a small white texture with soft edges
@@ -716,6 +979,19 @@ public static class PlaceholderEffects
                 float oval = Mathf.Sqrt((x / 0.45f) * (x / 0.45f) + (y / 0.8f) * (y / 0.8f));
                 float edge = (oval - 0.8f) / 0.16f;
                 return Mathf.Exp(-edge * edge);
+
+            case Shape.Slash: // Crescent bulging up, thick in the middle and tapering to points
+                float outer = Mathf.Clamp01((0.9f - distance) * 15f);
+                float inner = Mathf.Clamp01((Mathf.Sqrt(x * x + (y + 0.3f) * (y + 0.3f)) - 0.85f) * 15f);
+                return outer * inner * Mathf.Clamp01((y + 0.2f) * 2.5f);
+
+            case Shape.Rune: // Ring with tick marks and a thin inner ring
+                float outerRing = Mathf.Exp(-Mathf.Pow((distance - 0.8f) / 0.05f, 2f));
+                float innerRing = 0.6f * Mathf.Exp(-Mathf.Pow((distance - 0.5f) / 0.03f, 2f));
+                float angle = Mathf.Atan2(y, x) * Mathf.Rad2Deg;
+                float tickAngle = Mathf.Abs(Mathf.Repeat(angle + 22.5f, 45f) - 22.5f);
+                float ticks = distance > 0.58f && distance < 0.72f ? Mathf.Clamp01(1f - tickAngle / 4f) : 0f;
+                return Mathf.Clamp01(outerRing + innerRing + ticks);
 
             default: // Soft dot
                 float dot = Mathf.Clamp01(1f - distance);

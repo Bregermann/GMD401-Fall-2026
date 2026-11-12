@@ -15,6 +15,7 @@ MonoBehaviour:
   cardName: Arcturus
   characterClass: 0
   artwork: {fileID: 2777473820236066183, guid: bb640f275e6d51948bfd88ed8aa5431c, type: 3}
+  artHasText: 1
   maxHP: 4400
   physicalDefense: 80
   magicDefense: 50

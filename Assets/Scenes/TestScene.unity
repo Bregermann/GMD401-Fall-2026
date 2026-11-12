@@ -468,19 +468,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DevSetup
   cardPrefab: {fileID: 2641182804274139228, guid: d3dd23c108af5a54abf7c248adbeca23, type: 3}
   cards:
-  - data: {fileID: 11400000, guid: 0a5c2cdf706f94f05b3498f18ac6deaf, type: 2}
+  - data: {fileID: 11400000, guid: 1caa0f3c70b3b4c9f94f193f0a2d928a, type: 2}
     owner: 1
     row: 1
     column: 0
     startingHP: 3200
     startingEffects: 
-  - data: {fileID: 11400000, guid: c8e346032d002469095cd9a90621573f, type: 2}
+  - data: {fileID: 11400000, guid: b2e318376f9248c41aa90ef8d196877d, type: 2}
     owner: 2
     row: 0
     column: 0
     startingHP: 4400
     startingEffects: 
-  - data: {fileID: 11400000, guid: 5771b6bbbfa2e42d6b4016745c728d2b, type: 2}
+  - data: {fileID: 11400000, guid: 12e3301ccfa1c4da7b51f657bcaa84ac, type: 2}
     owner: 2
     row: 0
     column: 3
@@ -505,6 +505,15 @@ MonoBehaviour:
   projectileSpeed: 8
   hitDuration: 0.4
   textDuration: 1
+  chargeTime: 0.25
+  lungeTime: 0.12
+  lungeDistance: 0.35
+  knockbackSlideTime: 0.18
+  screenShake: 1
+  screenShakeStrength: 0.15
+  hitStop: 1
+  hitStopTime: 0.08
+  bigHitDamage: 400
   numberSize: 3
   shakeAmount: 0.05
   effectHeight: 0.3
@@ -714,17 +723,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b48c700c7ceeab4a848d5cc1d5c73b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameLog
-  logText: {fileID: 0}
-  scrollRect: {fileID: 0}
-  boxSize: {x: 550, y: 260}
+  panelSize: {x: 470, y: 330}
+  margin: {x: 20, y: 20}
   fontSize: 18
-  maxLines: 100
-  showWarningsAndErrors: 0
-  ignoreIfContains:
-  - started drag
-  - has used its move
-  - placed on board for the first time
-  - illegal drop
+  maxEntries: 40
+  showDebugMessages: 0
 --- !u!4 &1088218402
 Transform:
   m_ObjectHideFlags: 0

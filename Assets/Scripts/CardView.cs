@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class CardView : MonoBehaviour
@@ -5,8 +6,11 @@ public class CardView : MonoBehaviour
     [SerializeField] private SpriteRenderer artRenderer;
     [SerializeField] private Vector2 artSize = new Vector2(1f, 1f); // size of the art window in local units
     [SerializeField] private Sprite cardBack;                         // shown on the underside, seen when the card is flipped face down
+    [SerializeField] private TMP_FontAsset textFont;                  // font for the name, stats and attacks on blank art (empty = default)
 
     private SpriteRenderer backRenderer;
+    private GameObject cardText;   // name, stats and attacks written on art that doesn't have them printed
+    private CardData textFor;      // which card the text was written for, so it isn't rebuilt for nothing
 
     void Awake()
     {
@@ -23,6 +27,19 @@ public class CardView : MonoBehaviour
         if (data.artwork == null) return;
 
         artRenderer.transform.localScale = FitScale(data.artwork);
+        WriteCardText(data);
+    }
+
+    // Blank art (artHasText off) gets the card's name, stats and attacks written on in the printed layout
+    void WriteCardText(CardData data)
+    {
+        if (textFor == data && cardText != null) return;
+        if (cardText != null) Destroy(cardText);
+        cardText = null;
+        textFor = data;
+
+        if (data.artHasText) return;
+        cardText = CardFaceText.Build(artRenderer, data, textFont, artRenderer.sortingOrder + 1);
     }
 
     // Copy of the art renderer flipped onto the underside of the card. Turned so it reads upright when the card is flipped over
@@ -44,7 +61,7 @@ public class CardView : MonoBehaviour
         backRenderer = back.AddComponent<SpriteRenderer>();
         backRenderer.sprite = cardBack;
         backRenderer.sharedMaterial = artRenderer.sharedMaterial; // Same look as the front art
-        backRenderer.sortingOrder = artRenderer.sortingOrder;
+        backRenderer.sortingOrder = artRenderer.sortingOrder + 2;  // Above the card text, so face-down cards hide it
     }
 
     // Stretches a sprite to fill the art window

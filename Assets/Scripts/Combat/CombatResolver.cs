@@ -8,6 +8,7 @@ public class AttackHit
     public int damage;
     public int healed;
     public bool executed;              // Defeated instantly by executeAtOrBelowHP
+    public bool bonusTriggered;        // At least one of the attack's bonus conditions was met on this card
 }
 
 // What happened during one attack, for UI and animations
@@ -162,16 +163,20 @@ public static class CombatResolver
 
     // Adds up every bonus whose condition is met against this card, and collects their extra effects
     private static int CollectBonuses(CardInstance attacker, AttackData attack, CardInstance card, BoardState board,
-                                      List<StatusEffectApplication> extraTargetEffects, List<StatusEffectApplication> extraSelfEffects)
+                                      List<StatusEffectApplication> extraTargetEffects, List<StatusEffectApplication> extraSelfEffects,
+                                      out bool triggered)
     {
+        triggered = false;
         if (attack.bonuses == null) return 0;
 
         int bonusDamage = 0;
         foreach (AttackBonus bonus in attack.bonuses)
         {
+            if (bonus == null) continue;
             int times = TimesMet(bonus, attacker, card, board);
             if (times <= 0) continue;
 
+            triggered = true;
             bonusDamage += bonus.bonusDamage * times;
             if (bonus.extraTargetEffects != null) extraTargetEffects.AddRange(bonus.extraTargetEffects);
             if (bonus.extraSelfEffects != null) extraSelfEffects.AddRange(bonus.extraSelfEffects);
@@ -220,7 +225,7 @@ public static class CombatResolver
         {
             AttackHit hit = new AttackHit { card = card };
             List<StatusEffectApplication> extraTargetEffects = new List<StatusEffectApplication>();
-            int bonus = CollectBonuses(attacker, attack, card, board, extraTargetEffects, extraSelfEffects);
+            int bonus = CollectBonuses(attacker, attack, card, board, extraTargetEffects, extraSelfEffects, out hit.bonusTriggered);
 
             // Heals get no multipliers or defense
             if (attack.damageType == DamageType.Heal)
@@ -261,7 +266,7 @@ public static class CombatResolver
 
         // Self bonuses still count when an area attack found nobody
         if (affected.Count == 0)
-            CollectBonuses(attacker, attack, attacker, board, new List<StatusEffectApplication>(), extraSelfEffects);
+            CollectBonuses(attacker, attack, attacker, board, new List<StatusEffectApplication>(), extraSelfEffects, out _);
 
         // Main target's numbers (AroundSelf attacks have no main target)
         if (result.hits.Count > 0 && result.hits[0].card == target)
