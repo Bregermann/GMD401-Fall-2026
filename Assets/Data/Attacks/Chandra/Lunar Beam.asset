@@ -29,3 +29,5 @@ MonoBehaviour:
   knockbackCollisionDamage: 10
   targetStatusEffects: []
   selfStatusEffects: []
+  vfxTheme: 9
+  vfxSignature: 2

@@ -31,3 +31,5 @@ MonoBehaviour:
     amount: 50
     duration: 2
   selfStatusEffects: []
+  vfxTheme: 9
+  vfxSignature: 0

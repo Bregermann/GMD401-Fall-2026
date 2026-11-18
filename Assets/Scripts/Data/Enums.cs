@@ -140,3 +140,42 @@ public static class StatusEffectTypeExtensions
         }
     }
 }
+
+// The look of an attack's visual effects (VFX/ThemedEffects): wind-up, projectile, impact and comic word.
+// Default = the older placeholder effects for its damage type. Add new themes at the end, assets save these as numbers
+public enum VfxTheme
+{
+    Default,
+    Slash,    // Blades and swords
+    Claw,     // Claws and scratches
+    Blunt,    // Slams, bashes, shoves
+    Pierce,   // Shots, stabs, hooks
+    Ice,
+    Water,
+    Wind,
+    Light,
+    Lunar,    // Moon and stars
+    Nature,   // Flowers and plants
+    Tech,     // Saws, drills, nanobots
+    Trick,    // Stage magic
+    Food,     // Snacks and healing meals
+    Rally,    // Roars, stances and self buffs
+    Gas       // Breath and scents
+}
+
+// A one-off effect for a big signature move, played on top of its theme. None = just the theme.
+// Add new ones at the end, assets save these as numbers
+public enum VfxSignature
+{
+    None,
+    Starfall,
+    LunarBeam,
+    GlacialShatter,
+    BuzzsawSpinner,
+    RadiantPunishment,
+    HurricaneSlash,
+    SweepingTide,
+    Roar,
+    GardeniaBloom,
+    AllInSlam
+}

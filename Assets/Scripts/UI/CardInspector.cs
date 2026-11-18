@@ -24,6 +24,29 @@ public class CardInspector : MonoBehaviour
     private GameObject copy;
     private CardUnit inspected;
     private Camera cam;
+    private GameObject canvasRoot;
+
+    // ---- Editor preview ----
+
+    // The inspector's canvas, so the editor preview can tidy it up
+    public GameObject Root => canvasRoot;
+
+    // Builds the open inspector outside Play mode, showing one card's art and stats. Used by UIPreview
+    public void BuildPreview(CardData data)
+    {
+        BuildPanel();
+        panel.SetActive(true);
+        if (data == null) return;
+
+        if (data.artwork != null)
+        {
+            Rect rect = data.artwork.textureRect;
+            Texture texture = data.artwork.texture;
+            cardImage.texture = texture;
+            cardImage.uvRect = new Rect(rect.x / texture.width, rect.y / texture.height, rect.width / texture.width, rect.height / texture.height);
+        }
+        statsText.text = StatsText(data, null, false, "Player 1");
+    }
 
     void Start()
     {
@@ -52,7 +75,7 @@ public class CardInspector : MonoBehaviour
             }
             else if (!mouse.leftButton.isPressed && !IsDraftDealing()) // Not while dragging a card or dealing the draft
             {
-                CardUnit card = CardUnit.UnderMouse();
+                CardUnit card = CardHover.UnderMouse();
                 if (card != null) Open(card);
             }
         }
@@ -85,6 +108,32 @@ public class CardInspector : MonoBehaviour
 
     // ---- Card copy ----
 
+    // Cards with blank art have their name, stats and attacks written on as text objects. Copied text doesn't
+    // always redraw (it was hidden while the card was a token), so write it fresh on the copy
+    void RewriteCardText(GameObject copyObject, CardUnit card)
+    {
+        CardData data = card.Instance != null ? card.Instance.data : null;
+        if (data == null || data.artHasText || data.artwork == null) return;
+
+        foreach (Transform child in copyObject.GetComponentsInChildren<Transform>(true))
+            if (child != null && child.name == "Card Text") Destroy(child.gameObject);
+
+        // The art renderer is the one showing the card's artwork (not the back or the divider lines)
+        foreach (SpriteRenderer art in copyObject.GetComponentsInChildren<SpriteRenderer>(true))
+        {
+            if (art.sprite != data.artwork) continue;
+            CardFaceText.Build(art, data, CardTextFont(card), art.sortingOrder + 1);
+            return;
+        }
+    }
+
+    // The font the card's own text uses (CardView's Text Font), so the copy matches
+    static TMP_FontAsset CardTextFont(CardUnit card)
+    {
+        TMP_Text existing = card.GetComponentInChildren<TMP_Text>(true);
+        return existing != null ? existing.font : null;
+    }
+
     // Copy of the card with only its looks (no scripts or colliders), framed by the inspect camera
     void MakeCopy(CardUnit card)
     {
@@ -94,10 +143,15 @@ public class CardInspector : MonoBehaviour
             if (!(script is TMP_Text)) Destroy(script); // Keep text written on the card
         foreach (Collider collider in copy.GetComponentsInChildren<Collider>())
             Destroy(collider);
+        // Cards on the board are shown as tokens with their own look hidden (UnitTokens). The copy shows the full card
+        if (UnitTokens.IsToken(card))
+            foreach (Renderer renderer in copy.GetComponentsInChildren<Renderer>(true))
+                if (!(renderer is ParticleSystemRenderer)) renderer.enabled = true;
+        RewriteCardText(copy, card);
 
-        // Same view angle as the main camera, zoomed to fit the card
+        // Straight down onto the card, upright like the board, zoomed to fit (the main camera may be tilted)
         Bounds bounds = GetBounds(copy);
-        inspectCamera.transform.rotation = cam.transform.rotation;
+        inspectCamera.transform.rotation = BoardView.Flat;
         inspectCamera.transform.position = bounds.center - inspectCamera.transform.forward * 5f;
 
         float halfHeight = Extent(bounds, inspectCamera.transform.up);
@@ -144,10 +198,16 @@ public class CardInspector : MonoBehaviour
 
         // Live stats only once the card is on the board
         bool onBoard = card != null && CombatManager.Instance != null && CombatManager.Instance.Board.IsOnBoard(card);
+        statsText.text = StatsText(data, card, onBoard, OwnerText(card));
+    }
 
+    // The stats column: name, class and owner, stats (live ones once on the board), attacks
+    static string StatsText(CardData data, CardInstance card, bool onBoard, string owner)
+    {
         StringBuilder text = new StringBuilder();
-        text.AppendLine($"<size=140%><b>{data.cardName}</b></size>");
-        text.AppendLine($"{data.characterClass}  -  {OwnerText(card)}");
+        _ = GameFonts.Title; // Loads it so the <font> tag finds it
+        text.AppendLine($"<size=140%><font=\"Audiowide\">{data.cardName}</font></size>");
+        text.AppendLine($"<color=#FFE39A>{data.characterClass}  -  {owner}</color>");
         text.AppendLine();
         text.AppendLine(onBoard ? $"HP {card.currentHP}/{data.maxHP}" : $"HP {data.maxHP}");
         text.AppendLine($"Phys Def {CardText.Stat(data.physicalDefense, onBoard ? card.PhysicalDefense : data.physicalDefense)}    " +
@@ -168,8 +228,8 @@ public class CardInspector : MonoBehaviour
             text.AppendLine(CardText.Attack(i + 1, attacks[i], onBoard ? card : null));
 
         text.AppendLine();
-        text.Append("<size=70%>Right-click to close</size>");
-        statsText.text = text.ToString();
+        text.Append("<size=70%><color=#A9BDC2>Right-click to close</color></size>");
+        return text.ToString();
     }
 
     string OwnerText(CardInstance card)
@@ -180,10 +240,11 @@ public class CardInspector : MonoBehaviour
 
     // ---- Building the UI ----
 
-    // Dark screen with the card copy on the left and the stats on the right
+    // Dimmed screen with an inked window (InkUI): the card copy in a gold frame on the left, the stats on the right
     void BuildPanel()
     {
         GameObject canvasObject = new GameObject("CardInspectorCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasRoot = canvasObject;
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 200; // Above the game log
@@ -198,10 +259,25 @@ public class CardInspector : MonoBehaviour
         panelRect.anchorMax = Vector2.one;
         panelRect.offsetMin = Vector2.zero;
         panelRect.offsetMax = Vector2.zero;
-        panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.75f);
+        Color dim = InkArt.Ink;
+        dim.a = 0.8f;
+        panel.GetComponent<Image>().color = dim;
 
-        float gap = 40f;
+        float gap = 40f, padding = 36f;
         float left = -(cardImageSize.x + gap + statsSize.x) / 2f; // Centers both side by side
+
+        // The window behind both
+        Image window = InkUI.FramedPanel(panel.transform, "Window", InkUI.PanelColor, 9f);
+        window.raycastTarget = false;
+        RectTransform windowRect = window.rectTransform;
+        windowRect.anchorMin = windowRect.anchorMax = windowRect.pivot = new Vector2(0.5f, 0.5f);
+        windowRect.sizeDelta = new Vector2(cardImageSize.x + gap + statsSize.x + padding * 2f, Mathf.Max(cardImageSize.y, statsSize.y) + padding * 2f);
+
+        // Gold frame around the card
+        Image cardFrame = InkUI.Chip(panel.transform, "Card Frame", InkArt.Sage, 5f);
+        cardFrame.raycastTarget = false;
+        cardFrame.pixelsPerUnitMultiplier = 1f;
+        SetRect(cardFrame.rectTransform, left - 10f, cardImageSize + Vector2.one * 20f);
 
         GameObject imageObject = new GameObject("CardImage", typeof(RectTransform), typeof(RawImage));
         imageObject.transform.SetParent(panel.transform, false);
@@ -213,6 +289,7 @@ public class CardInspector : MonoBehaviour
         SetRect((RectTransform)textObject.transform, left + cardImageSize.x + gap, statsSize);
         TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
         text.color = Color.white;
+        GameFonts.UseBody(text);
         text.alignment = TextAlignmentOptions.TopLeft;
         text.enableAutoSizing = true; // Shrinks if a card has a lot of text
         text.fontSizeMin = 12;
@@ -240,7 +317,7 @@ public class CardInspector : MonoBehaviour
         inspectCamera = cameraObject.AddComponent<Camera>();
         inspectCamera.orthographic = true;
         inspectCamera.clearFlags = CameraClearFlags.SolidColor;
-        inspectCamera.backgroundColor = new Color(0.12f, 0.12f, 0.15f, 1f);
+        inspectCamera.backgroundColor = InkArt.Night;
         inspectCamera.nearClipPlane = 0.1f;
         inspectCamera.farClipPlane = 20f;
         inspectCamera.targetTexture = renderTexture;

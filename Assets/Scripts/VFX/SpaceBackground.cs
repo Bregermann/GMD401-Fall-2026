@@ -66,7 +66,14 @@ public class SpaceBackground : MonoBehaviour
         if (quad != null && !Mathf.Approximately(cam.aspect, fittedAspect)) Fit();
     }
 
-    // Faces the camera and fills its view at the background's depth
+    // Call after moving the camera somewhere new (CameraRig does)
+    public void Refit()
+    {
+        if (quad != null) Fit();
+    }
+
+    // Faces the camera and fills its view at the background's depth.
+    // A child of the camera, so it stays put on screen while the camera sways (it's infinitely far away)
     void Fit()
     {
         fittedAspect = cam.aspect;
@@ -78,7 +85,9 @@ public class SpaceBackground : MonoBehaviour
         height *= overscan;
         float width = height * cam.aspect;
 
-        quad.SetPositionAndRotation(cam.transform.position + forward * distance, Quaternion.LookRotation(forward, cam.transform.up));
+        quad.SetParent(cam.transform, false);
+        quad.localPosition = Vector3.forward * distance;
+        quad.localRotation = Quaternion.identity;
         quad.localScale = new Vector3(width, height, 1f);
 
         // So the pixels stay square and the swirl stays round on any screen shape

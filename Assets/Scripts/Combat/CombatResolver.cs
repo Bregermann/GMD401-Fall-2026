@@ -296,6 +296,67 @@ public static class CombatResolver
         return result;
     }
 
+    // What the attack would do, without changing anything. Used for the damage preview. Returns null if not allowed.
+    // Same maths as ResolveAttack, but status effects landing mid-attack and damage over time aren't counted
+    public static AttackResult PreviewAttack(CardInstance attacker, AttackData attack, CardInstance target, BoardState board)
+    {
+        if (!CanTarget(attacker, attack, target, board)) return null;
+
+        AttackResult result = new AttackResult();
+        List<StatusEffectApplication> unused = new List<StatusEffectApplication>();
+
+        foreach (CardInstance card in GetAffectedCards(attacker, attack, target, board))
+        {
+            AttackHit hit = new AttackHit { card = card };
+            int bonus = CollectBonuses(attacker, attack, card, board, unused, unused, out hit.bonusTriggered);
+
+            if (attack.damageType == DamageType.Heal)
+            {
+                bool blocked = card.statusEffects.Has(StatusEffectType.HealBlock);
+                hit.healed = blocked ? 0 : Mathf.Min(attack.damage + bonus, card.data.maxHP - card.currentHP);
+            }
+            else hit.damage = CalculateDamage(attacker, attack, card, bonus);
+
+            int hpAfter = card.currentHP - hit.damage + hit.healed;
+            if (attack.executeAtOrBelowHP > 0 && hpAfter > 0 && card.owner != attacker.owner && hpAfter <= attack.executeAtOrBelowHP)
+            {
+                hit.executed = true;
+                hpAfter = 0;
+            }
+            if (hpAfter <= 0) result.defeatedCards.Add(card);
+
+            if (card.owner != attacker.owner && card.ActivePassive == CooldownPassive.DamageAttackers)
+                result.reflectedDamage += card.lastAttackUsed.passiveDamage;
+
+            result.hits.Add(hit);
+        }
+
+        if (result.hits.Count > 0 && result.hits[0].card == target)
+        {
+            result.damageDealt = result.hits[0].damage;
+            result.amountHealed = result.hits[0].healed;
+        }
+
+        // Knockback, if the target survives
+        if (attack.hasKnockback && attack.area == AttackArea.Single && target != attacker && !result.defeatedCards.Contains(target))
+        {
+            if (target.ActivePassive == CooldownPassive.KnockbackImmune) result.knockbackBlocked = true;
+            else
+            {
+                int newRow = target.row + System.Math.Sign(target.row - attacker.row);
+                int newColumn = target.column + System.Math.Sign(target.column - attacker.column);
+                if (board.IsEmpty(newRow, newColumn)) result.wasKnockedBack = true;
+                else
+                {
+                    result.hitObstacle = true;
+                    result.collisionDamage = attack.knockbackCollisionDamage;
+                    result.collidedWith = board.GetCard(newRow, newColumn);
+                }
+            }
+        }
+        return result;
+    }
+
     private static void ApplyEffects(CardInstance card, IEnumerable<StatusEffectApplication> effects)
     {
         if (effects == null) return;

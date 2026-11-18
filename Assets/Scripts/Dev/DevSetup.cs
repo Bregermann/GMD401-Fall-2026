@@ -116,7 +116,7 @@ public class DevSetup : MonoBehaviour
     // Runs a change on the card under the mouse, then lets the turn manager react (defeats, game over)
     void ChangeHovered(System.Action<CardInstance> change, string whatHappened)
     {
-        CardUnit unit = CardUnit.UnderMouse();
+        CardUnit unit = CardHover.UnderMouse();
         if (unit == null || unit.Instance == null || !CombatManager.Instance.Board.IsOnBoard(unit.Instance)) return;
 
         change(unit.Instance);

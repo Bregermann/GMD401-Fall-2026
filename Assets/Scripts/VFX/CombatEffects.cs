@@ -30,6 +30,7 @@ public class CombatEffects : MonoBehaviour
     [SerializeField] private bool hitStop = true;
     [SerializeField] private float hitStopTime = 0.08f;         // Longest freeze in real seconds, for the biggest hits
     [SerializeField] private float bigHitDamage = 400f;         // Damage that counts as a full-size hit when scaling effects
+    [SerializeField] private bool inkAuras = true;              // Ink-style status auras, ticks and defeat (ThemedEffects). Off = the older placeholders
 
     [Header("Look")]
     [SerializeField] private float numberSize = 3f;       // Floating number font size. Raise it if they're too small
@@ -141,6 +142,7 @@ public class CombatEffects : MonoBehaviour
     {
         if (attacker == null || attack == null || result == null) return;
         Color color = PlaceholderEffects.ColorFor(attack.damageType);
+        bool themed = attack.vfxTheme != VfxTheme.Default; // Themed attacks use ThemedEffects, the rest the placeholders
 
         bool onSelf = CombatResolver.UsedOnSelf(attack);
         bool hasTarget = target != null && target != attacker;
@@ -152,7 +154,8 @@ public class CombatEffects : MonoBehaviour
         if (ranged || onSelf)
         {
             windup = chargeTime;
-            PlaceholderEffects.Charge(Above(attacker.transform), attack.damageType, chargeTime);
+            if (themed) ThemedEffects.Charge(attack.vfxTheme, Above(attacker.transform), chargeTime);
+            else PlaceholderEffects.Charge(Above(attacker.transform), attack.damageType, chargeTime);
         }
         else
         {
@@ -172,10 +175,24 @@ public class CombatEffects : MonoBehaviour
         float impact = windup + travel;
 
         // Area effects at the moment of impact
-        if (attack.area == AttackArea.AroundSelf)
-            StartCoroutine(Delayed(impact, () => PlaceholderEffects.Pulse(Above(attacker.transform), color, 1.5f + attack.areaSize * 1.2f)));
-        if (attack.area == AttackArea.AroundTarget && target != null)
-            StartCoroutine(DelayedEffect(Slot(l => l.areaBlast), Above(target.transform), impact));
+        if (themed)
+        {
+            if (attack.area == AttackArea.AroundSelf)
+                StartCoroutine(Delayed(impact, () => ThemedEffects.AreaBurst(attack.vfxTheme, Above(attacker.transform), attack.areaSize)));
+            if (attack.area == AttackArea.AroundTarget && target != null)
+                StartCoroutine(Delayed(impact, () => ThemedEffects.AreaBurst(attack.vfxTheme, Above(target.transform), attack.areaSize)));
+        }
+        else
+        {
+            if (attack.area == AttackArea.AroundSelf)
+                StartCoroutine(Delayed(impact, () => PlaceholderEffects.Pulse(Above(attacker.transform), color, 1.5f + attack.areaSize * 1.2f)));
+            if (attack.area == AttackArea.AroundTarget && target != null)
+                StartCoroutine(DelayedEffect(Slot(l => l.areaBlast), Above(target.transform), impact));
+        }
+
+        // Signature moves add their own one-off effect, timed to land with the hit
+        if (themed && attack.vfxSignature != VfxSignature.None)
+            ThemedEffects.Signature(attack.vfxSignature, attack.vfxTheme, attacker, hasTarget ? target : null, impact, this);
 
         // Each card hit. Effects scale with the biggest number in the attack
         int biggest = 0;
@@ -188,6 +205,13 @@ public class CombatEffects : MonoBehaviour
             bool slides = result.wasKnockedBack && target != null && hit.card == target.Instance;
             Vector3 direction = hit.card == attacker.Instance ? cam.transform.up : Flat(CombatManager.Instance.GetUnit(hit.card).transform.position - attacker.transform.position);
             StartCoroutine(PlayHit(CombatManager.Instance.GetUnit(hit.card), hit, attack, attacker.Instance.owner, color, impact, direction, k, slides));
+        }
+
+        // One comic word for the whole attack, on the main target (or the attacker for self moves)
+        if (themed && !ThemedEffects.HasOwnWord(attack.vfxSignature) && (biggest > 0 || attack.vfxTheme == VfxTheme.Rally))
+        {
+            CardUnit wordOn = hasTarget ? target : attacker;
+            StartCoroutine(Delayed(impact, () => { if (wordOn != null) ThemedEffects.Word(attack.vfxTheme, ThemedEffects.OnUnit(wordOn, 1.05f), k); }));
         }
 
         // The impact moment: shake and a split-second freeze, both scaled by damage
@@ -291,6 +315,11 @@ public class CombatEffects : MonoBehaviour
 
         GameObject projectile;
         if (attack.projectilePrefab != null) projectile = Instantiate(attack.projectilePrefab, start, facing);
+        else if (attack.vfxTheme != VfxTheme.Default)
+        {
+            projectile = ThemedEffects.Projectile(attack.vfxTheme, attack.vfxSignature, start);
+            if (projectile == null) yield break; // The signature draws its own travel (beam, wave)
+        }
         else if (entry != null && entry.IsSet) projectile = SpawnEffect(entry, start, facing);
         else projectile = PlaceholderEffects.Projectile(start, attack.damageType);
 
@@ -302,7 +331,8 @@ public class CombatEffects : MonoBehaviour
         }
 
         // Stop emitting so trails fade out instead of vanishing
-        PlaceholderEffects.Stop(projectile);
+        if (attack.vfxTheme != VfxTheme.Default && attack.projectilePrefab == null) InkFx.Stop(projectile, 1.5f);
+        else PlaceholderEffects.Stop(projectile);
     }
 
     // Particles, flash, shake and numbers on one card when the attack lands
@@ -347,6 +377,8 @@ public class CombatEffects : MonoBehaviour
     {
         if (attack.hitEffectPrefab != null)
             Destroy(Instantiate(attack.hitEffectPrefab, position, Quaternion.identity), 3f);
+        else if (attack.vfxTheme != VfxTheme.Default)
+            ThemedEffects.Impact(attack.vfxTheme, position, direction, k, attack.damageType == DamageType.Heal);
         else if (attack.damageType == DamageType.Heal)
             PlayOnce(Slot(l => l.healHit), position, () => PlaceholderEffects.HealHit(position, k));
         else if (attack.damageType == DamageType.Magic)
@@ -373,7 +405,7 @@ public class CombatEffects : MonoBehaviour
     {
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
-        PlayOnce(Slot(l => l.burnTick), position, () => PlaceholderEffects.Burn(position, false));
+        PlayOnce(Slot(l => l.burnTick), position, () => Tick(ThemedEffects.AuraKind.Burn, unit, () => PlaceholderEffects.Burn(position, false)));
         StatusHit(unit, $"-{amount}", PlaceholderEffects.BurnColor, true);
     }
 
@@ -381,7 +413,7 @@ public class CombatEffects : MonoBehaviour
     {
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
-        PlayOnce(Slot(l => l.poisonTick), position, () => PlaceholderEffects.Poison(position, false));
+        PlayOnce(Slot(l => l.poisonTick), position, () => Tick(ThemedEffects.AuraKind.Poison, unit, () => PlaceholderEffects.Poison(position, false)));
         StatusHit(unit, $"-{amount}", PlaceholderEffects.PoisonColor, true);
     }
 
@@ -389,15 +421,22 @@ public class CombatEffects : MonoBehaviour
     {
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
-        PlayOnce(Slot(l => l.regenerationTick), position, () => PlaceholderEffects.Regeneration(position, false));
+        PlayOnce(Slot(l => l.regenerationTick), position, () => Tick(ThemedEffects.AuraKind.Regeneration, unit, () => PlaceholderEffects.Regeneration(position, false)));
         StatusHit(unit, $"+{amount}", PlaceholderEffects.HealColor, false);
+    }
+
+    // The ink-style tick burst, or the placeholder with ink auras off
+    void Tick(ThemedEffects.AuraKind kind, CardUnit unit, System.Action placeholder)
+    {
+        if (inkAuras) ThemedEffects.Tick(kind, unit);
+        else placeholder();
     }
 
     void OnStunned(CardUnit unit)
     {
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
-        PlayOnce(Slot(l => l.stunTick), position, () => PlaceholderEffects.Stars(position, false, false));
+        PlayOnce(Slot(l => l.stunTick), position, () => Tick(ThemedEffects.AuraKind.Stun, unit, () => PlaceholderEffects.Stars(position, false, false)));
         StartCoroutine(Flash(unit, PlaceholderEffects.StunColor));
         StartCoroutine(FloatText(unit.transform, "STUNNED", PlaceholderEffects.StunColor, 0, 1.2f, textDuration * 1.5f));
     }
@@ -427,7 +466,8 @@ public class CombatEffects : MonoBehaviour
         }
         foreach ((CardInstance, AuraSlot) key in finished)
         {
-            PlaceholderEffects.Stop(auras[key]);
+            if (auras[key] != null && auras[key].GetComponent<FollowCard>() != null) InkFx.Stop(auras[key], 1.5f);
+            else PlaceholderEffects.Stop(auras[key]);
             auras.Remove(key);
         }
 
@@ -476,6 +516,13 @@ public class CombatEffects : MonoBehaviour
 
         GameObject aura;
         if (entry != null && entry.IsSet) aura = SpawnEffect(entry, position);
+        else if (inkAuras)
+        {
+            // Ink-style aura that follows the unit on its own (not parented to the card, whose scale would squash it)
+            CardUnit unit = card.GetComponent<CardUnit>();
+            if (unit != null) return ThemedEffects.Aura((ThemedEffects.AuraKind)(int)slot, unit);
+            return null;
+        }
         else
         {
             switch (slot)
@@ -532,17 +579,24 @@ public class CombatEffects : MonoBehaviour
             delay = Mathf.Max(0f, hitTime - Time.time) + hitDuration * 0.5f;
 
         float duration = Mathf.Max(0.1f, CombatManager.Instance.DefeatDelay - delay - 0.05f);
-        StartCoroutine(PlayDefeat(unit.transform, delay, duration));
+        StartCoroutine(PlayDefeat(unit, delay, duration));
     }
 
-    // Shatter, then the card flips over (showing its back), shrinks and sinks before CombatManager removes it
-    IEnumerator PlayDefeat(Transform card, float delay, float duration)
+    // Shatter (ink splat, shards, the star crest flying off and "KO!"), then the card flips over (showing its back),
+    // shrinks and sinks before CombatManager removes it. Tokens crack and shrink away on their own (UnitTokens)
+    IEnumerator PlayDefeat(CardUnit unit, float delay, float duration)
     {
         if (delay > 0f) yield return new WaitForSeconds(delay);
-        if (card == null) yield break;
+        if (unit == null) yield break;
+        Transform card = unit.transform;
 
         Vector3 position = Above(card);
-        PlayOnce(Slot(l => l.defeat), position, () => PlaceholderEffects.Shatter(position));
+        UnitTokens.StartDefeat(unit); // The token cracks and shrinks from this moment
+        PlayOnce(Slot(l => l.defeat), position, () =>
+        {
+            if (inkAuras) ThemedEffects.Defeat(unit);
+            else PlaceholderEffects.Shatter(position);
+        });
         AddShake(0.4f);
 
         Vector3 startScale = card.localScale;
@@ -568,6 +622,12 @@ public class CombatEffects : MonoBehaviour
     // Uses a property block so the card's material isn't copied (Unity never cleans those copies up)
     IEnumerator Flash(CardUnit unit, Color color)
     {
+        // Tokens flash their own silhouette (the card's renderers are hidden)
+        if (UnitTokens.IsToken(unit))
+        {
+            UnitTokens.Flash(unit, color, hitDuration);
+            yield break;
+        }
         if (flashBlock == null) flashBlock = new MaterialPropertyBlock();
 
         List<(Renderer, string, Color)> targets = new List<(Renderer, string, Color)>();
@@ -694,7 +754,13 @@ public class CombatEffects : MonoBehaviour
 
     // ---- Helpers ----
 
-    Vector3 Above(Transform card) => card.position + Vector3.up * effectHeight;
+    // Where effects play on a card: the middle of its standing token, or just above a flat card
+    Vector3 Above(Transform card)
+    {
+        CardUnit unit = card != null ? card.GetComponent<CardUnit>() : null;
+        if (unit != null && UnitTokens.IsToken(unit)) return ThemedEffects.OnUnit(unit, 0.5f);
+        return card.position + Vector3.up * effectHeight;
+    }
 
     int BoardDistance(CardInstance a, CardInstance b)
     {

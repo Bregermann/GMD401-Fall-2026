@@ -57,7 +57,9 @@ public class AttackData : ScriptableObject
     public int passiveDamage = 100;                              // For DamageAttackers: damage dealt to each enemy that attacks the user
 
     [Header("Visual Effects")]
-    // Optional. Leave empty to use the default effect for the damage type
+    public VfxTheme vfxTheme = VfxTheme.Default;           // Look of its effects (ice, wind, tech...). Default = older placeholder effects
+    public VfxSignature vfxSignature = VfxSignature.None;  // Extra one-off effect for a big signature move
+    // Optional. Leave empty to use the theme's effects
     public GameObject hitEffectPrefab;  // Spawned on each card hit, removed after 3 seconds
     public GameObject projectilePrefab; // Flies from the attacker to the target when they aren't next to each other
 }

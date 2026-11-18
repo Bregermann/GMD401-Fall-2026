@@ -39,3 +39,5 @@ MonoBehaviour:
     amount: 0
     duration: 0
     ignoreStagger: 1
+  vfxTheme: 14
+  vfxSignature: 0

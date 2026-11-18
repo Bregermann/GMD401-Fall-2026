@@ -34,6 +34,11 @@ public class CombatManager : MonoBehaviour
         if (GetComponent<BoardHighlights>() == null) gameObject.AddComponent<BoardHighlights>();
         if (GetComponent<SpaceBackground>() == null) gameObject.AddComponent<SpaceBackground>();
         if (GetComponent<BoardStyle>() == null) gameObject.AddComponent<BoardStyle>();
+        if (GetComponent<BattleHUD>() == null) gameObject.AddComponent<BattleHUD>();
+        if (GetComponent<CardHover>() == null) gameObject.AddComponent<CardHover>();
+        if (GetComponent<CameraRig>() == null) gameObject.AddComponent<CameraRig>();
+        if (GetComponent<ScreenLook>() == null) gameObject.AddComponent<ScreenLook>();
+        if (GetComponent<UnitTokens>() == null) gameObject.AddComponent<UnitTokens>();
     }
 
     void Start()

@@ -607,10 +607,10 @@ public static class PlaceholderEffects
         tmp.fontSize = fontSize;
         tmp.color = color;
         tmp.fontStyle = FontStyles.Bold;
+        // Inked look: chunky Lilita One with a thick ink outline, for words like STUNNED and numbers alike
+        GameFonts.UseInked(tmp, 0.3f);
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.rectTransform.sizeDelta = new Vector2(10f, 2f); // Wide so it stays on one line
-        tmp.outlineWidth = 0.25f;
-        tmp.outlineColor = Color.black;
 
         textObject.transform.position = position;
         if (Camera.main != null) textObject.transform.rotation = Camera.main.transform.rotation;

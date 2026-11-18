@@ -122,7 +122,7 @@ public class TurnManager : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (selectedAttack != null && mouse != null && mouse.leftButton.wasPressedThisFrame)
         {
-            CardUnit target = CardUnit.UnderMouse();
+            CardUnit target = CardHover.UnderMouse();
             if (target != null) UseAttack(target);
         }
     }
@@ -132,6 +132,28 @@ public class TurnManager : MonoBehaviour
     // The active card is waiting for its player: move, attack or end turn
     public bool CanAct => Phase == GamePhase.Battle && ActiveUnit != null && !isBusy;
     public AttackData SelectedAttack => selectedAttack;
+    public bool HasAttacked => hasAttacked;
+
+    // Cards still to act this round, in turn order (not the active card). For the turn order UI
+    public List<CardUnit> UpcomingTurns()
+    {
+        List<CardUnit> waiting = LivingUnits().FindAll(u => !actedThisRound.Contains(u.Instance));
+        SortByTurnOrder(waiting);
+        return waiting;
+    }
+
+    // Every card in next round's order. Full ties use this round's coin flips, so it's a best guess
+    public List<CardUnit> NextRoundOrder()
+    {
+        List<CardUnit> all = LivingUnits();
+        SortByTurnOrder(all);
+        return all;
+    }
+
+    void SortByTurnOrder(List<CardUnit> list)
+    {
+        list.Sort((a, b) => a == b ? 0 : GoesBefore(a.Instance, b.Instance) ? -1 : 1);
+    }
 
     // Ends the active card's turn. False if it can't right now (e.g. mid-drag)
     public bool EndTurn()

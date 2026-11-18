@@ -39,3 +39,5 @@ MonoBehaviour:
   passiveDamage: 100
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}
+  vfxTheme: 12
+  vfxSignature: 0

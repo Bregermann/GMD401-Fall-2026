@@ -107,7 +107,7 @@ public class DraftManager : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (mouse != null && mouse.leftButton.wasPressedThisFrame)
         {
-            CardUnit clicked = CardUnit.UnderMouse();
+            CardUnit clicked = CardHover.UnderMouse();
             if (clicked != null && available.Contains(clicked))
                 Select(clicked == selected ? null : clicked);
         }

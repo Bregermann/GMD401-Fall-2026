@@ -35,3 +35,5 @@ MonoBehaviour:
   - type: 0
     amount: 100
     duration: 2
+  vfxTheme: 14
+  vfxSignature: 8

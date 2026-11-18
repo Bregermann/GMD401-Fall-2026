@@ -16,6 +16,8 @@ MonoBehaviour:
   characterClass: 4
   artwork: {fileID: 1371347551380637131, guid: a47baddc42fea044bb44c482835ea979, type: 3}
   artHasText: 1
+  portraitFocus: {x: 0.45, y: 0.69}
+  portraitZoom: 0.42
   maxHP: 3200
   physicalDefense: 40
   magicDefense: 60

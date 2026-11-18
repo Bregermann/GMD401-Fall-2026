@@ -34,3 +34,5 @@ MonoBehaviour:
   selfStatusEffects: []
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}
+  vfxTheme: 4
+  vfxSignature: 0

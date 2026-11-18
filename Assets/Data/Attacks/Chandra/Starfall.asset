@@ -33,3 +33,5 @@ MonoBehaviour:
     duration: 0
     ignoreStagger: 0
   selfStatusEffects: []
+  vfxTheme: 9
+  vfxSignature: 1

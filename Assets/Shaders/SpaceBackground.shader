@@ -1,4 +1,4 @@
-// Pixelated swirling-paint space backdrop, in the style of Balatro's background, in the card back's colours.
+// Swirling-paint space backdrop in slate-navy to match the UI's slate blue-grey (colour steps give it flat cartoon bands), after Balatro's background.
 // The paint swirl is a spin-and-warp pattern mixed between three colours, drawn on a coarse pixel grid.
 // Pixel stars twinkle on top and a faint galaxy glow sits in the swirl's centre. Dim darkens everything evenly
 // (like a light black cover), so colours stay rich while the board and cards stand out.
@@ -8,13 +8,13 @@ Shader "Stratafield/Space Background"
     Properties
     {
         [Header(Colours)]
-        _Colour1 ("Swirl Violet", Color) = (0.52, 0.22, 0.66, 1)
-        _Colour2 ("Swirl Navy", Color) = (0.07, 0.13, 0.40, 1)
-        _Colour3 ("Swirl Deep Space", Color) = (0.02, 0.02, 0.07, 1)
-        _GlowColour ("Centre Glow", Color) = (0.95, 0.55, 0.85, 1)
+        _Colour1 ("Swirl Slate", Color) = (0.22, 0.31, 0.37, 1)
+        _Colour2 ("Swirl Navy", Color) = (0.09, 0.13, 0.19, 1)
+        _Colour3 ("Swirl Deep Space", Color) = (0.02, 0.03, 0.05, 1)
+        _GlowColour ("Centre Glow", Color) = (0.6, 0.76, 0.78, 1)
 
         [Header(Look)]
-        _PixelsAcross ("Pixels Across", Range(60, 1200)) = 420
+        _PixelsAcross ("Pixels Across", Range(60, 1200)) = 700
         _ColourSteps ("Colour Steps (0 = smooth)", Range(0, 32)) = 14
         _Contrast ("Swirl Contrast", Range(1, 6)) = 3.2
         _SpinAmount ("Spin Amount", Range(0, 1)) = 0.3

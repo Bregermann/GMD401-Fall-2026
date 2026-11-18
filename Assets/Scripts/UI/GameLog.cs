@@ -20,21 +20,19 @@ public class GameLog : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showDebugMessages = false;       // Also show Debug.Log lines in grey (for testing)
 
-    // Colours (hex, for TextMeshPro rich text)
-    const string Player1 = "#5A8CFF";
+    // Colours (hex, for TextMeshPro rich text), matching the Inked Star Chart palette
+    const string Player1 = "#4D9BFF";
     const string Player2 = "#FF5A5A";
     const string DamageHex = "#FF9A55";
     const string HealHex = "#66E07A";
     const string StatusHex = "#C08CFF";
-    const string GoldHex = "#FFD34D";
-    const string DimHex = "#8A93A8";
+    const string GoldHex = "#FFE39A";
+    const string DimHex = "#A9BDC2";
 
-    static readonly Color PanelColour = new Color(0.06f, 0.07f, 0.11f, 0.88f);
-    static readonly Color BorderColour = new Color(0.35f, 0.42f, 0.65f, 0.6f);
-    static readonly Color RowColour = new Color(1f, 1f, 1f, 0.035f);
-    static readonly Color TextColour = new Color(0.9f, 0.92f, 0.96f);
-    static readonly Color GoldColour = new Color(1f, 0.83f, 0.3f);
-    static readonly Color SystemAccent = new Color(0.55f, 0.6f, 0.75f);
+    static readonly Color RowColour = new Color(1f, 1f, 1f, 0.06f);
+    static readonly Color TextColour = new Color(0.96f, 0.95f, 1f);
+    static readonly Color GoldColour = new Color(1f, 0.89f, 0.6f);
+    static readonly Color SystemAccent = new Color(0.66f, 0.68f, 0.82f);
 
     private RectTransform panel;
     private GameObject body;
@@ -44,6 +42,8 @@ public class GameLog : MonoBehaviour
     private TextMeshProUGUI toggleLabel;
     private Sprite rounded;
     private bool collapsed;
+    private bool previewMode;      // Built by the editor preview: no fade-ins (coroutines don't run outside Play mode)
+    private GameObject canvasRoot;
     private readonly Queue<GameObject> entries = new Queue<GameObject>();
 
     void Awake()
@@ -236,6 +236,7 @@ public class GameLog : MonoBehaviour
         Image background = row.GetComponent<Image>();
         background.sprite = rounded;
         background.type = Image.Type.Sliced;
+        background.pixelsPerUnitMultiplier = 3f; // Small corners for thin rows
         background.color = RowColour;
 
         HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
@@ -264,9 +265,9 @@ public class GameLog : MonoBehaviour
         GameObject row = new GameObject("Divider", typeof(RectTransform), typeof(CanvasGroup), typeof(LayoutElement));
         row.transform.SetParent(content, false);
         row.GetComponent<LayoutElement>().preferredHeight = fontSize + 12;
-        TextMeshProUGUI label = MakeText(row.transform, $"<color={DimHex}>—</color>  {title}  <color={DimHex}>—</color>", fontSize - 4, TextAlignmentOptions.Center, Hex(DimHex));
-        label.characterSpacing = 8;
-        label.fontStyle = FontStyles.Bold;
+        TextMeshProUGUI label = MakeText(row.transform, $"<color={GoldHex}>—</color>  {title}  <color={GoldHex}>—</color>", fontSize - 2, TextAlignmentOptions.Center, GoldColour);
+        GameFonts.UseTitle(label, 0.2f);
+        label.characterSpacing = 3;
         Stretch(label.rectTransform);
         Push(row);
     }
@@ -277,7 +278,8 @@ public class GameLog : MonoBehaviour
         entries.Enqueue(row);
         while (entries.Count > maxEntries) Destroy(entries.Dequeue());
 
-        StartCoroutine(FadeIn(row.GetComponent<CanvasGroup>()));
+        if (previewMode) row.GetComponent<CanvasGroup>().alpha = 1f;
+        else StartCoroutine(FadeIn(row.GetComponent<CanvasGroup>()));
         Canvas.ForceUpdateCanvases();
         scroll.verticalNormalizedPosition = 0f;
     }
@@ -297,7 +299,7 @@ public class GameLog : MonoBehaviour
     {
         collapsed = !collapsed;
         body.SetActive(!collapsed);
-        panel.sizeDelta = new Vector2(panelSize.x, collapsed ? 44f : panelSize.y);
+        panel.sizeDelta = new Vector2(panelSize.x, collapsed ? 64f : panelSize.y); // Header plus the rim
         toggleLabel.text = collapsed ? "SHOW" : "HIDE";
         if (!collapsed)
         {
@@ -308,11 +310,13 @@ public class GameLog : MonoBehaviour
 
     // ---- Building the panel ----
 
+    // Inked Star Chart panel (InkUI): navy with an ink-and-gold rim and a hard shadow, a darker header strip
     void BuildPanel()
     {
-        rounded = MakeRoundedSprite();
+        rounded = InkUI.FillSprite;
 
         GameObject canvasObject = new GameObject("GameLogCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasRoot = canvasObject;
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100; // Above other UI, below the card inspector
@@ -320,47 +324,48 @@ public class GameLog : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
 
-        // Panel with a thin border (border is a slightly bigger panel behind)
-        GameObject border = MakeImage("GameLogBorder", canvasObject.transform, BorderColour);
-        panel = (RectTransform)border.transform;
+        Image frame = InkUI.FramedPanel(canvasObject.transform, "GameLogPanel", InkUI.PanelColor);
+        panel = frame.rectTransform;
         panel.anchorMin = panel.anchorMax = panel.pivot = Vector2.zero;
         panel.anchoredPosition = margin;
         panel.sizeDelta = panelSize;
+        Transform fill = panel;
 
-        GameObject fill = MakeImage("GameLogPanel", border.transform, PanelColour);
-        RectTransform fillRect = (RectTransform)fill.transform;
-        Stretch(fillRect, 1.5f);
-
-        // Header: title, round, and a hide/show toggle. The whole header is clickable
-        GameObject header = MakeImage("Header", fill.transform, new Color(1f, 1f, 1f, 0.04f));
+        // Header inside the rim: title, round, and a hide/show toggle. The whole header is clickable
+        GameObject header = new GameObject("Header", typeof(RectTransform), typeof(Image));
+        header.transform.SetParent(fill, false);
+        header.GetComponent<Image>().color = InkUI.PanelDark;
         RectTransform headerRect = (RectTransform)header.transform;
         headerRect.anchorMin = new Vector2(0f, 1f);
         headerRect.anchorMax = Vector2.one;
         headerRect.pivot = new Vector2(0.5f, 1f);
-        headerRect.sizeDelta = new Vector2(0f, 40f);
+        headerRect.offsetMin = new Vector2(11f, -53f);
+        headerRect.offsetMax = new Vector2(-11f, -11f);
+        header.transform.SetSiblingIndex(0); // Under the rim
         header.AddComponent<Button>().onClick.AddListener(ToggleCollapsed);
 
-        TextMeshProUGUI title = MakeText(header.transform, "BATTLE LOG", fontSize - 2, TextAlignmentOptions.MidlineLeft, new Color(0.75f, 0.8f, 1f));
-        title.fontStyle = FontStyles.Bold;
-        title.characterSpacing = 10;
+        TextMeshProUGUI title = MakeText(header.transform, "BATTLE LOG", fontSize + 3, TextAlignmentOptions.MidlineLeft, TextColour);
+        GameFonts.UseTitle(title, 0.2f);
+        title.characterSpacing = 3;
         Stretch(title.rectTransform, 0f, 14f);
 
-        roundLabel = MakeText(header.transform, "", fontSize - 4, TextAlignmentOptions.MidlineRight, GoldColour);
-        roundLabel.fontStyle = FontStyles.Bold;
-        roundLabel.characterSpacing = 6;
+        roundLabel = MakeText(header.transform, "", fontSize, TextAlignmentOptions.MidlineRight, GoldColour);
+        GameFonts.UseTitle(roundLabel, 0.2f);
+        roundLabel.characterSpacing = 2;
         Stretch(roundLabel.rectTransform, 0f, 70f);
 
-        toggleLabel = MakeText(header.transform, "HIDE", fontSize - 6, TextAlignmentOptions.MidlineRight, Hex(DimHex));
+        toggleLabel = MakeText(header.transform, "HIDE", fontSize - 4, TextAlignmentOptions.MidlineRight, Hex(DimHex));
         Stretch(toggleLabel.rectTransform, 0f, 14f);
 
-        // Scrolling list under the header
+        // Scrolling list under the header, inside the rim
         body = new GameObject("Body", typeof(RectTransform), typeof(RectMask2D), typeof(ScrollRect));
-        body.transform.SetParent(fill.transform, false);
+        body.transform.SetParent(fill, false);
+        body.transform.SetSiblingIndex(1); // Under the rim too
         RectTransform bodyRect = (RectTransform)body.transform;
         bodyRect.anchorMin = Vector2.zero;
         bodyRect.anchorMax = Vector2.one;
-        bodyRect.offsetMin = new Vector2(8f, 8f);
-        bodyRect.offsetMax = new Vector2(-8f, -46f);
+        bodyRect.offsetMin = new Vector2(16f, 16f);
+        bodyRect.offsetMax = new Vector2(-16f, -60f);
 
         GameObject list = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
         list.transform.SetParent(body.transform, false);
@@ -385,20 +390,45 @@ public class GameLog : MonoBehaviour
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = 25f;
 
-        // Scrolling and the header button need an EventSystem
-        if (FindAnyObjectByType<EventSystem>() == null)
+        // Scrolling and the header button need an EventSystem (only while playing, so the editor preview never adds one)
+        if (Application.isPlaying && FindAnyObjectByType<EventSystem>() == null)
             new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
     }
 
-    GameObject MakeImage(string name, Transform parent, Color colour)
+    // ---- Editor preview ----
+
+    // The log's canvas, so the editor preview can tidy it up
+    public GameObject Root => canvasRoot;
+
+    // Builds the log outside Play mode with example lines using the given cards. Used by UIPreview
+    public void BuildPreview(List<CardData> cards)
     {
-        GameObject imageObject = new GameObject(name, typeof(RectTransform), typeof(Image));
-        imageObject.transform.SetParent(parent, false);
-        Image image = imageObject.GetComponent<Image>();
-        image.sprite = rounded;
-        image.type = Image.Type.Sliced;
-        image.color = colour;
-        return imageObject;
+        previewMode = true;
+        BuildPanel();
+        if (cards == null || cards.Count == 0) return;
+
+        string first = PreviewName(cards, 0, 1), second = PreviewName(cards, 1, 2), third = PreviewName(cards, 2, 1);
+        AttackData attack = cards[0].attack1 != null ? cards[0].attack1 : cards[0].attack2;
+        string attackName = attack != null ? attack.attackName : "Attack";
+
+        AddDivider("DRAFT");
+        AddEntry($"Coin flip: {PlayerName(1)} picks first", 0);
+        AddEntry($"{PlayerName(1)} drafts {first}", 1);
+        AddEntry($"{PlayerName(2)} drafts {second}", 2);
+        AddDivider("BATTLE");
+        AddEntry($"<color={DimHex}>{first}'s turn</color>", 1, true);
+        AddEntry($"{first} <color={DimHex}>→</color> {second}  <i>{attackName}</i>  {Colour(DamageHex, "-340")}  {Colour(GoldHex, "bonus")}", 1);
+        AddEntry($"{second} burns  {Colour(DamageHex, "-60")}", 2);
+        AddDivider("ROUND 2");
+        AddEntry($"{third} regenerates  {Colour(HealHex, "+120")}", 1);
+        AddEntry($"{Colour(Player2, "×")} {second} is defeated", 2);
+        roundLabel.text = "ROUND 2";
+    }
+
+    static string PreviewName(List<CardData> cards, int index, int owner)
+    {
+        CardData data = cards[Mathf.Min(index, cards.Count - 1)];
+        return $"<b>{Colour(PlayerHex(owner), data.cardName)}</b>";
     }
 
     static TextMeshProUGUI MakeText(Transform parent, string text, float size, TextAlignmentOptions alignment, Color colour)
@@ -408,6 +438,7 @@ public class GameLog : MonoBehaviour
         TextMeshProUGUI tmp = textObject.GetComponent<TextMeshProUGUI>();
         tmp.text = text;
         tmp.fontSize = size;
+        GameFonts.UseBody(tmp);
         tmp.alignment = alignment;
         tmp.color = colour;
         tmp.textWrappingMode = TextWrappingModes.Normal;
@@ -429,26 +460,5 @@ public class GameLog : MonoBehaviour
     {
         ColorUtility.TryParseHtmlString(hex, out Color colour);
         return colour;
-    }
-
-    // White rounded rectangle that stretches without warping its corners (9-sliced)
-    static Sprite MakeRoundedSprite()
-    {
-        const int size = 32, radius = 10;
-        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                // Distance outside the rounded corner, 0 inside
-                float dx = Mathf.Max(radius - x - 0.5f, x + 0.5f - (size - radius), 0f);
-                float dy = Mathf.Max(radius - y - 0.5f, y + 0.5f - (size - radius), 0f);
-                float alpha = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + 0.5f);
-                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-            }
-        }
-        texture.Apply();
-        return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect,
-                             new Vector4(radius + 1, radius + 1, radius + 1, radius + 1));
     }
 }
