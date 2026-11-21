@@ -94,10 +94,12 @@ public class CardInspector : MonoBehaviour
         panel.SetActive(true);
         inspectCamera.enabled = true;
         IsOpen = true;
+        GameSfx.Play("card.inspect");
     }
 
     void Close()
     {
+        if (IsOpen) GameSfx.Play("card.inspectClose");
         if (copy != null) Destroy(copy);
         copy = null;
         inspected = null;

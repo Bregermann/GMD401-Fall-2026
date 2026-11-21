@@ -20,6 +20,8 @@ public class OptionsManager : MonoBehaviour
     Resolution[] resolutions;
 
     public Slider masterVolumeSlider;
+    public Slider musicVolumeSlider; // Added to link up with SoundManager's music volume
+    public Slider sfxVolumeSlider;   // Added to link up with SoundManager's SFX volume
     public Toggle fullscreenToggle;
 
     public GameObject winPanel;
@@ -70,6 +72,9 @@ private void OnDisable()
     {
         masterVolumeSlider.onValueChanged.RemoveListener(SetVolume);
     }
+    // Added to unhook the music and SFX sliders too
+    if (musicVolumeSlider != null) musicVolumeSlider.onValueChanged.RemoveListener(SetMusicVolume);
+    if (sfxVolumeSlider != null) sfxVolumeSlider.onValueChanged.RemoveListener(SetSfxVolume);
 }
 
 private void InitializeVolumeSlider()
@@ -80,6 +85,7 @@ private void InitializeVolumeSlider()
         return;
     }
 
+    SoundManager.EnsureExists(); // Added so the sliders work when GameScene is played on its own
     if (SoundManager.Instance == null)
     {
         Debug.LogError("SoundManager does not exist!");
@@ -93,6 +99,20 @@ private void InitializeVolumeSlider()
     );
 
     masterVolumeSlider.onValueChanged.AddListener(SetVolume);
+
+    // Added to load the music and SFX sliders the same way
+    if (musicVolumeSlider != null)
+    {
+        musicVolumeSlider.onValueChanged.RemoveListener(SetMusicVolume);
+        musicVolumeSlider.SetValueWithoutNotify(SoundManager.Instance.GetMusicVolume());
+        musicVolumeSlider.onValueChanged.AddListener(SetMusicVolume);
+    }
+    if (sfxVolumeSlider != null)
+    {
+        sfxVolumeSlider.onValueChanged.RemoveListener(SetSfxVolume);
+        sfxVolumeSlider.SetValueWithoutNotify(SoundManager.Instance.GetSfxVolume());
+        sfxVolumeSlider.onValueChanged.AddListener(SetSfxVolume);
+    }
 
     Debug.Log("Loaded volume: " + SoundManager.Instance.GetMasterVolume());
 }
@@ -141,6 +161,18 @@ private void InitializeVolumeSlider()
     {
         SoundManager.Instance.SetMasterVolume(volume);
     }
+    }
+
+    // Added for the music slider
+    public void SetMusicVolume(float volume)
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.SetMusicVolume(volume);
+    }
+
+    // Added for the SFX slider
+    public void SetSfxVolume(float volume)
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.SetSfxVolume(volume);
     }
 
     public void SetResolution(int resolutionIndex)

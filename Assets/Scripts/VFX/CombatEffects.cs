@@ -151,6 +151,7 @@ public class CombatEffects : MonoBehaviour
 
         // Wind-up
         float windup;
+        GameSfx.Windup(attack, !(ranged || onSelf), attacker.transform.position);
         if (ranged || onSelf)
         {
             windup = chargeTime;
@@ -173,6 +174,17 @@ public class CombatEffects : MonoBehaviour
             StartCoroutine(Projectile(attack, start, end, travel, windup));
         }
         float impact = windup + travel;
+
+        // Impact sound on the exact impact moment (the launch and travel sounds play in Projectile)
+        int loudest = 0;
+        foreach (AttackHit hit in result.hits) loudest = Mathf.Max(loudest, Mathf.Max(hit.damage, hit.healed));
+        bool buffMove = loudest == 0 && attack.damageType != DamageType.Heal;
+        Vector3 soundAt = hasTarget ? target.transform.position : attacker.transform.position;
+        StartCoroutine(Delayed(impact, () =>
+        {
+            if (buffMove) GameSfx.BuffMove(attack, soundAt);
+            else GameSfx.Impact(attack, Intensity(loudest), soundAt);
+        }));
 
         // Area effects at the moment of impact
         if (themed)
@@ -293,6 +305,7 @@ public class CombatEffects : MonoBehaviour
         if (delay > 0f) yield return new WaitForSeconds(delay);
         if (card == null) yield break;
         PlaceholderEffects.Dust(Above(card) - Vector3.up * effectHeight * 0.8f, direction);
+        GameSfx.PlayLayers(GameSfx.Knockback, 1f, GameSfx.PanAt(card.position));
 
         for (float t = 0f; t < knockbackSlideTime; t += Time.deltaTime)
         {
@@ -309,6 +322,20 @@ public class CombatEffects : MonoBehaviour
     {
         if (delay > 0f) yield return new WaitForSeconds(delay);
 
+        // Launch sound, then a loop that pans along with the projectile until it lands
+        AudioSource travelSound = GameSfx.Launch(attack, start);
+        try
+        {
+            yield return FlyProjectile(attack, start, end, travel, travelSound);
+        }
+        finally
+        {
+            GameSfx.StopLoop(travelSound);
+        }
+    }
+
+    IEnumerator FlyProjectile(AttackData attack, Vector3 start, Vector3 end, float travel, AudioSource travelSound)
+    {
         Quaternion facing = Quaternion.LookRotation(end - start);
         EffectEntry entry = Slot(l => attack.damageType == DamageType.Heal ? l.healProjectile
                                     : attack.damageType == DamageType.Magic ? l.magicProjectile : l.physicalProjectile);
@@ -327,6 +354,7 @@ public class CombatEffects : MonoBehaviour
         {
             if (projectile == null) yield break;
             projectile.transform.position = Vector3.Lerp(start, end, t / travel);
+            GameSfx.SetPan(travelSound, projectile.transform.position);
             yield return null;
         }
 
@@ -355,7 +383,11 @@ public class CombatEffects : MonoBehaviour
         // Numbers sized by how big the hit is, coloured by damage type
         float size = Mathf.Lerp(0.85f, 1.5f, (k - 0.6f));
         int line = 0;
-        if (hit.executed) ShowText(unit, "Executed!", PlaceholderEffects.DebuffColor, line++, 1.2f);
+        float pan = GameSfx.PanAt(unit.transform.position);
+        if (hit.executed) { ShowText(unit, "Executed!", PlaceholderEffects.DebuffColor, line++, 1.2f); GameSfx.PlayLayers(GameSfx.Execute, 1f, pan); }
+        if (hit.bonusTriggered) GameSfx.PlayLayers(GameSfx.Bonus, 1f, pan);
+        if (attack.targetStatusEffects != null && hit.card.IsAlive && attack.targetStatusEffects.Length > 0)
+            GameSfx.PlayLayers(attack.targetStatusEffects[0].type.IsBuff() ? GameSfx.Buff : GameSfx.Debuff, 0.7f, pan);
         if (hit.damage > 0) ShowText(unit, $"-{hit.damage}", NumberColor(attack.damageType), line++, size);
         if (hit.healed > 0) ShowText(unit, $"+{hit.healed}", PlaceholderEffects.HealColor, line++, size);
         if (hit.bonusTriggered) ShowText(unit, "Bonus!", PlaceholderEffects.BonusColor, line++, 0.7f);
@@ -406,6 +438,7 @@ public class CombatEffects : MonoBehaviour
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
         PlayOnce(Slot(l => l.burnTick), position, () => Tick(ThemedEffects.AuraKind.Burn, unit, () => PlaceholderEffects.Burn(position, false)));
+        GameSfx.PlayLayers(GameSfx.Burn, 1f, GameSfx.PanAt(unit.transform.position));
         StatusHit(unit, $"-{amount}", PlaceholderEffects.BurnColor, true);
     }
 
@@ -414,6 +447,7 @@ public class CombatEffects : MonoBehaviour
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
         PlayOnce(Slot(l => l.poisonTick), position, () => Tick(ThemedEffects.AuraKind.Poison, unit, () => PlaceholderEffects.Poison(position, false)));
+        GameSfx.PlayLayers(GameSfx.Poison, 1f, GameSfx.PanAt(unit.transform.position));
         StatusHit(unit, $"-{amount}", PlaceholderEffects.PoisonColor, true);
     }
 
@@ -422,6 +456,7 @@ public class CombatEffects : MonoBehaviour
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
         PlayOnce(Slot(l => l.regenerationTick), position, () => Tick(ThemedEffects.AuraKind.Regeneration, unit, () => PlaceholderEffects.Regeneration(position, false)));
+        GameSfx.PlayLayers(GameSfx.Regen, 1f, GameSfx.PanAt(unit.transform.position));
         StatusHit(unit, $"+{amount}", PlaceholderEffects.HealColor, false);
     }
 
@@ -437,6 +472,7 @@ public class CombatEffects : MonoBehaviour
         if (unit == null) return;
         Vector3 position = Above(unit.transform);
         PlayOnce(Slot(l => l.stunTick), position, () => Tick(ThemedEffects.AuraKind.Stun, unit, () => PlaceholderEffects.Stars(position, false, false)));
+        GameSfx.PlayLayers(GameSfx.Stun, 1f, GameSfx.PanAt(unit.transform.position));
         StartCoroutine(Flash(unit, PlaceholderEffects.StunColor));
         StartCoroutine(FloatText(unit.transform, "STUNNED", PlaceholderEffects.StunColor, 0, 1.2f, textDuration * 1.5f));
     }
@@ -592,6 +628,7 @@ public class CombatEffects : MonoBehaviour
 
         Vector3 position = Above(card);
         UnitTokens.StartDefeat(unit); // The token cracks and shrinks from this moment
+        GameSfx.PlayLayers(GameSfx.Defeat, 1f, GameSfx.PanAt(card.position));
         PlayOnce(Slot(l => l.defeat), position, () =>
         {
             if (inkAuras) ThemedEffects.Defeat(unit);

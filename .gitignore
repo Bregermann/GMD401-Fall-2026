@@ -107,3 +107,6 @@ InitTestScene*.unity*
 
 # macOS folder files
 .DS_Store
+
+# Unused sound effects kept locally (move clips back into Assets/Audio/SFX when an attack needs them)
+/AudioLibrary/

@@ -1,0 +1,1067 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496b38531e97efd4094966d1d40397dc, type: 3}
+  m_Name: SfxLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::SfxLibrary
+  cues:
+  - id: ui.hover
+    clips:
+    - {fileID: 8300000, guid: 721f6a350e97a0a43a4ec08f696b04ee, type: 3}
+    - {fileID: 8300000, guid: 9fca362b0961f564082f5e61e28cea82, type: 3}
+    - {fileID: 8300000, guid: 2ed399c8782b91f4baf98e1f75d95ea5, type: 3}
+    - {fileID: 8300000, guid: 32418a9e0fc2a564b9c7316ea21e3196, type: 3}
+    - {fileID: 8300000, guid: f49a08a2cdf0d8f4ca5129586673a7e7, type: 3}
+    - {fileID: 8300000, guid: 39cbc680874c91640b88f26b42fd11f4, type: 3}
+    volume: 0.3
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0.01622449
+    - 0
+    - 0.039557822
+    - 0
+    - 0
+    gains:
+    - 1.450962
+    - 1.6
+    - 0.89438087
+    - 1.4010644
+    - 1.5397514
+    - 0.60446036
+  - id: ui.click
+    clips:
+    - {fileID: 8300000, guid: 7b770a24a8a984245bf4e7e405c1a8e6, type: 3}
+    - {fileID: 8300000, guid: 1ff2e1802d0221a4bb222cba0019ff77, type: 3}
+    - {fileID: 8300000, guid: 3ede37d2e86d70448ac36f67dcfa96b1, type: 3}
+    - {fileID: 8300000, guid: a92b86d00881cfa408bce39a73710bc1, type: 3}
+    - {fileID: 8300000, guid: 016d465f278305247a96ca7b3f24fbaa, type: 3}
+    volume: 0.5
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 1.6
+    - 0.89411116
+    - 0.9499144
+    - 0.87476134
+    - 0.667939
+  - id: ui.select
+    clips:
+    - {fileID: 8300000, guid: 48e2aa4b8e48dd64194d709bffdeafd8, type: 3}
+    - {fileID: 8300000, guid: 54b4fed8bdfcf7d4d86b5f62a132b3cb, type: 3}
+    - {fileID: 8300000, guid: dd72d8a75057c8b4b964cc3bb201fc85, type: 3}
+    - {fileID: 8300000, guid: 9852af5c3a63fd5439d6409cfa8c1313, type: 3}
+    - {fileID: 8300000, guid: 4f4c346590bb76143be789bcfacfb9c3, type: 3}
+    - {fileID: 8300000, guid: b0766d1c8ab3e384996f085ba9b26e78, type: 3}
+    volume: 0.55
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0.027494332
+    gains:
+    - 1.1363575
+    - 0.9585045
+    - 0.54336804
+    - 0.5412172
+    - 0.5310444
+    - 0.34875575
+  - id: ui.back
+    clips:
+    - {fileID: 8300000, guid: 76c77f536b9f34c48bc2bded386fc43d, type: 3}
+    - {fileID: 8300000, guid: bbcb8c06a8f538a44978a1e7271f0630, type: 3}
+    - {fileID: 8300000, guid: 117eca9774656484aaffa4c3ebe7f020, type: 3}
+    - {fileID: 8300000, guid: 3ceb959c891f24c429128a3dfc495d4f, type: 3}
+    volume: 0.45
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 1.6
+    - 0.795382
+    - 1.0702522
+    - 0.84665036
+  - id: ui.error
+    clips:
+    - {fileID: 8300000, guid: cb1f594589030f64aa0f97aa0c7a2c69, type: 3}
+    - {fileID: 8300000, guid: 1ece0c0f07e032a48b12f6d3313a704e, type: 3}
+    - {fileID: 8300000, guid: 4ddf73008b1a404418fd9be43ecf84bd, type: 3}
+    - {fileID: 8300000, guid: 11fec7bbf6ca0324493cd8f40a60aa5f, type: 3}
+    - {fileID: 8300000, guid: 6040181b33cdead408d3ae7a2d8cb4ea, type: 3}
+    - {fileID: 8300000, guid: 33da13e847b0c7843b14f23f082a8a2a, type: 3}
+    volume: 0.5
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0.030555556
+    - 0.01851474
+    gains:
+    - 1.0243831
+    - 0.7995884
+    - 0.6914322
+    - 0.8096593
+    - 0.47108465
+    - 0.4776407
+  - id: ui.endTurn
+    clips:
+    - {fileID: 8300000, guid: 6f93f7a27aa43cc4b932eec1cc3bfa9b, type: 3}
+    - {fileID: 8300000, guid: ec1edb9e969b5ba4dae8356fb65e266b, type: 3}
+    - {fileID: 8300000, guid: 50c297b12b82f7d40bc1d33b4d116e19, type: 3}
+    - {fileID: 8300000, guid: cf678dd4ed3051044b516f3afe981d0a, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.30966917
+    - 0.34830177
+    - 0.37428883
+    - 0.26179388
+  - id: ui.slider
+    clips:
+    - {fileID: 8300000, guid: 3bd16d9644149fb4a9042755217fa511, type: 3}
+    - {fileID: 8300000, guid: 22f3af1d7957f494f95115799c3ae4dd, type: 3}
+    - {fileID: 8300000, guid: 1af589d5fb9c85a428a50030d84b35fc, type: 3}
+    volume: 0.3
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.07
+    startTimes:
+    - 0
+    - 0
+    - 0
+    gains:
+    - 1.2950062
+    - 1.096205
+    - 0.8861523
+  - id: card.hover
+    clips:
+    - {fileID: 8300000, guid: b4123f27c6ea60848a9daf50698c5e2a, type: 3}
+    - {fileID: 8300000, guid: ffd48e9631eca33499d4cf5572307c0c, type: 3}
+    - {fileID: 8300000, guid: e760cdc1afc2da343a181d5763115100, type: 3}
+    - {fileID: 8300000, guid: b7f9982ecc94cd8499e028d8aad6f2ee, type: 3}
+    volume: 0.2
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.07
+    startTimes:
+    - 0.1310771
+    - 0
+    - 0
+    - 0
+    gains:
+    - 1.0614997
+    - 0.8365621
+    - 0.97405034
+    - 1.2683051
+  - id: card.pick
+    clips:
+    - {fileID: 8300000, guid: f14b8b3bda6e36d498c9a9c0b9ee9660, type: 3}
+    - {fileID: 8300000, guid: af39cd0179d255943b9d1872a6cfe966, type: 3}
+    - {fileID: 8300000, guid: 1f8f26cfe96c1534981d0eef82fe5cda, type: 3}
+    - {fileID: 8300000, guid: 28ac97be18fcd2549abe38281ee71b9e, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.032301586
+    - 0.12654196
+    - 0.08543084
+    - 0.022913832
+    gains:
+    - 1.5108294
+    - 1.2804157
+    - 1.6
+    - 1.25181
+  - id: card.place
+    clips:
+    - {fileID: 8300000, guid: 5e1a741d4d528f3479217c174f1060dd, type: 3}
+    - {fileID: 8300000, guid: c60aecfa1a0681f49b52ce4230e2800b, type: 3}
+    - {fileID: 8300000, guid: 84aa27752ab322d4da9dfbdc9602b8bd, type: 3}
+    - {fileID: 8300000, guid: 97e65d11e69332342bc00d279b04a56e, type: 3}
+    volume: 0.7
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.09504535
+    - 0.03792517
+    - 0.2909864
+    - 0
+    gains:
+    - 0.9338212
+    - 1.6
+    - 1.6
+    - 1.402577
+  - id: card.deal
+    clips:
+    - {fileID: 8300000, guid: b4123f27c6ea60848a9daf50698c5e2a, type: 3}
+    - {fileID: 8300000, guid: ffd48e9631eca33499d4cf5572307c0c, type: 3}
+    - {fileID: 8300000, guid: e760cdc1afc2da343a181d5763115100, type: 3}
+    - {fileID: 8300000, guid: b7f9982ecc94cd8499e028d8aad6f2ee, type: 3}
+    - {fileID: 8300000, guid: f14b8b3bda6e36d498c9a9c0b9ee9660, type: 3}
+    - {fileID: 8300000, guid: af39cd0179d255943b9d1872a6cfe966, type: 3}
+    volume: 0.45
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.1310771
+    - 0
+    - 0
+    - 0
+    - 0.032301586
+    - 0.12654196
+    gains:
+    - 1.0614997
+    - 0.8365621
+    - 0.97405034
+    - 1.2683051
+    - 1.5108294
+    - 1.2804157
+  - id: card.gather
+    clips:
+    - {fileID: 8300000, guid: 5b7314c39c2c85b46a79a44ed6f5f6f5, type: 3}
+    - {fileID: 8300000, guid: 49067c87a5f257b489fed47108710586, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.021734694
+    - 0.1559297
+    gains:
+    - 0.9148497
+    - 1.313063
+  - id: card.split
+    clips:
+    - {fileID: 8300000, guid: d7add1e56c25f704393bc56b077c2017, type: 3}
+    - {fileID: 8300000, guid: df8fac65fe61c4640b956959e6f4a171, type: 3}
+    - {fileID: 8300000, guid: dda9229d14d2af1479e89b0ab5fcbe3e, type: 3}
+    - {fileID: 8300000, guid: efce5afa56bb77a4bb0277312fa7e59c, type: 3}
+    volume: 0.55
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.08014739
+    - 0
+    - 0
+    - 0
+    gains:
+    - 1.6
+    - 1.6
+    - 1.0956728
+    - 0.89079505
+  - id: card.shuffle
+    clips:
+    - {fileID: 8300000, guid: ae33387322eab56428fc829c9c70268b, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.11243764
+    gains:
+    - 1.6
+  - id: card.inspect
+    clips:
+    - {fileID: 8300000, guid: 5b7314c39c2c85b46a79a44ed6f5f6f5, type: 3}
+    - {fileID: 8300000, guid: 49067c87a5f257b489fed47108710586, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.021734694
+    - 0.1559297
+    gains:
+    - 0.9148497
+    - 1.313063
+  - id: card.inspectClose
+    clips:
+    - {fileID: 8300000, guid: b4123f27c6ea60848a9daf50698c5e2a, type: 3}
+    - {fileID: 8300000, guid: ffd48e9631eca33499d4cf5572307c0c, type: 3}
+    - {fileID: 8300000, guid: e760cdc1afc2da343a181d5763115100, type: 3}
+    - {fileID: 8300000, guid: b7f9982ecc94cd8499e028d8aad6f2ee, type: 3}
+    - {fileID: 8300000, guid: f14b8b3bda6e36d498c9a9c0b9ee9660, type: 3}
+    - {fileID: 8300000, guid: af39cd0179d255943b9d1872a6cfe966, type: 3}
+    volume: 0.45
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.1310771
+    - 0
+    - 0
+    - 0
+    - 0.032301586
+    - 0.12654196
+    gains:
+    - 1.0614997
+    - 0.8365621
+    - 0.97405034
+    - 1.2683051
+    - 1.5108294
+    - 1.2804157
+  - id: turn.start
+    clips:
+    - {fileID: 8300000, guid: bfefefdcca2ba90469c418b9e515411b, type: 3}
+    volume: 0.45
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    gains:
+    - 0.62441605
+  - id: banner
+    clips:
+    - {fileID: 8300000, guid: 4b9e8ecdbde591149a1931584aa258e1, type: 3}
+    - {fileID: 8300000, guid: 271a8529b075cf64dad425acf315d724, type: 3}
+    - {fileID: 8300000, guid: 8e278164880b7614fa75cbc1bd5a0233, type: 3}
+    - {fileID: 8300000, guid: ccd35d026838c744388fcd16bbc7eae5, type: 3}
+    - {fileID: 8300000, guid: 08addc4e6e2fa754b883c8435d64f133, type: 3}
+    - {fileID: 8300000, guid: eb192cc9bbaf2f44cabc98aae9b73812, type: 3}
+    volume: 0.55
+    pitch: {x: 1, y: 1}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0.022142857
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.67227143
+    - 0.67093134
+    - 0.6854985
+    - 0.64746684
+    - 0.6866241
+    - 0.6495631
+  - id: banner.battle
+    clips:
+    - {fileID: 8300000, guid: 96a45bafbd27d2e40aa783d5415f569e, type: 3}
+    - {fileID: 8300000, guid: 8786bbdba0a76d641993c2416781a016, type: 3}
+    - {fileID: 8300000, guid: bb5b4eef89e8e6b41843035e6f4c1753, type: 3}
+    - {fileID: 8300000, guid: 2436e9e9587b74842a41e915229e22e0, type: 3}
+    - {fileID: 8300000, guid: 183755476eb74eb448b24999b52594f9, type: 3}
+    volume: 0.7
+    pitch: {x: 1, y: 1}
+    cooldown: 0.04
+    startTimes:
+    - 0.015340136
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.5460161
+    - 0.5005565
+    - 0.51843524
+    - 0.4509829
+    - 0.5025194
+  - id: victory
+    clips:
+    - {fileID: 8300000, guid: 2ebc1644aa9a8f748a34530e808255aa, type: 3}
+    - {fileID: 8300000, guid: 701800257e50c3041a8d7a20d4cb62c8, type: 3}
+    - {fileID: 8300000, guid: 3f8b57426894daa45ac6b1097b2cd4bd, type: 3}
+    - {fileID: 8300000, guid: 79dd3f55542cdd14681b53cac748e6ae, type: 3}
+    volume: 0.8
+    pitch: {x: 1, y: 1}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.6048018
+    - 0.58821064
+    - 0.5387313
+    - 0.50109243
+  - id: ambient
+    clips:
+    - {fileID: 8300000, guid: ca9df8eba0f47d2438c2775e03449776, type: 3}
+    volume: 1
+    pitch: {x: 1, y: 1}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    gains:
+    - 1
+  - id: whoosh.light
+    clips:
+    - {fileID: 8300000, guid: 00dacc77160a9a74e8aa694b2d3b10ed, type: 3}
+    - {fileID: 8300000, guid: 329f94a6ae0bc0e4bb8f719d7df619c3, type: 3}
+    - {fileID: 8300000, guid: 3caa803a181d0304c91b6db8215eab30, type: 3}
+    - {fileID: 8300000, guid: 8a337ed56c454e24ab3d5196c137753d, type: 3}
+    volume: 0.7
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.022959184
+    - 0.026473923
+    - 0.03373016
+    - 0.032528345
+    gains:
+    - 0.60467124
+    - 0.65815514
+    - 0.6027291
+    - 0.5660016
+  - id: whoosh.heavy
+    clips:
+    - {fileID: 8300000, guid: 5df25ca96bc63d64b8f6f82705af74ac, type: 3}
+    - {fileID: 8300000, guid: aecea105dc06d704186c9eaf1ef3a5cb, type: 3}
+    - {fileID: 8300000, guid: 4634b03a29257704088090dbaa18fa03, type: 3}
+    volume: 0.75
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.044863947
+    - 0.044614512
+    - 0.05005669
+    gains:
+    - 0.6628
+    - 0.55406064
+    - 0.5996064
+  - id: charge
+    clips:
+    - {fileID: 8300000, guid: 7de7ae3da1d955947b488efcb9b9eac8, type: 3}
+    - {fileID: 8300000, guid: 81225208143744641899f03a0530bc5b, type: 3}
+    - {fileID: 8300000, guid: 9a2ecec68a86de84589bcfb7ca815320, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.02697279
+    - 0.028968254
+    - 0.026950113
+    gains:
+    - 0.7069814
+    - 0.7637348
+    - 0.6369012
+  - id: magic.launch
+    clips:
+    - {fileID: 8300000, guid: 571b5c207c8449b4b880cc3c81851dae, type: 3}
+    - {fileID: 8300000, guid: 63d472bef7616574d8a321fd541060b0, type: 3}
+    - {fileID: 8300000, guid: 42a0c254da56e0740a5ad87fcb943c02, type: 3}
+    volume: 0.7
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.39932758
+    - 0.44282675
+    - 0.47488114
+  - id: travel.magic
+    clips:
+    - {fileID: 8300000, guid: 83c665504467f0340a4c4407345a9f7e, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    gains:
+    - 1
+  - id: travel.air
+    clips:
+    - {fileID: 8300000, guid: 03b31c411c8295640ba2a184ddd4b881, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    gains:
+    - 1
+  - id: sparkle
+    clips:
+    - {fileID: 8300000, guid: 67f5aed47a16aad4682c353c3453b3ec, type: 3}
+    - {fileID: 8300000, guid: 96cf948f898f7684495d865ab846185c, type: 3}
+    - {fileID: 8300000, guid: e12788824a81455449e6b1c8a1c0154b, type: 3}
+    - {fileID: 8300000, guid: 59b7df6f2355fb44bb01dda97213f301, type: 3}
+    volume: 0.55
+    pitch: {x: 0.98, y: 1.02}
+    cooldown: 0.04
+    startTimes:
+    - 0.023344671
+    - 0
+    - 0.024659865
+    - 0
+    gains:
+    - 0.7004988
+    - 0.6661305
+    - 0.7044319
+    - 0.71369857
+  - id: thump
+    clips:
+    - {fileID: 8300000, guid: e47a8e526a7b71b4a9e1301603518235, type: 3}
+    - {fileID: 8300000, guid: a63d1a5a9b9f2ab4cb199057f2e60686, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    gains:
+    - 0.28120837
+    - 0.2828483
+  - id: snap
+    clips:
+    - {fileID: 8300000, guid: 7cf5f9ed5136df145b3b86410aade2fd, type: 3}
+    - {fileID: 8300000, guid: 6bd1004691d3967439e535f307fd8d3f, type: 3}
+    - {fileID: 8300000, guid: fd0d9ed6194af624391e0993a63edf81, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    gains:
+    - 1.2634126
+    - 1.0984776
+    - 1.1019343
+  - id: chime.up
+    clips:
+    - {fileID: 8300000, guid: 15452015ddb9c1042bb304cbcc35e3ac, type: 3}
+    - {fileID: 8300000, guid: 48b99dc1de8bdb44d81143074a886fd0, type: 3}
+    - {fileID: 8300000, guid: 9c36c7a62531b364fbb2d7c25a52b0ba, type: 3}
+    volume: 0.6
+    pitch: {x: 0.98, y: 1.02}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.5357879
+    - 0.54071003
+    - 0.5293809
+  - id: chime.down
+    clips:
+    - {fileID: 8300000, guid: befedcc2ca2c80b40a997bcdc1a1e31a, type: 3}
+    - {fileID: 8300000, guid: 29f343129f94a314a80e9f750fea8ffd, type: 3}
+    - {fileID: 8300000, guid: 719d3f961e209754c8d2bd23b22b39dc, type: 3}
+    volume: 0.6
+    pitch: {x: 0.98, y: 1.02}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.51544595
+    - 0.51544595
+    - 0.51544595
+  - id: heal
+    clips:
+    - {fileID: 8300000, guid: b498b2f0dfbb03343afa3476968ef35c, type: 3}
+    - {fileID: 8300000, guid: 74509e4e73dcf3f41b4060e29fb617c7, type: 3}
+    - {fileID: 8300000, guid: 7ec45cbd2131c0243a2966a609ffc124, type: 3}
+    volume: 0.75
+    pitch: {x: 0.98, y: 1.02}
+    cooldown: 0.04
+    startTimes:
+    - 0.015090703
+    - 0
+    - 0.015113379
+    gains:
+    - 0.71591103
+    - 0.7875095
+    - 0.8174202
+  - id: pop
+    clips:
+    - {fileID: 8300000, guid: 4285eaabf5fd5a0499abdceee05f794d, type: 3}
+    - {fileID: 8300000, guid: 96f4399395be58040ba19657826cd953, type: 3}
+    - {fileID: 8300000, guid: 3d259d7bcbd31c244973af9c7d233fdc, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.5681902
+    - 0.58196
+    - 0.5767744
+  - id: wind
+    clips:
+    - {fileID: 8300000, guid: 041e180f010622b43baa77d0b7349dba, type: 3}
+    - {fileID: 8300000, guid: 618d523a25ed68e4aa88f54cb4e7941a, type: 3}
+    volume: 0.7
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.01729025
+    - 0.02468254
+    gains:
+    - 0.6406386
+    - 0.690478
+  - id: beam
+    clips:
+    - {fileID: 8300000, guid: a3ffd6dab3cd39942b52a0ce25a124a5, type: 3}
+    volume: 0.7
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    gains:
+    - 0.48964536
+  - id: dizzy
+    clips:
+    - {fileID: 8300000, guid: 315cf4f8d68bb104cbebee9c9fbe5eda, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    gains:
+    - 0.37778255
+  - id: poof
+    clips:
+    - {fileID: 8300000, guid: 861c2d654b2e11842854f8fecbad9358, type: 3}
+    volume: 0.7
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    gains:
+    - 0.5585579
+  - id: punch.medium
+    clips:
+    - {fileID: 8300000, guid: 0e43e6d64771903499f65664fa0f3386, type: 3}
+    - {fileID: 8300000, guid: a7b0b9cdbbce9be418cb7b6a35a604b6, type: 3}
+    - {fileID: 8300000, guid: 29ad272e460d7054eac6fdf4517f8702, type: 3}
+    - {fileID: 8300000, guid: fa97586114ef6f34fbf837ed30093d54, type: 3}
+    - {fileID: 8300000, guid: 66f973c07907df64fb5bb74f00af4d8b, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.39834407
+    - 0.39892864
+    - 0.43435887
+    - 0.43460396
+    - 0.42524895
+  - id: punch.heavy
+    clips:
+    - {fileID: 8300000, guid: 5c97bd32f39323b4c9cf2a6af6817333, type: 3}
+    - {fileID: 8300000, guid: 371af0702ad843a438d6cc793059e756, type: 3}
+    - {fileID: 8300000, guid: 1d3aebab6e0ea4e44a6d78bd271e1bb0, type: 3}
+    - {fileID: 8300000, guid: 1dec0f93370d5144185752ece6300c35, type: 3}
+    - {fileID: 8300000, guid: 599e38995a1ff284b90afe64a525b4ea, type: 3}
+    volume: 0.9
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.37890944
+    - 0.3818266
+    - 0.36693475
+    - 0.38404158
+    - 0.379969
+  - id: soft.medium
+    clips:
+    - {fileID: 8300000, guid: 6686bb4a91009984eaaab71e2cddd36e, type: 3}
+    - {fileID: 8300000, guid: 86db48d4c4f7efb4ba64993c6bb78e2d, type: 3}
+    - {fileID: 8300000, guid: 687851e5af721804fac856ab5d0a92e8, type: 3}
+    - {fileID: 8300000, guid: c761c50e787877544a452e38c5cc1f4f, type: 3}
+    - {fileID: 8300000, guid: 767b29df556c9a84695fdcb0314473f8, type: 3}
+    volume: 0.75
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.5083309
+    - 0.4389842
+    - 0.46674022
+    - 0.4660731
+    - 0.46414733
+  - id: soft.heavy
+    clips:
+    - {fileID: 8300000, guid: 8c75455dbf06b1c4da539766bb5c226b, type: 3}
+    - {fileID: 8300000, guid: 303a90e42234b604d8d4f3b462957c2a, type: 3}
+    - {fileID: 8300000, guid: 33f568f65e3775e429d853f09288fa69, type: 3}
+    - {fileID: 8300000, guid: 37d02bf3eb6d41642b3be162a576532a, type: 3}
+    - {fileID: 8300000, guid: 59f95c43363e6184da72fcb93b88c22c, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.3766526
+    - 0.36821622
+    - 0.35735542
+    - 0.3398194
+    - 0.35836697
+  - id: slice
+    clips:
+    - {fileID: 8300000, guid: 0ba75a057bce591449b37df1fa502d52, type: 3}
+    - {fileID: 8300000, guid: c5658c0e8d8baeb4686ae8ff4b8ad649, type: 3}
+    volume: 0.85
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.07639583
+    - 0
+    gains:
+    - 0.728132
+    - 0.5467491
+  - id: knife.draw
+    clips:
+    - {fileID: 8300000, guid: f0f0110537989a24188e2b2ebd4d828e, type: 3}
+    - {fileID: 8300000, guid: 786b0d58cbd04b6488204e871953f594, type: 3}
+    - {fileID: 8300000, guid: da95faa7bc627e14b8865d8f530af670, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.113729164
+    - 0.064520836
+    - 0.08833333
+    gains:
+    - 1.6
+    - 1.6
+    - 1.6
+  - id: metal.light
+    clips:
+    - {fileID: 8300000, guid: 98bd9c5857c5e7245a1d77c5be4dc206, type: 3}
+    - {fileID: 8300000, guid: 1364fa81c1f6dcf41b7ac25d885f8157, type: 3}
+    - {fileID: 8300000, guid: 53e6c94e7ba46b140a361bcc3d3ca50c, type: 3}
+    - {fileID: 8300000, guid: 2582582e39c8f1f4d8c8c7bd4f46c191, type: 3}
+    - {fileID: 8300000, guid: 1dcee58cebc5d1c48b9f8c954a2c5337, type: 3}
+    volume: 0.75
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.65200794
+    - 0.6838684
+    - 0.75148875
+    - 0.58289886
+    - 0.7902073
+  - id: metal.heavy
+    clips:
+    - {fileID: 8300000, guid: 99d510c7b0837b44cb6fcbbf179350a5, type: 3}
+    - {fileID: 8300000, guid: 0853374b0016ad645a9a4cdecf51a4ea, type: 3}
+    - {fileID: 8300000, guid: 3b7f7b56efaecc441b76e502bc723373, type: 3}
+    - {fileID: 8300000, guid: dcc9e06e0488d714ea30d44ad0a6143f, type: 3}
+    - {fileID: 8300000, guid: 84071e5df12a95a419d4fed83e6bd1c9, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.873997
+    - 0.85927254
+    - 0.85176885
+    - 0.86317676
+    - 0.8731021
+  - id: wood.medium
+    clips:
+    - {fileID: 8300000, guid: a5652d8e2f8860c44939cab339005f24, type: 3}
+    - {fileID: 8300000, guid: d90e01235d7f321458e73a10ccfeff4a, type: 3}
+    - {fileID: 8300000, guid: fe524631e32c55b48a58dff1d8bb96d6, type: 3}
+    - {fileID: 8300000, guid: f39d9c68f3cb0fb4abd81fba49e2291f, type: 3}
+    - {fileID: 8300000, guid: 0efac1b702d6d804f9977fccdabccd1a, type: 3}
+    volume: 0.7
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.80158055
+    - 0.7932972
+    - 0.79835945
+    - 0.81001425
+    - 0.75765896
+  - id: wood.heavy
+    clips:
+    - {fileID: 8300000, guid: c1658ad3d3b4581428af62a2ca9b6d7e, type: 3}
+    - {fileID: 8300000, guid: 9c43a6e329fdd654e86df40762e0d20a, type: 3}
+    - {fileID: 8300000, guid: 0897936809c388649a9df7966eb06d32, type: 3}
+    - {fileID: 8300000, guid: 79a514f3556db2845b2bde0cb3669eb8, type: 3}
+    - {fileID: 8300000, guid: b377caefcfe019f429ef20f312b111e9, type: 3}
+    volume: 0.75
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.57990617
+    - 0.5859256
+    - 0.5349022
+    - 0.6324636
+    - 0.6096716
+  - id: glass.heavy
+    clips:
+    - {fileID: 8300000, guid: 0f292d8b531b72e43ab0e13d26884c12, type: 3}
+    - {fileID: 8300000, guid: 45c7372e53f657c428b1d5a1e21cd9d0, type: 3}
+    - {fileID: 8300000, guid: 7a6c5dd8926fc9f468c9065f7f114ed2, type: 3}
+    - {fileID: 8300000, guid: 871e81ffb9946fe4784dcf1353b54f4d, type: 3}
+    - {fileID: 8300000, guid: 35c7957eb25d6bd41bc4b2c49a788716, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.9205469
+    - 0.96438587
+    - 0.9882147
+    - 0.7919473
+    - 0.8857366
+  - id: bell
+    clips:
+    - {fileID: 8300000, guid: b7fc802630954eb42a76b38101c3f79d, type: 3}
+    - {fileID: 8300000, guid: 91016c250f5d2b14a8bd7ac85bc376fa, type: 3}
+    - {fileID: 8300000, guid: afaac1c6c33386f46b835b8d09ef31e6, type: 3}
+    - {fileID: 8300000, guid: 491b9e490fe78bb4696f2293c4a4ce4b, type: 3}
+    - {fileID: 8300000, guid: e8d6717c4d1cb194e9259c9054f27b0a, type: 3}
+    volume: 0.6
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.8137788
+    - 0.63683665
+    - 0.7203766
+    - 0.77451265
+    - 0.79250854
+  - id: crunch
+    clips:
+    - {fileID: 8300000, guid: 906ffd2ed9904854c88bbb3108dba74f, type: 3}
+    - {fileID: 8300000, guid: f035678f7ca82d7408db17a9285024fd, type: 3}
+    - {fileID: 8300000, guid: 130592c279d49c34b86c03f969ef181d, type: 3}
+    - {fileID: 8300000, guid: ac72188a8766b7b47a17f59c55c71a20, type: 3}
+    - {fileID: 8300000, guid: 9d48ff024588e294aac793d388e69cf1, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.43852946
+    - 0.44162995
+    - 0.49464288
+    - 0.50066346
+    - 0.35801888
+  - id: saw
+    clips:
+    - {fileID: 8300000, guid: aa057d9131fb175429f02850d3767e2d, type: 3}
+    - {fileID: 8300000, guid: 5069a894a36b0624a8f54f4de5e28fdb, type: 3}
+    - {fileID: 8300000, guid: d2e64cb92ccbe804ba8235fa0e0535bb, type: 3}
+    - {fileID: 8300000, guid: deb5d3eb7f4b70e4792e58683b8714cb, type: 3}
+    - {fileID: 8300000, guid: ac15cc61698218c49bf4f8c885eb2128, type: 3}
+    volume: 0.55
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 0.603838
+    - 0.5637154
+    - 0.47753832
+    - 0.65466464
+    - 0.689095
+  - id: laser.small
+    clips:
+    - {fileID: 8300000, guid: eaebf2981d3050048aa2aa2520bcbef5, type: 3}
+    - {fileID: 8300000, guid: ed3ffb7209007174999b23cb1bc8f25e, type: 3}
+    - {fileID: 8300000, guid: 4f17b37b337a98a4d9a6722093166bf5, type: 3}
+    - {fileID: 8300000, guid: bdf0bafb13b5c2d4fba5e89e851fc378, type: 3}
+    - {fileID: 8300000, guid: 95d0f573d9bd685449d40af3d75ec187, type: 3}
+    volume: 0.45
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    gains:
+    - 1.1516371
+    - 0.9657701
+    - 0.9943584
+    - 1.0745368
+    - 0.40020555
+  - id: spell.ice
+    clips:
+    - {fileID: 8300000, guid: 1b04bf4345bd4424f80f6d1ba0cb6676, type: 3}
+    - {fileID: 8300000, guid: 17f7cd2625f815b45bcce83d1218649f, type: 3}
+    - {fileID: 8300000, guid: 1c5ea503cd79d854cbedebcbe54e7f5a, type: 3}
+    - {fileID: 8300000, guid: 51c17a43f838c914c889db38f1f819df, type: 3}
+    - {fileID: 8300000, guid: edfc85899385ace468186a11b2d3cb5d, type: 3}
+    volume: 0.85
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.050520834
+    - 0
+    - 0
+    - 0.06260417
+    - 0
+    gains:
+    - 0.4159504
+    - 0.37846723
+    - 0.44116834
+    - 0.340905
+    - 0.5234747
+  - id: spell.water
+    clips:
+    - {fileID: 8300000, guid: ce48a26a06115fb43974f3b74269039b, type: 3}
+    - {fileID: 8300000, guid: 3636f1681213370479031a1370c1d806, type: 3}
+    - {fileID: 8300000, guid: b0793e71d1a00fc4185d7848499b925e, type: 3}
+    - {fileID: 8300000, guid: 90e9f6579daf8be4c9cb047caea0b1e1, type: 3}
+    - {fileID: 8300000, guid: 8a6a0e1efde8c114eb6fd0ac74bc3002, type: 3}
+    volume: 0.85
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.06520833
+    - 0.09422917
+    - 0.082354166
+    - 0.1565625
+    - 0.033604167
+    gains:
+    - 0.4146629
+    - 0.47035193
+    - 0.47496015
+    - 0.38786
+    - 0.65430295
+  - id: spell.fire
+    clips:
+    - {fileID: 8300000, guid: 99f5ea50c0f7a664d8278feea0e1b2a2, type: 3}
+    - {fileID: 8300000, guid: 6813053b128fe2646b173c93b7378fc8, type: 3}
+    - {fileID: 8300000, guid: 51a29ce1076355e4eb334e0f6e5865a9, type: 3}
+    - {fileID: 8300000, guid: a66fb9d677f92b54cb6559d5ba46576d, type: 3}
+    - {fileID: 8300000, guid: a401586888a3893448920a1c795899e4, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0.045354165
+    - 0
+    - 0
+    - 0.036166668
+    - 0.058
+    gains:
+    - 0.25001335
+    - 0.30157945
+    - 0.37270963
+    - 0.25
+    - 0.37802562
+  - id: spell.lightning
+    clips:
+    - {fileID: 8300000, guid: b77f45650d89f59489af2b73a462a4f0, type: 3}
+    - {fileID: 8300000, guid: b26a7700ee914fe47b4fa07777a8fd5e, type: 3}
+    - {fileID: 8300000, guid: bd760f48e7502be439db972019f03632, type: 3}
+    - {fileID: 8300000, guid: 439f815869cd0624fa34065911d254c6, type: 3}
+    - {fileID: 8300000, guid: 10a4c009ed8dbc34c981edfd210b7f39, type: 3}
+    volume: 0.8
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes:
+    - 0
+    - 0.029604167
+    - 0.034645833
+    - 0.07545833
+    - 0
+    gains:
+    - 0.40908152
+    - 0.4092487
+    - 0.3510653
+    - 0.4375717
+    - 0.4454898
+  - id: voice.roar
+    clips: []
+    volume: 0.9
+    pitch: {x: 0.94, y: 1.06}
+    cooldown: 0.04
+    startTimes: []
+    gains: []
+  setupVersion: 2

@@ -10,11 +10,18 @@ public class SpaceBackground : MonoBehaviour
     [SerializeField] private float depthBelowBoard = 4f;   // How far under the board it sits
     [SerializeField] private float overscan = 1.15f;       // A bit bigger than the view, so screen shake never shows an edge
     [SerializeField] private bool hideBoardSurface = true; // Hides the board under the grid so the slots float over space
+    [Tooltip("Works the swirl out once per background pixel into a small texture instead of once per screen pixel. " +
+             "Looks the same, roughly 5-10x cheaper on the GPU (important for WebGL). Turn off if the background looks wrong")]
+    [SerializeField] private bool lowResRender = true;
+    [SerializeField] private float lowResFps = 30f;        // How often the small texture is redrawn (the swirl moves slowly)
 
     private Camera cam;
     private Transform quad;
     private MaterialPropertyBlock block;
     private float fittedAspect;
+    private Material renderMaterial; // A copy, so setting the aspect doesn't change the material asset
+    private RenderTexture lowRes;
+    private float nextRender;
 
     void Start()
     {
@@ -60,10 +67,35 @@ public class SpaceBackground : MonoBehaviour
         }
     }
 
-    // Re-fits if the window is resized
+    // Re-fits if the window is resized, and redraws the small texture
     void LateUpdate()
     {
-        if (quad != null && !Mathf.Approximately(cam.aspect, fittedAspect)) Fit();
+        if (quad == null) return;
+        if (!Mathf.Approximately(cam.aspect, fittedAspect)) Fit();
+        if (lowRes != null && Time.unscaledTime >= nextRender)
+        {
+            nextRender = Time.unscaledTime + 1f / Mathf.Max(1f, lowResFps);
+            Graphics.Blit(null, lowRes, renderMaterial, 0);
+        }
+    }
+
+    // One texture pixel per background pixel (the shader's Pixels Across grid)
+    void MakeLowRes(float aspect)
+    {
+        if (!lowResRender) return;
+        if (renderMaterial == null) renderMaterial = new Material(material);
+        renderMaterial.SetFloat("_Aspect", aspect);
+        renderMaterial.SetFloat("_UseLowRes", 0f);
+
+        float across = material.HasProperty("_PixelsAcross") ? material.GetFloat("_PixelsAcross") : 700f;
+        int width = Mathf.Max(16, Mathf.RoundToInt(across));
+        int height = Mathf.Max(16, Mathf.RoundToInt(across / aspect));
+        if (lowRes != null && lowRes.width == width && lowRes.height == height) return;
+
+        if (lowRes != null) { lowRes.Release(); Destroy(lowRes); }
+        lowRes = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+        lowRes.Create();
+        nextRender = 0f;
     }
 
     // Call after moving the camera somewhere new (CameraRig does)
@@ -94,11 +126,19 @@ public class SpaceBackground : MonoBehaviour
         MeshRenderer meshRenderer = quad.GetComponent<MeshRenderer>();
         meshRenderer.GetPropertyBlock(block);
         block.SetFloat("_Aspect", width / height);
+        MakeLowRes(width / height);
+        if (lowRes != null)
+        {
+            block.SetTexture("_LowResTex", lowRes);
+            block.SetFloat("_UseLowRes", 1f);
+        }
         meshRenderer.SetPropertyBlock(block);
     }
 
     void OnDestroy()
     {
         if (quad != null) Destroy(quad.gameObject);
+        if (lowRes != null) { lowRes.Release(); Destroy(lowRes); }
+        if (renderMaterial != null) Destroy(renderMaterial);
     }
 }

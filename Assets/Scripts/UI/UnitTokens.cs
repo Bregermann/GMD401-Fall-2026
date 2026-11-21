@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -131,10 +132,27 @@ public class UnitTokens : MonoBehaviour
         ribbonSprite = MakeRibbon();
         shadowSprite = MakeShadow();
         _ = GameFonts.Display;
+
+        // Make each drafted card's token frame ahead of time, a little each frame, so the draft and placing don't hitch
+        draft = FindAnyObjectByType<DraftManager>();
+        if (draft != null) draft.CardDrafted += OnDrafted;
+        StartCoroutine(PrewarmLoop());
+    }
+
+    [Header("Performance")]
+    [SerializeField] private float prewarmMsPerFrame = 3f; // Time per frame spent making upcoming token frames
+
+    private DraftManager draft;
+    private readonly Queue<(CardData, int)> prewarm = new Queue<(CardData, int)>();
+
+    void OnDrafted(CardUnit unit, int player)
+    {
+        if (unit != null && unit.Instance != null) prewarm.Enqueue((unit.Instance.data, player));
     }
 
     void OnDestroy()
     {
+        if (draft != null) draft.CardDrafted -= OnDrafted;
         foreach (KeyValuePair<CardUnit, Token> pair in tokens) ExitTokenMode(pair.Key, pair.Value);
         foreach (Texture2D texture in textures) Destroy(texture);
         foreach (LineRenderer line in lines) if (line != null) Destroy(line.gameObject);
@@ -483,38 +501,84 @@ public class UnitTokens : MonoBehaviour
     Sprite FrameFor(CardData data, int owner)
     {
         if (frames.TryGetValue((data, owner), out Sprite cached)) return cached;
+        using PerfLog.Scope timer = PerfLog.Time($"Token frame {data.cardName}");
+        return KeepFrame(data, owner, ClassFrames.PaintFrame(data.characterClass, InkArt.PlayerColor(owner), PortraitSampler(data), FramePixels));
+    }
 
-        // The portrait has as many pixels as the frame has inside the crown's portrait box
+    Sprite KeepFrame(CardData data, int owner, Texture2D texture)
+    {
+        if (frames.TryGetValue((data, owner), out Sprite existing)) { Destroy(texture); return existing; } // Made another way meanwhile
+        textures.Add(texture);
+        Sprite sprite = InkArt.ToSprite(texture, ClassFrames.Pivot, FramePixels / UnitScale);
+        frames[(data, owner)] = sprite;
+        return sprite;
+    }
+
+    // Colour of the card's portrait at a point in crown units. The portrait has as many pixels as the frame has
+    // inside the crown's portrait box
+    System.Func<Vector2, Color> PortraitSampler(CardData data)
+    {
         Rect box = ClassFrames.PortraitBox(data.characterClass);
         int portraitW = Mathf.CeilToInt(box.width * FramePixels), portraitH = Mathf.CeilToInt(box.height * FramePixels);
         Color[] portrait = ReadPortrait(data, portraitW, portraitH);
-
-        Texture2D texture = ClassFrames.PaintFrame(data.characterClass, InkArt.PlayerColor(owner), p =>
+        return p =>
         {
             // Crown units (y down) to portrait pixels (y up)
             int px = Mathf.Clamp((int)((p.x - box.xMin) * FramePixels), 0, portraitW - 1);
             int py = Mathf.Clamp((int)((box.yMax - p.y) * FramePixels), 0, portraitH - 1);
             return portrait[py * portraitW + px];
-        }, FramePixels);
-        textures.Add(texture);
-
-        Sprite sprite = InkArt.ToSprite(texture, ClassFrames.Pivot, FramePixels / UnitScale);
-        frames[(data, owner)] = sprite;
-        return sprite;
+        };
     }
 
     // Hit flash silhouette and defeat cracks for one class, made once
     (Sprite, Sprite) ShapesFor(CharacterClass characterClass)
     {
         if (classShapes.TryGetValue(characterClass, out (Sprite, Sprite) cached)) return cached;
-        Texture2D silhouette = ClassFrames.PaintSilhouette(characterClass, FramePixels);
-        Texture2D cracks = ClassFrames.PaintCracks(characterClass, FramePixels);
+        return KeepShapes(characterClass, ClassFrames.PaintSilhouette(characterClass, FramePixels), ClassFrames.PaintCracks(characterClass, FramePixels));
+    }
+
+    (Sprite, Sprite) KeepShapes(CharacterClass characterClass, Texture2D silhouette, Texture2D cracks)
+    {
+        if (classShapes.TryGetValue(characterClass, out (Sprite, Sprite) existing)) { Destroy(silhouette); Destroy(cracks); return existing; }
         textures.Add(silhouette);
         textures.Add(cracks);
         (Sprite, Sprite) shapes = (InkArt.ToSprite(silhouette, ClassFrames.Pivot, FramePixels / UnitScale),
                                    InkArt.ToSprite(cracks, ClassFrames.Pivot, FramePixels / UnitScale));
         classShapes[characterClass] = shapes;
         return shapes;
+    }
+
+    // Makes drafted cards' frames and their class shapes in the background, a few milliseconds per frame, so the
+    // draft never stutters (WebGL has one thread: a whole frame at once froze the game for a moment)
+    IEnumerator PrewarmLoop()
+    {
+        InkArt.FrameBudget budget = new InkArt.FrameBudget(prewarmMsPerFrame);
+        while (true)
+        {
+            if (prewarm.Count == 0) { yield return null; continue; }
+            (CardData data, int owner) = prewarm.Dequeue();
+            if (data == null) continue;
+            budget.Restart();
+
+            if (!frames.ContainsKey((data, owner)))
+            {
+                System.Func<Vector2, Color> portrait = PortraitSampler(data); // One small GPU read, then wait a frame
+                yield return null;
+                budget.Restart();
+                Texture2D frame = null;
+                yield return ClassFrames.PaintFrameRoutine(data.characterClass, InkArt.PlayerColor(owner), portrait, FramePixels, budget, t => frame = t);
+                KeepFrame(data, owner, frame);
+            }
+
+            if (!classShapes.ContainsKey(data.characterClass))
+            {
+                Texture2D silhouette = null, cracks = null;
+                yield return ClassFrames.SilhouetteRoutine(data.characterClass, FramePixels, budget, t => silhouette = t);
+                yield return ClassFrames.CracksRoutine(data.characterClass, FramePixels, budget, t => cracks = t);
+                KeepShapes(data.characterClass, silhouette, cracks);
+            }
+            yield return null;
+        }
     }
 
     // Crops this card's portrait out of its art (see PortraitCrop) and shrinks it to the portrait size on the GPU,

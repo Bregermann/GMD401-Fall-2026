@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -126,7 +127,8 @@ public static class ClassFrames
         public Color fill;
         public float ink;
         public bool inFront;
-        public Extra(System.Func<Vector2, float> shape, Color fill, float ink, bool inFront) { this.shape = shape; this.fill = fill; this.ink = ink; this.inFront = inFront; }
+        public Rect bounds; // Nothing outside this box, so most points skip the shape test
+        public Extra(System.Func<Vector2, float> shape, Color fill, float ink, bool inFront, Rect bounds) { this.shape = shape; this.fill = fill; this.ink = ink; this.inFront = inFront; this.bounds = bounds; }
     }
 
     static List<Extra> ExtrasOf(CharacterClass characterClass)
@@ -136,32 +138,32 @@ public static class ClassFrames
         {
             case CharacterClass.Attacker: // Blade fins on the shoulders
                 Vector2[] leftFin = { V(12, 92), V(-2, 62), V(20, 74) }, rightFin = { V(128, 92), V(142, 62), V(120, 74) };
-                extras.Add(new Extra(p => InkArt.Polygon(p, leftFin), InkArt.Gold, 1.8f, false));
-                extras.Add(new Extra(p => InkArt.Polygon(p, rightFin), InkArt.Gold, 1.8f, false));
+                extras.Add(new Extra(p => InkArt.Polygon(p, leftFin), InkArt.Gold, 1.8f, false, Box(leftFin)));
+                extras.Add(new Extra(p => InkArt.Polygon(p, rightFin), InkArt.Gold, 1.8f, false, Box(rightFin)));
                 break;
             case CharacterClass.Healer: // Floating halo
-                extras.Add(new Extra(p => Mathf.Abs(Ellipse(p - V(70, 18), 28f, 7f)) - 3.6f, InkArt.GoldLight, 1.6f, true));
+                extras.Add(new Extra(p => Mathf.Abs(Ellipse(p - V(70, 18), 28f, 7f)) - 3.6f, InkArt.GoldLight, 1.6f, true, Rect.MinMaxRect(38f, 7f, 102f, 29f)));
                 break;
             case CharacterClass.Support: // Notched pennants
                 Vector2[] leftFlag = { V(14, 70), V(-4, 74), V(4, 86), V(-4, 98), V(14, 96) };
                 Vector2[] rightFlag = { V(126, 70), V(144, 74), V(136, 86), V(144, 98), V(126, 96) };
-                extras.Add(new Extra(p => InkArt.Polygon(p, leftFlag), InkArt.Sage, 1.8f, false));
-                extras.Add(new Extra(p => InkArt.Polygon(p, rightFlag), InkArt.Sage, 1.8f, false));
+                extras.Add(new Extra(p => InkArt.Polygon(p, leftFlag), InkArt.Sage, 1.8f, false, Box(leftFlag)));
+                extras.Add(new Extra(p => InkArt.Polygon(p, rightFlag), InkArt.Sage, 1.8f, false, Box(rightFlag)));
                 break;
             case CharacterClass.Mage: // Star on the tip
                 Vector2[] star = Star(V(70, 4), 9.5f, 4.2f);
-                extras.Add(new Extra(p => InkArt.Polygon(p, star), InkArt.GoldLight, 1.8f, true));
+                extras.Add(new Extra(p => InkArt.Polygon(p, star), InkArt.GoldLight, 1.8f, true, Box(star)));
                 break;
             case CharacterClass.Assassin: // Blade tip off the high corner
                 Vector2[] tip = { V(126, 28), V(141, 15), V(128, 44) };
-                extras.Add(new Extra(p => InkArt.Polygon(p, tip), InkArt.Gold, 1.8f, true));
+                extras.Add(new Extra(p => InkArt.Polygon(p, tip), InkArt.Gold, 1.8f, true, Box(tip)));
                 break;
             case CharacterClass.Ranged: // Range-finder ticks down the sides
                 foreach (float y in new[] { 110f, 124f, 138f })
                 {
                     float tickY = y;
-                    extras.Add(new Extra(p => InkArt.Segment(p, V(1, tickY), V(11, tickY)) - 2.4f, InkArt.Gold, 1.2f, false));
-                    extras.Add(new Extra(p => InkArt.Segment(p, V(129, tickY), V(139, tickY)) - 2.4f, InkArt.Gold, 1.2f, false));
+                    extras.Add(new Extra(p => InkArt.Segment(p, V(1, tickY), V(11, tickY)) - 2.4f, InkArt.Gold, 1.2f, false, Rect.MinMaxRect(-2f, tickY - 3f, 14f, tickY + 3f)));
+                    extras.Add(new Extra(p => InkArt.Segment(p, V(129, tickY), V(139, tickY)) - 2.4f, InkArt.Gold, 1.2f, false, Rect.MinMaxRect(126f, tickY - 3f, 142f, tickY + 3f)));
                 }
                 break;
         }
@@ -202,59 +204,246 @@ public static class ClassFrames
     // ---- Painting ----
 
     // The whole frame for one card on one team: decorations, outline bands, portrait and class badge.
-    // portraitColour gives the art colour at a point inside the portrait box (in units)
+    // portraitColour gives the art colour at a point inside the portrait box (in units).
+    // The shape work (outline, bands, badge, decorations) is the slow part and is the same for every card of a class,
+    // so it's worked out once per class (Regions) and each card only fills in its team colour and portrait.
+    // Every job here also has a Routine version that spreads the work over several frames (see InkArt.FrameBudget)
     public static Texture2D PaintFrame(CharacterClass characterClass, Color team, System.Func<Vector2, Color> portraitColour, float pixelsPerUnit)
     {
+        Texture2D result = null;
+        RunNow(PaintFrameRoutine(characterClass, team, portraitColour, pixelsPerUnit, null, t => result = t));
+        return result;
+    }
+
+    public static IEnumerator PaintFrameRoutine(CharacterClass characterClass, Color team, System.Func<Vector2, Color> portraitColour,
+                                                float pixelsPerUnit, InkArt.FrameBudget budget, System.Action<Texture2D> done)
+    {
+        budget ??= NoBudget;
+        int width = Mathf.RoundToInt(CanvasWidth * pixelsPerUnit), height = Mathf.RoundToInt(CanvasHeight * pixelsPerUnit);
+        byte[] regions = null;
+        yield return RegionsRoutine(characterClass, pixelsPerUnit, width, height, budget, r => regions = r);
+        Color badgeColour = ColourOf(characterClass);
+        int rowLength = width * FrameSamples;
+
+        yield return InkArt.PaintRoutine(width, height, pixel =>
+        {
+            // Paint asks for sample points at x + (s + 0.5) / samples, so this lands on exactly one stored sample
+            int sx = Mathf.Min(rowLength - 1, (int)(pixel.x * FrameSamples));
+            int sy = Mathf.Min(height * FrameSamples - 1, (int)(pixel.y * FrameSamples));
+            switch (regions[sy * rowLength + sx])
+            {
+                case RegionInk: return InkArt.Ink;
+                case RegionTeam: return team;
+                case RegionGold: return InkArt.Gold;
+                case RegionGoldLight: return InkArt.GoldLight;
+                case RegionSage: return InkArt.Sage;
+                case RegionBadge: return badgeColour;
+                case RegionPortrait:
+                    Color art = portraitColour(ToUnits(pixel, pixelsPerUnit));
+                    art.a = 1f;
+                    return art;
+                default: return Color.clear;
+            }
+        }, FrameSamples, true, budget, done);
+    }
+
+    // ---- Shape cache ----
+    // Working out a frame means asking "which band is this point in?" for ~250k sample points. Measuring the distance
+    // to every edge of the outline each time was the slow part (up to 1.4 s per class), so instead:
+    // - inside/outside comes from where the outline crosses each row (worked out once per row)
+    // - the distance only needs the edges within a band's reach, found through a grid of nearby edges
+
+    const int FrameSamples = 2; // Samples per pixel each way
+    const byte RegionClear = 0, RegionInk = 1, RegionTeam = 2, RegionGold = 3, RegionGoldLight = 4, RegionSage = 5, RegionBadge = 6, RegionPortrait = 7;
+    static readonly Dictionary<(CharacterClass, float), byte[]> regionCache = new Dictionary<(CharacterClass, float), byte[]>();
+    static readonly InkArt.FrameBudget NoBudget = new InkArt.FrameBudget(float.MaxValue); // Never runs out: finish in one go
+
+    // True once this class's shape has been worked out (so its first token won't hitch)
+    public static bool IsReady(CharacterClass characterClass, float pixelsPerUnit) => regionCache.ContainsKey((characterClass, pixelsPerUnit));
+
+    static readonly Rect BadgeBox = new Rect(BadgeCentre - BadgeHalf - Vector2.one, (BadgeHalf + Vector2.one) * 2f);
+
+    // Which part of the frame every sample point falls in, for one class
+    static IEnumerator RegionsRoutine(CharacterClass characterClass, float pixelsPerUnit, int width, int height,
+                                      InkArt.FrameBudget budget, System.Action<byte[]> done)
+    {
+        if (regionCache.TryGetValue((characterClass, pixelsPerUnit), out byte[] cached)) { done(cached); yield break; }
+
         Vector2[] outline = Outline(characterClass);
         List<Extra> extras = ExtrasOf(characterClass);
-        Color badgeColour = ColourOf(characterClass);
-        int width = Mathf.RoundToInt(CanvasWidth * pixelsPerUnit), height = Mathf.RoundToInt(CanvasHeight * pixelsPerUnit);
+        SegmentGrid edges = new SegmentGrid(Edges(outline), PortraitInset + 0.5f);
+        byte[] regions = new byte[width * FrameSamples * height * FrameSamples];
 
-        return InkArt.Paint(width, height, pixel =>
+        yield return SamplesRoutine(width, height, pixelsPerUnit, outline, budget, (index, p, inside) =>
         {
-            Vector2 p = ToUnits(pixel, pixelsPerUnit);
+            regions[index] = RegionAt(characterClass, p, inside, edges, extras);
+        });
 
-            // Class badge on top of everything
+        // Another caller may have finished the same class meanwhile: keep the first so everyone shares one array
+        if (regionCache.TryGetValue((characterClass, pixelsPerUnit), out cached)) regions = cached;
+        else regionCache[(characterClass, pixelsPerUnit)] = regions;
+        done(regions);
+    }
+
+    static byte RegionAt(CharacterClass characterClass, Vector2 p, bool inside, SegmentGrid edges, List<Extra> extras)
+    {
+        // Class badge on top of everything
+        if (BadgeBox.Contains(p))
+        {
             float badge = InkArt.Chamfer(p, BadgeCentre, BadgeHalf, 7f, 2f);
             if (badge <= 0f)
             {
-                if (badge > -2.4f) return InkArt.Ink;
-                return Icon(characterClass, p - BadgeCentre) <= 0f ? InkArt.Ink : badgeColour;
+                if (badge > -2.4f) return RegionInk;
+                return Icon(characterClass, p - BadgeCentre) <= 0f ? RegionInk : RegionBadge;
             }
+        }
 
-            foreach (Extra extra in extras)
-                if (extra.inFront && extra.shape(p) <= 0f) return extra.shape(p) > -extra.ink ? InkArt.Ink : extra.fill;
+        foreach (Extra extra in extras)
+            if (extra.inFront && extra.bounds.Contains(p)) { float d = extra.shape(p); if (d <= 0f) return d > -extra.ink ? RegionInk : FillRegion(extra.fill); }
 
-            float edge = InkArt.Polygon(p, outline);
-            if (edge <= 0f)
+        if (inside)
+        {
+            float depth = edges.Nearest(p); // MaxValue = deeper than every band
+            if (depth < OutlineInk) return RegionInk;
+            if (depth < OutlineInk + TeamBand) return RegionTeam;
+            if (depth < OutlineInk + TeamBand + GoldLine) return RegionGold;
+            if (depth < PortraitInset) return RegionInk;
+            return RegionPortrait;
+        }
+
+        foreach (Extra extra in extras)
+            if (!extra.inFront && extra.bounds.Contains(p)) { float d = extra.shape(p); if (d <= 0f) return d > -extra.ink ? RegionInk : FillRegion(extra.fill); }
+        return RegionClear;
+    }
+
+    static byte FillRegion(Color fill) => fill == InkArt.GoldLight ? RegionGoldLight : fill == InkArt.Sage ? RegionSage : RegionGold;
+
+    // Visits every sample point (FrameSamples x FrameSamples per pixel) with its index, position in units and whether
+    // it's inside the outline. Inside/outside comes from the outline's crossings on that row. Pauses between rows
+    // when the frame's budget is used up
+    static IEnumerator SamplesRoutine(int width, int height, float pixelsPerUnit, Vector2[] outline, InkArt.FrameBudget budget,
+                                      System.Action<int, Vector2, bool> visit)
+    {
+        int rowLength = width * FrameSamples;
+        float step = 1f / FrameSamples;
+        List<float> crossings = new List<float>();
+
+        for (int sy = 0; sy < height * FrameSamples; sy++)
+        {
+            float y = ToUnits(new Vector2(0f, (sy + 0.5f) * step), pixelsPerUnit).y;
+            crossings.Clear();
+            for (int i = 0, j = outline.Length - 1; i < outline.Length; j = i++)
             {
-                float depth = -edge;
-                if (depth < OutlineInk) return InkArt.Ink;
-                if (depth < OutlineInk + TeamBand) return team;
-                if (depth < OutlineInk + TeamBand + GoldLine) return InkArt.Gold;
-                if (depth < PortraitInset) return InkArt.Ink;
-                Color art = portraitColour(p);
-                art.a = 1f;
-                return art;
+                Vector2 a = outline[j], b = outline[i];
+                if ((a.y > y) != (b.y > y)) crossings.Add(a.x + (y - a.y) * (b.x - a.x) / (b.y - a.y));
+            }
+            crossings.Sort();
+
+            int passed = 0;
+            for (int sx = 0; sx < rowLength; sx++)
+            {
+                Vector2 p = ToUnits(new Vector2((sx + 0.5f) * step, (sy + 0.5f) * step), pixelsPerUnit);
+                while (passed < crossings.Count && crossings[passed] < p.x) passed++;
+                visit(sy * rowLength + sx, p, passed % 2 == 1);
             }
 
-            foreach (Extra extra in extras)
-                if (!extra.inFront && extra.shape(p) <= 0f) return extra.shape(p) > -extra.ink ? InkArt.Ink : extra.fill;
-            return Color.clear;
-        }, 2, true);
+            if (budget.Spent) { yield return null; budget.Restart(); }
+        }
+    }
+
+    // Runs a routine (and any routines it waits on) to the end right now
+    static void RunNow(IEnumerator routine)
+    {
+        Stack<IEnumerator> stack = new Stack<IEnumerator>();
+        stack.Push(routine);
+        while (stack.Count > 0)
+        {
+            IEnumerator top = stack.Peek();
+            if (!top.MoveNext()) stack.Pop();
+            else if (top.Current is IEnumerator nested) stack.Push(nested);
+        }
+    }
+
+    static List<(Vector2, Vector2)> Edges(Vector2[] outline)
+    {
+        List<(Vector2, Vector2)> edges = new List<(Vector2, Vector2)>();
+        for (int i = 0, j = outline.Length - 1; i < outline.Length; j = i++) edges.Add((outline[j], outline[i]));
+        return edges;
+    }
+
+    // Line segments sorted into grid cells, so "how far is the nearest segment?" only checks the few nearby ones.
+    // Only answers up to reach; anything further away comes back as float.MaxValue
+    class SegmentGrid
+    {
+        readonly float cell, reach;
+        readonly Dictionary<(int, int), List<(Vector2 a, Vector2 b)>> cells = new Dictionary<(int, int), List<(Vector2, Vector2)>>();
+
+        public SegmentGrid(List<(Vector2, Vector2)> segments, float reach)
+        {
+            this.reach = reach;
+            cell = Mathf.Max(4f, reach);
+            foreach ((Vector2 a, Vector2 b) in segments)
+            {
+                // Every cell within reach of the segment's box
+                Vector2 min = Vector2.Min(a, b) - Vector2.one * reach, max = Vector2.Max(a, b) + Vector2.one * reach;
+                for (int cx = Mathf.FloorToInt(min.x / cell); cx <= Mathf.FloorToInt(max.x / cell); cx++)
+                    for (int cy = Mathf.FloorToInt(min.y / cell); cy <= Mathf.FloorToInt(max.y / cell); cy++)
+                    {
+                        if (!cells.TryGetValue((cx, cy), out List<(Vector2, Vector2)> list)) cells[(cx, cy)] = list = new List<(Vector2, Vector2)>();
+                        list.Add((a, b));
+                    }
+            }
+        }
+
+        public float Nearest(Vector2 p)
+        {
+            if (!cells.TryGetValue((Mathf.FloorToInt(p.x / cell), Mathf.FloorToInt(p.y / cell)), out List<(Vector2 a, Vector2 b)> list)) return float.MaxValue;
+            float best = float.MaxValue;
+            foreach ((Vector2 a, Vector2 b) in list) best = Mathf.Min(best, InkArt.Segment(p, a, b));
+            return best < reach ? best : float.MaxValue;
+        }
+    }
+
+    // Paints a texture from one byte per sample point (0 = clear)
+    static IEnumerator PaintSamplesRoutine(int width, int height, byte[] samples, Color[] palette, InkArt.FrameBudget budget, System.Action<Texture2D> done)
+    {
+        int rowLength = width * FrameSamples;
+        return InkArt.PaintRoutine(width, height, pixel =>
+        {
+            int sx = Mathf.Min(rowLength - 1, (int)(pixel.x * FrameSamples));
+            int sy = Mathf.Min(height * FrameSamples - 1, (int)(pixel.y * FrameSamples));
+            return palette[samples[sy * rowLength + sx]];
+        }, FrameSamples, false, budget, done);
     }
 
     // Solid white body, for the hit flash
     public static Texture2D PaintSilhouette(CharacterClass characterClass, float pixelsPerUnit)
     {
-        Vector2[] outline = Outline(characterClass);
-        return InkArt.Paint(Mathf.RoundToInt(CanvasWidth * pixelsPerUnit), Mathf.RoundToInt(CanvasHeight * pixelsPerUnit), pixel =>
-            InkArt.Polygon(ToUnits(pixel, pixelsPerUnit), outline) <= 0f ? Color.white : Color.clear, 2);
+        Texture2D result = null;
+        RunNow(SilhouetteRoutine(characterClass, pixelsPerUnit, null, t => result = t));
+        return result;
+    }
+
+    public static IEnumerator SilhouetteRoutine(CharacterClass characterClass, float pixelsPerUnit, InkArt.FrameBudget budget, System.Action<Texture2D> done)
+    {
+        budget ??= NoBudget;
+        int width = Mathf.RoundToInt(CanvasWidth * pixelsPerUnit), height = Mathf.RoundToInt(CanvasHeight * pixelsPerUnit);
+        byte[] samples = new byte[width * FrameSamples * height * FrameSamples];
+        yield return SamplesRoutine(width, height, pixelsPerUnit, Outline(characterClass), budget, (index, p, inside) => samples[index] = (byte)(inside ? 1 : 0));
+        yield return PaintSamplesRoutine(width, height, samples, new[] { Color.clear, Color.white }, budget, done);
     }
 
     // Ink cracks spreading across the body from near the top, for the defeat
     public static Texture2D PaintCracks(CharacterClass characterClass, float pixelsPerUnit)
     {
+        Texture2D result = null;
+        RunNow(CracksRoutine(characterClass, pixelsPerUnit, null, t => result = t));
+        return result;
+    }
+
+    public static IEnumerator CracksRoutine(CharacterClass characterClass, float pixelsPerUnit, InkArt.FrameBudget budget, System.Action<Texture2D> done)
+    {
+        budget ??= NoBudget;
         Vector2[] outline = Outline(characterClass);
         Vector2 origin = V(78, 80);
         List<(Vector2, Vector2)> segments = new List<(Vector2, Vector2)>();
@@ -271,14 +460,17 @@ public static class ClassFrames
             }
         }
 
-        return InkArt.Paint(Mathf.RoundToInt(CanvasWidth * pixelsPerUnit), Mathf.RoundToInt(CanvasHeight * pixelsPerUnit), pixel =>
+        SegmentGrid edges = new SegmentGrid(Edges(outline), 3.5f);
+        SegmentGrid cracks = new SegmentGrid(segments, 2.6f);
+        int width = Mathf.RoundToInt(CanvasWidth * pixelsPerUnit), height = Mathf.RoundToInt(CanvasHeight * pixelsPerUnit);
+        byte[] samples = new byte[width * FrameSamples * height * FrameSamples];
+        yield return SamplesRoutine(width, height, pixelsPerUnit, outline, budget, (index, p, inside) =>
         {
-            Vector2 p = ToUnits(pixel, pixelsPerUnit);
-            if (InkArt.Polygon(p, outline) > -3f) return Color.clear;
-            float best = float.MaxValue;
-            foreach ((Vector2 a, Vector2 b) in segments) best = Mathf.Min(best, InkArt.Segment(p, a, b));
-            return best < 1.5f ? InkArt.Ink : best < 2.6f ? new Color(1f, 1f, 1f, 0.8f) : Color.clear;
-        }, 2);
+            if (!inside || edges.Nearest(p) < 3f) return; // Keep the cracks off the outline
+            float best = cracks.Nearest(p);
+            samples[index] = (byte)(best < 1.5f ? 1 : best < 2.6f ? 2 : 0);
+        });
+        yield return PaintSamplesRoutine(width, height, samples, new[] { Color.clear, InkArt.Ink, new Color(1f, 1f, 1f, 0.8f) }, budget, done); // Ink crack with a light edge
     }
 
     // ---- Helpers ----
@@ -287,6 +479,14 @@ public static class ClassFrames
     static Vector2 ToUnits(Vector2 pixel, float pixelsPerUnit) => new Vector2(CanvasLeft + pixel.x / pixelsPerUnit, CanvasBottom - pixel.y / pixelsPerUnit);
 
     static Vector2 V(float x, float y) => new Vector2(x, y);
+
+    // Box around some points, with a little margin
+    static Rect Box(Vector2[] points)
+    {
+        Vector2 min = points[0], max = points[0];
+        foreach (Vector2 point in points) { min = Vector2.Min(min, point); max = Vector2.Max(max, point); }
+        return Rect.MinMaxRect(min.x - 1f, min.y - 1f, max.x + 1f, max.y + 1f);
+    }
 
     static IEnumerable<Vector2> Quad(Vector2 a, Vector2 control, Vector2 b, int steps = 14)
     {

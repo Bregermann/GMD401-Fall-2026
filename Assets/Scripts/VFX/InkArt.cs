@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 // The Inked Star Chart look in one place: the palette, and a painter that draws smooth ink-outlined shapes into
@@ -25,30 +26,60 @@ public static class InkArt
     // Points are in pixels, (0,0) = bottom-left corner
     public static Texture2D Paint(int width, int height, System.Func<Vector2, Color> colourAt, int samples = 3, bool mipmaps = false)
     {
+        Color[] pixels = new Color[width * height];
+        for (int y = 0; y < height; y++) PaintRow(y, width, pixels, colourAt, samples);
+        return ToTexture(width, height, pixels, mipmaps);
+    }
+
+    // Same as Paint, but spread over several frames: it stops whenever this frame's time budget is used up and
+    // carries on next frame (WebGL runs everything on one thread, so a long paint would freeze the game). Use in a coroutine
+    public static IEnumerator PaintRoutine(int width, int height, System.Func<Vector2, Color> colourAt, int samples, bool mipmaps,
+                                           FrameBudget budget, System.Action<Texture2D> done)
+    {
+        Color[] pixels = new Color[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            PaintRow(y, width, pixels, colourAt, samples);
+            if (budget.Spent) { yield return null; budget.Restart(); }
+        }
+        done(ToTexture(width, height, pixels, mipmaps));
+    }
+
+    static void PaintRow(int y, int width, Color[] pixels, System.Func<Vector2, Color> colourAt, int samples)
+    {
+        float step = 1f / samples;
+        for (int x = 0; x < width; x++)
+        {
+            Vector4 sum = Vector4.zero;
+            for (int sy = 0; sy < samples; sy++)
+                for (int sx = 0; sx < samples; sx++)
+                {
+                    Color c = colourAt(new Vector2(x + (sx + 0.5f) * step, y + (sy + 0.5f) * step));
+                    sum += new Vector4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
+                }
+            float alpha = sum.w / (samples * samples);
+            pixels[y * width + x] = alpha > 0f ? new Color(sum.x / sum.w, sum.y / sum.w, sum.z / sum.w, alpha) : Color.clear;
+        }
+    }
+
+    static Texture2D ToTexture(int width, int height, Color[] pixels, bool mipmaps)
+    {
         Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, mipmaps);
         texture.wrapMode = TextureWrapMode.Clamp;
         texture.filterMode = FilterMode.Bilinear;
-        Color[] pixels = new Color[width * height];
-        float step = 1f / samples;
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                Vector4 sum = Vector4.zero;
-                for (int sy = 0; sy < samples; sy++)
-                    for (int sx = 0; sx < samples; sx++)
-                    {
-                        Color c = colourAt(new Vector2(x + (sx + 0.5f) * step, y + (sy + 0.5f) * step));
-                        sum += new Vector4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
-                    }
-                float alpha = sum.w / (samples * samples);
-                pixels[y * width + x] = alpha > 0f ? new Color(sum.x / sum.w, sum.y / sum.w, sum.z / sum.w, alpha) : Color.clear;
-            }
-        }
         texture.SetPixels(pixels);
         texture.Apply(mipmaps);
         return texture;
+    }
+
+    // How long a spread-out job may run each frame before it waits for the next one
+    public class FrameBudget
+    {
+        readonly System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew();
+        readonly double milliseconds;
+        public FrameBudget(float milliseconds) { this.milliseconds = milliseconds; }
+        public bool Spent => watch.Elapsed.TotalMilliseconds > milliseconds;
+        public void Restart() => watch.Restart();
     }
 
     public static Sprite ToSprite(Texture2D texture, Vector2 pivot, float pixelsPerUnit, float border = 0f)

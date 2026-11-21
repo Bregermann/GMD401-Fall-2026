@@ -176,8 +176,13 @@ public class BattleHUD : MonoBehaviour
         if (!battle) return;
 
         infoPanel.GetComponent<Image>().color = panelColor;
-        roundLabel.text = $"ROUND {turns.Round}";
-        RebuildTurnOrder(turns);
+        // Working out the turn order sorts lists and builds strings, so check it a few times a second, not every frame
+        if (Time.unscaledTime >= nextOrderCheck)
+        {
+            nextOrderCheck = Time.unscaledTime + 0.2f;
+            roundLabel.text = $"ROUND {turns.Round}";
+            RebuildTurnOrder(turns);
+        }
         infoPanel.sizeDelta = new Vector2(Mathf.Max(470f, 112f + orderWidth + 12f), 132f);
 
         foreach ((CardUnit unit, Image hp) in portraits)
@@ -203,9 +208,28 @@ public class BattleHUD : MonoBehaviour
         cardPanel.anchoredPosition = new Vector2(-24f + eased * 120f, 40f);
         cardGroup.alpha = 1f - eased;
 
+        // Rewriting the text makes garbage and re-lays out the TMP text, so only do it when something changed
+        // (plus twice a second to catch buffs that change attack power)
         CardMover mover = active.GetComponent<CardMover>();
-        FillCardPanel(active.Instance, mover != null && mover.hasMoved, turns.HasAttacked, turns.CanAct, turns.SelectedAttack);
+        bool hasMoved = mover != null && mover.hasMoved;
+        CardInstance card = active.Instance;
+        int key = 17;
+        key = key * 31 + card.GetHashCode();
+        key = key * 31 + card.currentHP;
+        key = key * 31 + card.Speed;
+        key = key * 31 + (hasMoved ? 1 : 0) + (turns.HasAttacked ? 2 : 0) + (turns.CanAct ? 4 : 0);
+        key = key * 31 + (turns.SelectedAttack != null ? turns.SelectedAttack.GetHashCode() : 0);
+        key = key * 31 + hoveredButton;
+        key = key * 31 + (card.CanUseAttack(card.data.attack1) ? 1 : 0) + (card.CanUseAttack(card.data.attack2) ? 2 : 0)
+                       + (card.CanUseAttack(card.data.attack3) ? 4 : 0) + (card.CanUseAttack(card.data.attack4) ? 8 : 0);
+        if (key == cardPanelKey && Time.unscaledTime < cardPanelRefresh) return;
+        cardPanelKey = key;
+        cardPanelRefresh = Time.unscaledTime + 0.5f;
+        FillCardPanel(card, hasMoved, turns.HasAttacked, turns.CanAct, turns.SelectedAttack);
     }
+
+    private int cardPanelKey;
+    private float cardPanelRefresh, nextOrderCheck;
 
     // Writes one card's details into the card panel. Shared by the game and the editor preview
     void FillCardPanel(CardInstance card, bool hasMoved, bool hasAttacked, bool canAct, AttackData selected)
@@ -622,6 +646,7 @@ public class BattleHUD : MonoBehaviour
         Button click = button.root.gameObject.AddComponent<Button>();
         click.transition = Selectable.Transition.None;
         click.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.root.gameObject.AddComponent<UISound>().clickCue = ""; // Hover sound only; TurnManager plays the select sound
         click.onClick.AddListener(() =>
         {
             TurnManager.Instance?.SelectAttack(index);
@@ -667,6 +692,7 @@ public class BattleHUD : MonoBehaviour
         Button click = endTurnPanel.gameObject.AddComponent<Button>();
         click.transition = Selectable.Transition.None;
         click.navigation = new Navigation { mode = Navigation.Mode.None };
+        endTurnPanel.gameObject.AddComponent<UISound>().clickCue = ""; // Hover sound only; TurnManager plays the end turn sound
         click.onClick.AddListener(() =>
         {
             TurnManager.Instance?.EndTurn();

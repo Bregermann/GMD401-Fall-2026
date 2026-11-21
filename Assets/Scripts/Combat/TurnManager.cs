@@ -164,6 +164,7 @@ public class TurnManager : MonoBehaviour
         if (mover != null && mover.IsBusy) return false; // Can't end the turn mid-drag
 
         StartCoroutine(EndCardTurn());
+        GameSfx.Play("ui.endTurn");
         return true;
     }
 
@@ -443,10 +444,12 @@ public class TurnManager : MonoBehaviour
         if (!card.CanUseAttack(attack))
         {
             Debug.Log($"{attack.attackName} is on cooldown");
+            GameSfx.Play("ui.error");
             return false;
         }
 
         selectedAttack = selectedAttack == attack ? null : attack;
+        GameSfx.Play(selectedAttack != null ? "ui.select" : "ui.back");
         // AroundSelf and Self attacks are used by clicking the card itself
         string howToUse = CombatResolver.UsedOnSelf(attack) ? $"click {card.data.cardName} to use it" : "click a target";
         Debug.Log(selectedAttack != null ? $"{attack.attackName} selected, {howToUse}" : "Attack cancelled");

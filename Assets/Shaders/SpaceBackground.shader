@@ -30,6 +30,8 @@ Shader "Stratafield/Space Background"
         _TwinkleSpeed ("Twinkle Speed", Float) = 1.5
 
         [HideInInspector] _Aspect ("Aspect (set by script)", Float) = 1.7778
+        [HideInInspector] _LowResTex ("Low-res render (set by script)", 2D) = "black" {}
+        [HideInInspector] _UseLowRes ("Show the low-res render (set by script)", Float) = 0
     }
 
     SubShader
@@ -52,8 +54,13 @@ Shader "Stratafield/Space Background"
                 half4 _Colour1, _Colour2, _Colour3, _GlowColour;
                 float _PixelsAcross, _ColourSteps, _Contrast, _SpinAmount, _Zoom, _GlowStrength;
                 float _StarDensity, _Dim, _Vignette;
-                float _SwirlSpeed, _SpinSpeed, _TwinkleSpeed, _Aspect;
+                float _SwirlSpeed, _SpinSpeed, _TwinkleSpeed, _Aspect, _UseLowRes;
             CBUFFER_END
+
+            // SpaceBackground.cs renders the swirl once into a small texture the size of the pixel grid, then the
+            // quad just shows it (much cheaper than working out every screen pixel, which matters for WebGL)
+            TEXTURE2D(_LowResTex);
+            SAMPLER(sampler_LowResPointClamp);
 
             struct Attributes
             {
@@ -133,6 +140,7 @@ Shader "Stratafield/Space Background"
 
             half4 Frag(Varyings input) : SV_Target
             {
+                if (_UseLowRes > 0.5) return SAMPLE_TEXTURE2D(_LowResTex, sampler_LowResPointClamp, input.uv);
                 float time = _Time.y;
 
                 // Snap to a coarse pixel grid (square pixels whatever the screen shape)

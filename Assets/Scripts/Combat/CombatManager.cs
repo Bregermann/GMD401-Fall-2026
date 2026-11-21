@@ -39,6 +39,7 @@ public class CombatManager : MonoBehaviour
         if (GetComponent<CameraRig>() == null) gameObject.AddComponent<CameraRig>();
         if (GetComponent<ScreenLook>() == null) gameObject.AddComponent<ScreenLook>();
         if (GetComponent<UnitTokens>() == null) gameObject.AddComponent<UnitTokens>();
+        if (GetComponent<GameAudio>() == null) gameObject.AddComponent<GameAudio>();
     }
 
     void Start()

@@ -185,6 +185,7 @@ public class DraftManager : MonoBehaviour
         }
         for (int i = 0; i < pile.Count; i++)
             StartCoroutine(MoveCard(pile[i].transform, PilePosition(i, Vector3.zero), PileRotation(slots[0].rotation), gatherTime, 0f));
+        GameSfx.Play("card.gather");
         yield return WaitForCards();
 
         for (int shuffle = 0; shuffle < shuffleCount && !skipDeal; shuffle++)
@@ -197,9 +198,11 @@ public class DraftManager : MonoBehaviour
                 StartCoroutine(MoveCard(left[i].transform, PilePosition(i, -right * splitDistance), PileRotation(slots[0].rotation), splitTime, 0f));
             for (int i = 0; i < rightHalf.Count; i++)
                 StartCoroutine(MoveCard(rightHalf[i].transform, PilePosition(i, right * splitDistance), PileRotation(slots[0].rotation), splitTime, 0f));
+            GameSfx.Play("card.split");
             yield return WaitForCards();
 
             // Riffle: cards drop back into the middle from the bottom of either half, randomly
+            GameSfx.Play("card.shuffle");
             pile.Clear();
             int l = 0, r = 0;
             while ((l < left.Count || r < rightHalf.Count) && !skipDeal)
@@ -230,6 +233,7 @@ public class DraftManager : MonoBehaviour
 
             Vector3 target = slots[i].position + Vector3.up * HeightOffset;
             StartCoroutine(MoveCard(card.transform, target, slots[i].rotation, dealFlightTime, dealArcHeight, 180f));
+            GameSfx.Play("card.deal");
             yield return new WaitForSeconds(dealInterval);
         }
         yield return WaitForCards();
