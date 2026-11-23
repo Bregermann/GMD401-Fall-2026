@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Nox
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Nox
+  characterClass: 5
+  artwork: {fileID: 0}
+  artHasText: 0
+  portraitFocus: {x: 0.5, y: 0.69}
+  portraitZoom: 0.42
+  maxHP: 1650
+  physicalDefense: 50
+  magicDefense: 20
+  speed: 530
+  moveSpaces: 5
+  canMoveDiagonally: 0
+  attack1: {fileID: 11400000, guid: 6904a0e56251544559484475a38ee4f1, type: 2}
+  attack2: {fileID: 11400000, guid: b2362b07fc935423594e6ffe15bdfb2c, type: 2}
+  attack3: {fileID: 11400000, guid: 6b2765bba61ac4f0186f8a122cf9e2f8, type: 2}
+  attack4: {fileID: 11400000, guid: 3e9b27d73b15e4cad9c54b95f291da1f, type: 2}

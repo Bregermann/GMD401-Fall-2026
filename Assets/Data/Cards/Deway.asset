@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Deway
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Deway
+  characterClass: 3
+  artwork: {fileID: 0}
+  artHasText: 0
+  portraitFocus: {x: 0.5, y: 0.69}
+  portraitZoom: 0.42
+  maxHP: 1440
+  physicalDefense: 30
+  magicDefense: 40
+  speed: 400
+  moveSpaces: 3
+  canMoveDiagonally: 1
+  attack1: {fileID: 11400000, guid: 9322e4ffb602b4483873c4f1cab67121, type: 2}
+  attack2: {fileID: 11400000, guid: d4acef820f77448f5ab1e81aa935681d, type: 2}
+  attack3: {fileID: 11400000, guid: 9c4d7aa8412c7468497f77e939989368, type: 2}
+  attack4: {fileID: 11400000, guid: 057d96ee0b705482bb94b27dfe44f41b, type: 2}

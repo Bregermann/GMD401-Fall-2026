@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Helena
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Helena
+  characterClass: 0
+  artwork: {fileID: 0}
+  artHasText: 0
+  portraitFocus: {x: 0.5, y: 0.69}
+  portraitZoom: 0.42
+  maxHP: 2250
+  physicalDefense: 70
+  magicDefense: 30
+  speed: 400
+  moveSpaces: 3
+  canMoveDiagonally: 1
+  attack1: {fileID: 11400000, guid: 3fa107b199ed5484f8e4f6c05195ede3, type: 2}
+  attack2: {fileID: 11400000, guid: 7d792b84d9a2e4271b52e2f55788c274, type: 2}
+  attack3: {fileID: 11400000, guid: 6a32847de21e6435d853eda5a779275f, type: 2}
+  attack4: {fileID: 11400000, guid: 356e19649049d4ad29048e1650058953, type: 2}

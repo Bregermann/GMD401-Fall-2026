@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b4181548305175c4a96fb96e354cb77e, type: 3}
-  m_Name: Scented Breath
+  m_Name: Order I Quick Attack
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  attackName: Scented Breath
-  description: Inflicts magic defense down if attacking from the front
-  damage: 230
-  damageType: 1
+  attackName: 'Order I: Quick Attack'
+  description: Inflicts stagger
+  damage: 240
+  damageType: 0
   range: 0
   area: 0
   areaSize: 1
@@ -27,29 +27,18 @@ MonoBehaviour:
   classMultiplier: 1.25
   hasKnockback: 0
   knockbackCollisionDamage: 10
-  targetStatusEffects: []
+  targetStatusEffects:
+  - type: 12
+    amount: 0
+    duration: 2
+    ignoreStagger: 0
   selfStatusEffects: []
-  bonuses:
-  - condition: 5
-    status: 0
-    ally: {fileID: 0}
-    otherAttack: {fileID: 0}
-    side: 3
-    targetClass: 0
-    hp: 0
-    hpIsPercent: 0
-    bonusDamage: 0
-    extraTargetEffects:
-    - type: 10
-      amount: 50
-      duration: 2
-      ignoreStagger: 0
-    extraSelfEffects: []
+  bonuses: []
   ignoresDefense: 0
   executeAtOrBelowHP: 0
   whileOnCooldown: 0
   passiveDamage: 100
+  vfxTheme: 0
+  vfxSignature: 0
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}
-  vfxTheme: 15
-  vfxSignature: 0
