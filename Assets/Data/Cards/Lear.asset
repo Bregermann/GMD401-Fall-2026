@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Lear
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Lear
+  characterClass: 0
+  artwork: {fileID: 0}
+  artHasText: 0
+  portraitFocus: {x: 0.5, y: 0.69}
+  portraitZoom: 0.42
+  maxHP: 2090
+  physicalDefense: 50
+  magicDefense: 30
+  speed: 280
+  moveSpaces: 2
+  canMoveDiagonally: 0
+  attack1: {fileID: 11400000, guid: 9a8d2159aa5b541adbc333d7fa6af92b, type: 2}
+  attack2: {fileID: 11400000, guid: 0257a5eff025540bba14380ec6370a4b, type: 2}
+  attack3: {fileID: 11400000, guid: b62cae3ccb1ef468ab89991783d344a2, type: 2}
+  attack4: {fileID: 11400000, guid: ebe667ad01acd4e12b0d562baab92d95, type: 2}

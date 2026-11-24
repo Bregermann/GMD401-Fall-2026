@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: STELLA Mk III
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: STELLA Mk III
+  characterClass: 4
+  artwork: {fileID: 0}
+  artHasText: 0
+  portraitFocus: {x: 0.5, y: 0.69}
+  portraitZoom: 0.42
+  maxHP: 2220
+  physicalDefense: 30
+  magicDefense: 20
+  speed: 440
+  moveSpaces: 3
+  canMoveDiagonally: 1
+  attack1: {fileID: 11400000, guid: d7ac6edaf3b794d07a93d5af3079122d, type: 2}
+  attack2: {fileID: 11400000, guid: 0cffb40c065844fcc809657a38538dc9, type: 2}
+  attack3: {fileID: 11400000, guid: 50422c89a39834b35b1500c2cf3bdee7, type: 2}
+  attack4: {fileID: 11400000, guid: 4525923434e0a40ca9c8baa8fd36f710, type: 2}

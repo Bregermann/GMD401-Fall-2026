@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc06c83de9ab3e449994819e40020a6, type: 3}
+  m_Name: Charles
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardName: Charles
+  characterClass: 5
+  artwork: {fileID: 0}
+  artHasText: 0
+  portraitFocus: {x: 0.5, y: 0.69}
+  portraitZoom: 0.42
+  maxHP: 1630
+  physicalDefense: 60
+  magicDefense: 20
+  speed: 560
+  moveSpaces: 5
+  canMoveDiagonally: 0
+  attack1: {fileID: 11400000, guid: 1377a977500cb44f8b32bcafa7a68a3e, type: 2}
+  attack2: {fileID: 11400000, guid: 6355a8a42a5184200802647ceb324fe7, type: 2}
+  attack3: {fileID: 11400000, guid: 6989ee0aeb781455c9f8b1666c28b448, type: 2}
+  attack4: {fileID: 11400000, guid: a630a1cb5d9f9466183d25d6f1d369bb, type: 2}
