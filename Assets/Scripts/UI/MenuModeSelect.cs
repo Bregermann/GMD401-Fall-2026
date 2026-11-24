@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// After PLAY on the main menu: the three menu buttons swap for VS. COMPUTER, VS. PLAYER and BACK (copies of the real
+// After PLAY on the main menu: the three menu buttons swap for VS CPU, VS PLAYER and BACK (copies of the real
 // buttons, same art and font, only the words change). Picking a mode sets who controls Player 2 and starts the black
 // hole into the game. MainMenu.PlayGame opens it
 public static class MenuModeSelect
@@ -18,8 +18,9 @@ public static class MenuModeSelect
         copies.RemoveAll(copy => copy == null); // Left over from an earlier visit to the menu
         if (copies.Count > 0 || BlackHoleTransition.IsPlaying) return;
         hidden.Clear();
+        var labels = new List<TMP_Text>();
 
-        string[] labels = { "VS. COMPUTER", "VS. PLAYER", "BACK" };
+        string[] words = { "VS CPU", "VS PLAYER", "BACK" }; // No full stops: ROG only has letters
         System.Action[] actions =
         {
             () => Start(ComputerPlayer.Mode.Player2),
@@ -33,7 +34,7 @@ public static class MenuModeSelect
             if (original == null) { Debug.LogWarning($"MenuModeSelect: no {Originals[i]} in the scene"); continue; }
 
             GameObject copy = Object.Instantiate(original, original.transform.parent);
-            copy.name = labels[i] + " Button";
+            copy.name = words[i] + " Button";
             copy.transform.SetSiblingIndex(original.transform.GetSiblingIndex() + 1);
 
             Button button = copy.GetComponent<Button>();
@@ -44,11 +45,23 @@ public static class MenuModeSelect
             TMP_Text text = copy.GetComponentInChildren<TMP_Text>(true);
             if (text != null)
             {
-                text.text = labels[i];
-                if (labels[i].Contains(".") && GameFonts.Title != null) text.font = GameFonts.Title; // ROG has no full stop; the game's Title font fills it in
-                text.enableAutoSizing = true; // Longer words than PLAY
+                text.text = words[i]; // Same ROG font as the menu buttons
+
+                // The originals are left aligned in a box that fits their own word, so centre across the whole button
+                RectTransform box = text.rectTransform;
+                box.SetParent(copy.transform, false);
+                box.anchorMin = Vector2.zero;
+                box.anchorMax = Vector2.one;
+                box.pivot = new Vector2(0.5f, 0.5f);
+                box.offsetMin = new Vector2(10f, 0f);
+                box.offsetMax = new Vector2(-10f, 0f);
+                text.horizontalAlignment = HorizontalAlignmentOptions.Center;
+                text.verticalAlignment = VerticalAlignmentOptions.Middle;
+                text.textWrappingMode = TextWrappingModes.NoWrap; // One line, shrunk to fit instead of wrapping
+                text.enableAutoSizing = true;
                 text.fontSizeMax = text.fontSize;
-                text.fontSizeMin = text.fontSize * 0.5f;
+                text.fontSizeMin = text.fontSize * 0.3f;
+                labels.Add(text);
             }
 
             original.SetActive(false);
@@ -56,6 +69,11 @@ public static class MenuModeSelect
             copies.Add(copy);
             copy.GetComponent<MonoBehaviour>().StartCoroutine(PopIn(copy.transform, i * 0.06f));
         }
+
+        // All three use the size the longest label fits at, so they match
+        float size = float.MaxValue;
+        foreach (TMP_Text label in labels) { label.ForceMeshUpdate(); size = Mathf.Min(size, label.fontSize); }
+        foreach (TMP_Text label in labels) { label.enableAutoSizing = false; label.fontSize = size; }
     }
 
     static void Start(ComputerPlayer.Mode mode)
