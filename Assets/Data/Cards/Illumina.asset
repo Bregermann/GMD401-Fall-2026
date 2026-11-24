@@ -15,7 +15,7 @@ MonoBehaviour:
   cardName: Illumina
   characterClass: 5
   artwork: {fileID: 0}
-  maxHP: 1380
+  maxHP: 1980
   physicalDefense: 30
   magicDefense: 30
   speed: 550

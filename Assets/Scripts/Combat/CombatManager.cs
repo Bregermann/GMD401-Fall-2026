@@ -40,6 +40,8 @@ public class CombatManager : MonoBehaviour
         if (GetComponent<ScreenLook>() == null) gameObject.AddComponent<ScreenLook>();
         if (GetComponent<UnitTokens>() == null) gameObject.AddComponent<UnitTokens>();
         if (GetComponent<GameAudio>() == null) gameObject.AddComponent<GameAudio>();
+        if (GetComponent<ComputerPlayer>() == null) gameObject.AddComponent<ComputerPlayer>();
+        if (GetComponent<CounterWheel>() == null) gameObject.AddComponent<CounterWheel>();
     }
 
     void Start()

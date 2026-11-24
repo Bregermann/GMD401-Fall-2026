@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Alakazap
   description: 
-  damage: 400
+  damage: 350
   damageType: 1
-  range: 0
+  range: 4
   area: 0
   areaSize: 1
   areaAffects: 0
   positionalBonus: 0
   positionalMultiplier: 1.25
-  hasClassBonus: 0
-  classBonusTarget: 0
+  hasClassBonus: 1
+  classBonusTarget: 2
   classMultiplier: 1.25
   hasKnockback: 0
   knockbackCollisionDamage: 10

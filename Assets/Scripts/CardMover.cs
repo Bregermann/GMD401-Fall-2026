@@ -71,7 +71,7 @@ public class CardMover : MonoBehaviour
         if (CardInspector.IsOpen) return false; // No dragging while inspecting a card
         if (InputGate.IsPaused || InputGate.PointerOverUI) return false; // Or through the options menu
         if (TurnManager.Instance == null) return true;
-        return TurnManager.Instance.CanDrag(GetComponent<CardUnit>());
+        return TurnManager.Instance.CanHumanDrag(GetComponent<CardUnit>()); // Changed to link up with the computer player (no dragging its cards)
     }
 
     bool IsMouseOverThisCard()
@@ -141,6 +141,28 @@ public class CardMover : MonoBehaviour
         if (grid == null || data == null) return new List<Transform>();
         GetMoveRules(out int moveSpaces, out int owner);
         return grid.GetValidSlots(data, moveSpaces, owner, currentSlot);
+    }
+
+    // Added for the computer player: slots this card could move to from where it sits now
+    public List<Transform> GetMoveOptions()
+    {
+        if (grid == null || data == null || hasMoved || IsBusy) return new List<Transform>();
+        GetMoveRules(out int moveSpaces, out int owner);
+        return grid.GetValidSlots(data, moveSpaces, owner, transform.parent);
+    }
+
+    // Added for the computer player: moves to a slot without dragging, using the same rules and snap as a drag.
+    // False if the move isn't allowed right now
+    public bool MoveTo(Transform slot)
+    {
+        if (slot == null || hasMoved || IsBusy) return false;
+        if (TurnManager.Instance != null && !TurnManager.Instance.CanDrag(GetComponent<CardUnit>())) return false;
+        if (!GetMoveOptions().Contains(slot)) return false;
+
+        currentSlot = transform.parent;
+        transform.SetParent(null);
+        snapCoroutine = StartCoroutine(SmoothSnap(slot));
+        return true;
     }
 
     // Move spaces with status effects (or the base stat without a CardUnit), and the owner for placement rows (0 = anywhere)

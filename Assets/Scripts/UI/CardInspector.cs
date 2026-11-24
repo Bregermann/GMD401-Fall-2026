@@ -208,7 +208,7 @@ public class CardInspector : MonoBehaviour
     {
         StringBuilder text = new StringBuilder();
         _ = GameFonts.Title; // Loads it so the <font> tag finds it
-        text.AppendLine($"<size=140%><font=\"Audiowide\">{data.cardName}</font></size>");
+        text.AppendLine($"<size=140%><font=\"ROG\">{data.cardName}</font></size>");
         text.AppendLine($"<color=#FFE39A>{data.characterClass}  -  {owner}</color>");
         text.AppendLine();
         text.AppendLine(onBoard ? $"HP {card.currentHP}/{data.maxHP}" : $"HP {data.maxHP}");

@@ -14,7 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardName: Alexis
   characterClass: 4
-  artwork: {fileID: 0}
+  artwork: {fileID: 4532706007504512582, guid: a0d036b1673e9fa4da378aa867e5998a, type: 3}
+  artHasText: 0
+  portraitFocus: {x: 0.5, y: 0.69}
+  portraitZoom: 0.42
   maxHP: 2090
   physicalDefense: 70
   magicDefense: 40

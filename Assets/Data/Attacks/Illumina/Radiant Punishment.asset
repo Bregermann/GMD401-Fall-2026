@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Radiant Punishment
   description: Deals +130 magic damage to stunned targets
-  damage: 220
+  damage: 290
   damageType: 1
   range: 0
   area: 0

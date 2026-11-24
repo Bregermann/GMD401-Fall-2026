@@ -172,6 +172,22 @@ public static class ClassFrames
 
     // ---- Badge icons (in the badge's own units, centred, y down, about 10 each way; negative = ink) ----
 
+    // The class badge on its own (cut-corner plate in the class colour with its ink icon), for UI like the counter wheel
+    public static Texture2D PaintBadge(CharacterClass characterClass, int size)
+    {
+        float unitsPerPixel = (BadgeHalf.y * 2f + 4f) / size;
+        Color colour = ColourOf(characterClass);
+        return InkArt.Paint(size, size, p =>
+        {
+            Vector2 q = (p - new Vector2(size / 2f, size / 2f)) * unitsPerPixel;
+            q.y = -q.y; // Badge units run downward
+            float badge = InkArt.Chamfer(q, Vector2.zero, BadgeHalf, 7f, 2f);
+            if (badge > 0f) return Color.clear;
+            if (badge > -2.4f) return InkArt.Ink;
+            return Icon(characterClass, q) <= 0f ? InkArt.Ink : colour;
+        }, 3);
+    }
+
     static float Icon(CharacterClass characterClass, Vector2 q)
     {
         switch (characterClass)

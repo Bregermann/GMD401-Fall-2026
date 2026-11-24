@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Knuckle Drill
   description: Applies haste to self
-  damage: 220
+  damage: 270
   damageType: 0
   range: 0
   area: 0

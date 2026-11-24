@@ -6,7 +6,7 @@ public class MainMenu : MonoBehaviour
     public void PlayGame()
     {
         SceneTransition.TargetScene = "GameScene"; // replace with your actual gameplay scene name
-        SceneManager.LoadScene("LoadingScene");
+        MenuModeSelect.Open(); // Changed: shows Vs. Computer / Vs. Player first, then the black hole loads the game
     }
 
     public void GoToOptions()

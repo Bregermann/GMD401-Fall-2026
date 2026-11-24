@@ -91,6 +91,9 @@ public class DraftManager : MonoBehaviour
             yield break;
         }
 
+        // Coming from the menu: wait for the black hole to close so the shuffle is seen from the start
+        while (BlackHoleTransition.IsPlaying) yield return null;
+
         yield return StartDraft();
     }
 
@@ -102,6 +105,7 @@ public class DraftManager : MonoBehaviour
             skipDeal = true;
 
         if (!IsDrafting || isBusy || CardInspector.IsOpen || InputGate.IsPaused) return;
+        if (ComputerPlayer.Controls(PickingPlayer)) return; // The computer picks for this player
 
         // Click a card to select it, click it again to deselect
         Mouse mouse = Mouse.current;
@@ -379,6 +383,30 @@ public class DraftManager : MonoBehaviour
             TurnManager.Instance.StartPlacement(drafted, placesFirst);
         else
             Debug.LogWarning("No TurnManager in the scene, placement won't start");
+    }
+
+    // ---- Commands (mouse and Space now, the computer player uses these too) ----
+
+    // A pick can be made right now
+    public bool CanPick => IsDrafting && !isBusy;
+    public IReadOnlyList<CardUnit> Available => available;
+    public IReadOnlyList<CardUnit> PickedBy(int player) => picked[player];
+    public CardData DataOf(CardUnit unit) => unit != null && cardData.TryGetValue(unit, out CardData data) ? data : null;
+
+    // Selects a card in the pool (it grows). False if it can't be picked right now
+    public bool SelectCard(CardUnit unit)
+    {
+        if (!CanPick || unit == null || !available.Contains(unit)) return false;
+        Select(unit);
+        return true;
+    }
+
+    // Confirms the selected card for the picking player
+    public bool ConfirmSelection()
+    {
+        if (!CanPick || selected == null) return false;
+        StartCoroutine(ConfirmPick());
+        return true;
     }
 
     // ---- Helpers ----

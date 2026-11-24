@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Sibling Of Water
   description: Deals +140 magic damage if Fjorn is in play as an ally
-  damage: 360
+  damage: 290
   damageType: 1
-  range: 0
+  range: 4
   area: 0
   areaSize: 1
   areaAffects: 0
   positionalBonus: 0
   positionalMultiplier: 1.25
-  hasClassBonus: 0
-  classBonusTarget: 0
+  hasClassBonus: 1
+  classBonusTarget: 2
   classMultiplier: 1.25
   hasKnockback: 0
   knockbackCollisionDamage: 10

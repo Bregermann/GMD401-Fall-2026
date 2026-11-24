@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Full Speed Collision
   description: Inflicts knockback. Also, deals +130 physical damage if this card is above 3800 HP
-  damage: 220
+  damage: 270
   damageType: 0
   range: 0
   area: 0
@@ -22,8 +22,8 @@ MonoBehaviour:
   areaAffects: 0
   positionalBonus: 0
   positionalMultiplier: 1.25
-  hasClassBonus: 0
-  classBonusTarget: 0
+  hasClassBonus: 1
+  classBonusTarget: 6
   classMultiplier: 1.25
   hasKnockback: 1
   knockbackCollisionDamage: 10

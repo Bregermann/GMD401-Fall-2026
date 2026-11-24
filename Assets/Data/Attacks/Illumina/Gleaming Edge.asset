@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Gleaming Edge
   description: Deals +120 magic damage if this character is below 800 HP
-  damage: 250
+  damage: 320
   damageType: 1
   range: 0
   area: 0
   areaSize: 1
   areaAffects: 0
-  positionalBonus: 0
-  positionalMultiplier: 1.25
-  hasClassBonus: 0
-  classBonusTarget: 0
+  positionalBonus: 1
+  positionalMultiplier: 1.5
+  hasClassBonus: 1
+  classBonusTarget: 2
   classMultiplier: 1.25
   hasKnockback: 0
   knockbackCollisionDamage: 10

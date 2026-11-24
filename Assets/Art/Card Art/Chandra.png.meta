@@ -1,15 +1,15 @@
 fileFormatVersion: 2
-guid: bb640f275e6d51948bfd88ed8aa5431c
+guid: c781908a93d60a34b99532b8811a9bab
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2777473820236066183
-    second: Arcturus_Art@2x_0
+      213: -6840771088664096008
+    second: Chandra_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
     mipMapMode: 0
-    enableMipMap: 1
+    enableMipMap: 0
     sRGBTexture: 1
     linearTexture: 0
     fadeOut: 0
@@ -38,8 +38,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 1
-    aniso: 8
-    mipBias: -0.5
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 0
@@ -98,17 +98,30 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Arcturus_Art@2x_0
+      name: Chandra_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 380
-        height: 546
+        width: 1024
+        height: 1473
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -117,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 78d2e1c49b19b8620800000000000000
-      internalID: 2777473820236066183
+      spriteID: 8f21a6650f2b011a0800000000000000
+      internalID: -6840771088664096008
       vertices: []
       indices: 
       edges: []
@@ -137,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Arcturus_Art@2x_0: 2777473820236066183
+      Chandra_0: -6840771088664096008
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Meowgic Missle
   description: 
-  damage: 410
+  damage: 300
   damageType: 1
-  range: 7
+  range: 5
   area: 0
   areaSize: 1
   areaAffects: 0
   positionalBonus: 0
   positionalMultiplier: 1.25
-  hasClassBonus: 0
-  classBonusTarget: 0
+  hasClassBonus: 1
+  classBonusTarget: 1
   classMultiplier: 1.25
   hasKnockback: 0
   knockbackCollisionDamage: 10

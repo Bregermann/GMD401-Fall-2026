@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Piercing Glow
   description: This attack ignores magic defense
-  damage: 200
+  damage: 270
   damageType: 1
   range: 0
   area: 0

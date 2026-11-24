@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Zephyr Discharge
   description: Inflicts physical defense down. Also Inflicts physical attack down if Wind Blade is on cooldown
-  damage: 200
+  damage: 270
   damageType: 0
   range: 0
   area: 0

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Self Nourishment
   description: Heals self by 270
-  damage: 270
+  damage: 320
   damageType: 2
   range: 0
   area: 3

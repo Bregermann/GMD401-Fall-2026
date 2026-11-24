@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Have A Snack
   description: Applies regeneration to target
-  damage: 150
+  damage: 200
   damageType: 2
   range: 0
   area: 0

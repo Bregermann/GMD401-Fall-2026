@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardName: Arcturus
   characterClass: 0
-  artwork: {fileID: 2777473820236066183, guid: bb640f275e6d51948bfd88ed8aa5431c, type: 3}
-  artHasText: 1
-  portraitFocus: {x: 0.3168421, y: 0.6730769}
+  artwork: {fileID: 974440805696754508, guid: f845c120b7ae9694b81f4b382ad10fc5, type: 3}
+  artHasText: 0
+  portraitFocus: {x: 0.2845707, y: 0.68846154}
   portraitZoom: 0.42
-  maxHP: 4400
+  maxHP: 3200
   physicalDefense: 80
   magicDefense: 50
   speed: 250

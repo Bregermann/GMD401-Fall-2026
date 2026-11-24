@@ -235,6 +235,7 @@ public class CombatEffects : MonoBehaviour
             StartCoroutine(Delayed(impact, () =>
             {
                 AddShake(0.25f + 0.55f * power);
+                if (power > 0.3f) ScreenLook.Punch(0.4f + 0.6f * power); // Big hits flash the screen (bigger hit = stronger flash)
                 StartCoroutine(Freeze(hitStopTime * (0.4f + 0.6f * power)));
             }));
         }
@@ -629,6 +630,7 @@ public class CombatEffects : MonoBehaviour
         Vector3 position = Above(card);
         UnitTokens.StartDefeat(unit); // The token cracks and shrinks from this moment
         GameSfx.PlayLayers(GameSfx.Defeat, 1f, GameSfx.PanAt(card.position));
+        ScreenLook.Punch(0.7f);
         PlayOnce(Slot(l => l.defeat), position, () =>
         {
             if (inkAuras) ThemedEffects.Defeat(unit);

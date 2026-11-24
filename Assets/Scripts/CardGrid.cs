@@ -108,6 +108,13 @@ public class CardGrid : MonoBehaviour
         return valid;
     }
 
+    //Added for the computer player: row and column of a slot. False if it isn't one of this grid's slots
+    public bool TryGetCoordinates(Transform slot, out int row, out int col)
+    {
+        FindSlot(slot, out row, out col);
+        return row != -1;
+    }
+
     //Row and column of a slot, or -1, -1 if it isn't one of this grid's slots
     void FindSlot(Transform slot, out int row, out int col)
     {

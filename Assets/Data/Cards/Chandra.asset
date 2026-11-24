@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardName: Chandra
   characterClass: 4
-  artwork: {fileID: 1371347551380637131, guid: a47baddc42fea044bb44c482835ea979, type: 3}
-  artHasText: 1
-  portraitFocus: {x: 0.45, y: 0.69}
+  artwork: {fileID: -6840771088664096008, guid: c781908a93d60a34b99532b8811a9bab, type: 3}
+  artHasText: 0
+  portraitFocus: {x: 0.4389198, y: 0.63461536}
   portraitZoom: 0.42
-  maxHP: 3200
+  maxHP: 2000
   physicalDefense: 40
   magicDefense: 60
   speed: 360

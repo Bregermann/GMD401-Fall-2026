@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Nanoviral Storm
   description: Deals an additional +30 magic damage per debuff on target
-  damage: 220
+  damage: 270
   damageType: 1
   range: 0
   area: 0

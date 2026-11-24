@@ -107,7 +107,7 @@ public class TurnManager : MonoBehaviour
     // Turns keyboard and mouse input into commands
     void Update()
     {
-        if (!CanAct || CardInspector.IsOpen || InputGate.IsPaused) return;
+        if (!HumanCanAct || CardInspector.IsOpen || InputGate.IsPaused) return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
@@ -131,6 +131,8 @@ public class TurnManager : MonoBehaviour
 
     // The active card is waiting for its player: move, attack or end turn
     public bool CanAct => Phase == GamePhase.Battle && ActiveUnit != null && !isBusy;
+    // Same, but only when a person controls the active card (the computer player's turns ignore mouse and keys)
+    public bool HumanCanAct => CanAct && !ComputerPlayer.Controls(ActiveUnit.Instance.owner);
     public AttackData SelectedAttack => selectedAttack;
     public bool HasAttacked => hasAttacked;
 
@@ -184,6 +186,20 @@ public class TurnManager : MonoBehaviour
 
         return false;
     }
+
+    // Dragging by mouse: the same rules, but never a card the computer player controls
+    public bool CanHumanDrag(CardUnit unit)
+    {
+        if (unit == null || unit.Instance == null) return false;
+        if (ComputerPlayer.Controls(unit.Instance.owner)) return false;
+        return CanDrag(unit);
+    }
+
+    // A player's cards that still need placing (for the computer player)
+    public List<CardUnit> UnplacedCards(int owner) => units.FindAll(u => u != null && u.Instance != null && u.Instance.owner == owner && !IsPlaced(u));
+
+    // True while the placing player can put a card down
+    public bool CanPlace => Phase == GamePhase.Placement && !isBusy;
 
     // Called after a card snaps to a slot
     public void OnCardSnapped(CardUnit unit)
@@ -403,16 +419,32 @@ public class TurnManager : MonoBehaviour
             yield return new WaitForSeconds(CombatManager.Instance.DefeatDelay);
     }
 
-    // A player loses when all their cards are defeated
+    // Design doc rule: the game also ends when one player has three more cards in play than the other.
+    // Off = play until a whole team is gone (DevSetup has a toggle)
+    public static bool ThreeAheadRule = true;
+    public const int CardsAheadToWin = 3;
+
+    // Who has won right now, or 0 if nobody yet. Shared with the balance simulation
+    public static int WinnerOf(BoardState board, bool threeAhead)
+    {
+        int player1 = board.GetCards(1).Count, player2 = board.GetCards(2).Count;
+        if (player1 == 0 || player2 == 0) return player1 > 0 ? 1 : player2 > 0 ? 2 : 0;
+        if (threeAhead && Mathf.Abs(player1 - player2) >= CardsAheadToWin) return player1 > player2 ? 1 : 2;
+        return 0;
+    }
+
+    // A player loses when all their cards are defeated, or (with the three-ahead rule) when they're three cards behind
     bool CheckForWinner()
     {
-        bool player1Alive = Board.GetCards(1).Count > 0;
-        bool player2Alive = Board.GetCards(2).Count > 0;
-        if (player1Alive && player2Alive) return false;
+        int winner = WinnerOf(Board, ThreeAheadRule);
+        bool bothGone = Board.GetCards(1).Count == 0 && Board.GetCards(2).Count == 0;
+        if (winner == 0 && !bothGone) return false;
 
         Phase = GamePhase.GameOver;
         ActiveUnit = null;
-        Winner = player1Alive ? 1 : 2;
+        Winner = winner != 0 ? winner : 2; // Both gone at once (shouldn't happen): keep the old behaviour
+        if (winner != 0 && Board.GetCards(BoardState.OtherPlayer(winner)).Count > 0)
+            Debug.Log($"Player {winner} is {CardsAheadToWin} cards ahead");
         Debug.Log($"Player {Winner} wins!");
         GameEnded?.Invoke(Winner);
 

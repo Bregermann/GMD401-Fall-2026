@@ -15,7 +15,7 @@ MonoBehaviour:
   cardName: Galvin
   characterClass: 5
   artwork: {fileID: 0}
-  maxHP: 1580
+  maxHP: 1930
   physicalDefense: 30
   magicDefense: 20
   speed: 510

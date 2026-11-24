@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Starfall
   description: 
-  damage: 380
+  damage: 240
   damageType: 1
-  range: 20
+  range: 5
   area: 1
   areaSize: 1
   areaAffects: 0

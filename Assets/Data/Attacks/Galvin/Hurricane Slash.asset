@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Hurricane Slash
   description: 'Inflicts stagger if Wind Blade is on cooldown '
-  damage: 220
+  damage: 290
   damageType: 0
   range: 0
   area: 0
@@ -22,8 +22,8 @@ MonoBehaviour:
   areaAffects: 0
   positionalBonus: 0
   positionalMultiplier: 1.25
-  hasClassBonus: 0
-  classBonusTarget: 0
+  hasClassBonus: 1
+  classBonusTarget: 2
   classMultiplier: 1.25
   hasKnockback: 0
   knockbackCollisionDamage: 10

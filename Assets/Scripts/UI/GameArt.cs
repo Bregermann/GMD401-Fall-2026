@@ -7,9 +7,20 @@ using UnityEngine.UI;
 public class GameArt : ScriptableObject
 {
     public Sprite logo;
+    public CardData[] showcaseCards; // Cards the main menu shows standing on its board (real cards with art, filled in automatically)
 
     private static GameArt loaded;
     private static bool looked;
+
+    // The GameArt asset itself (null if it doesn't exist)
+    public static GameArt Asset
+    {
+        get
+        {
+            if (!looked) { looked = true; loaded = Resources.Load<GameArt>("UI/GameArt"); }
+            return loaded;
+        }
+    }
 
     // The logo sprite: from the GameArt asset, or else borrowed from any "Stratafield Logo" image in the scene
     // (the pause menu has one). Null if neither exists

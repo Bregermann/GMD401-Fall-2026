@@ -18,7 +18,7 @@ public class DevCard
 
 // DEV ONLY - for a test scene, don't put this in GameScene.
 // Skips the draft and placement: spawns the cards listed below on their slots and starts the battle straight away.
-// Hotkeys (hover a card): K kill, D damage, H heal to full. R restarts the scene.
+// Hotkeys (hover a card): K kill, D damage, H heal to full. R restarts the scene. T toggles the three-ahead win rule.
 public class DevSetup : MonoBehaviour
 {
     public static DevSetup Instance { get; private set; }
@@ -29,17 +29,20 @@ public class DevSetup : MonoBehaviour
     [Header("Options")]
     [SerializeField] private bool ignoreCooldowns = false; // Use the same attack every turn
     [SerializeField] private bool fixedTurnOrder = false;  // Turns go in list order instead of by speed
+    [SerializeField] private bool threeAheadRule = true;   // Game ends when a player is 3 cards ahead (design doc rule). T toggles it while playing
     [SerializeField] private int damageAmount = 100;       // How much D deals
 
     void Awake()
     {
         Instance = this;
         CardInstance.IgnoreCooldowns = ignoreCooldowns;
+        TurnManager.ThreeAheadRule = threeAheadRule;
     }
 
     void OnDestroy()
     {
         CardInstance.IgnoreCooldowns = false; // Don't leak into other scenes
+        TurnManager.ThreeAheadRule = true;
     }
 
     // Waits a frame so CardGrid and CombatManager are set up
@@ -60,7 +63,7 @@ public class DevSetup : MonoBehaviour
             if (unit != null) spawned.Add(unit);
         }
 
-        Debug.Log("Dev mode: hover a card and press K to kill, D to damage, H to heal. R restarts");
+        Debug.Log("Dev mode: hover a card and press K to kill, D to damage, H to heal. R restarts, T toggles the three-ahead win rule");
         TurnManager.Instance.FixedTurnOrder = fixedTurnOrder;
         TurnManager.Instance.StartBattle(spawned);
     }
@@ -69,6 +72,12 @@ public class DevSetup : MonoBehaviour
     {
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null || CardInspector.IsOpen || InputGate.IsPaused) return;
+
+        if (keyboard.tKey.wasPressedThisFrame)
+        {
+            TurnManager.ThreeAheadRule = !TurnManager.ThreeAheadRule;
+            Debug.Log($"Dev: three-ahead win rule {(TurnManager.ThreeAheadRule ? "ON" : "OFF (play until a team is gone)")}");
+        }
 
         if (keyboard.rKey.wasPressedThisFrame)
         {

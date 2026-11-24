@@ -15,7 +15,7 @@ MonoBehaviour:
   cardName: Cruze
   characterClass: 0
   artwork: {fileID: 0}
-  maxHP: 2050
+  maxHP: 2300
   physicalDefense: 70
   magicDefense: 30
   speed: 420

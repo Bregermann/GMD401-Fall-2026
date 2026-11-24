@@ -25,7 +25,7 @@ public class UnitTokens : MonoBehaviour
     public static UnitTokens Instance { get; private set; }
 
     // Frame texture pixels per crown unit (the body is 116 units wide)
-    private const float FramePixels = 1.4f;
+    public const float FramePixels = 1.4f;
 
     // World units per crown unit
     float UnitScale => tokenWidth / ClassFrames.BodyWidth;
@@ -516,7 +516,7 @@ public class UnitTokens : MonoBehaviour
 
     // Colour of the card's portrait at a point in crown units. The portrait has as many pixels as the frame has
     // inside the crown's portrait box
-    System.Func<Vector2, Color> PortraitSampler(CardData data)
+    public static System.Func<Vector2, Color> PortraitSampler(CardData data)
     {
         Rect box = ClassFrames.PortraitBox(data.characterClass);
         int portraitW = Mathf.CeilToInt(box.width * FramePixels), portraitH = Mathf.CeilToInt(box.height * FramePixels);
@@ -583,7 +583,7 @@ public class UnitTokens : MonoBehaviour
 
     // Crops this card's portrait out of its art (see PortraitCrop) and shrinks it to the portrait size on the GPU,
     // then reads it back. Works on art that isn't marked readable. No art = a night-sky gradient
-    Color[] ReadPortrait(CardData data, int width, int height)
+    static Color[] ReadPortrait(CardData data, int width, int height)
     {
         Color[] result = new Color[width * height];
         Sprite art = data.artwork;

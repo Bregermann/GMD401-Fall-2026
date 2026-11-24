@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Eat Up
   description: Applies physical defense up to target
-  damage: 180
+  damage: 230
   damageType: 2
   range: 0
   area: 0

@@ -15,7 +15,7 @@ MonoBehaviour:
   attackName: Hiss
   damage: 0
   damageType: 1
-  range: 0
+  range: 4
   area: 0
   areaSize: 1
   areaAffects: 0

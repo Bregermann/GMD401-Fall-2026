@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   attackName: Wind Blade
   description: 
-  damage: 190
+  damage: 260
   damageType: 0
   range: 0
   area: 0

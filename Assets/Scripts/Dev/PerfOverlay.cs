@@ -91,9 +91,7 @@ public static class PerfLog
     {
         entries.Add((label, ms));
         if (entries.Count > 200) entries.RemoveAt(0);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (ms > 30f) Debug.Log($"[Perf] {label}: {ms:0} ms");
-#endif
+        if (ms > 30f && (Application.isEditor || Debug.isDebugBuild)) Debug.Log($"[Perf] {label}: {ms:0} ms"); // Editor and Development Builds only
     }
 
     public static IEnumerable<(string, float)> Slowest(int count)

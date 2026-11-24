@@ -152,12 +152,16 @@ public class BattleHUD : MonoBehaviour
         if (turns.Phase == GamePhase.Draft && draft != null && draft.IsDrafting && !draft.IsDealing)
         {
             player = draft.PickingPlayer;
-            status = $"<font=\"Audiowide\">PLAYER {player} PICKS</font>\n<size=72%><color=#C9D8D8>Click a card, SPACE to confirm, right-click to inspect</color></size>";
+            status = ComputerPlayer.Controls(player)
+                ? $"<font=\"ROG\">COMPUTER PICKS</font>\n<size=72%><color=#C9D8D8>Player {player} is choosing a card...</color></size>"
+                : $"<font=\"ROG\">PLAYER {player} PICKS</font>\n<size=72%><color=#C9D8D8>Click a card, SPACE to confirm, right-click to inspect</color></size>";
         }
         else if (turns.Phase == GamePhase.Placement)
         {
             player = turns.PlacingPlayer;
-            status = $"<font=\"Audiowide\">PLAYER {player} PLACES</font>\n<size=72%><color=#C9D8D8>Drag a card onto your coloured rows</color></size>";
+            status = ComputerPlayer.Controls(player)
+                ? $"<font=\"ROG\">COMPUTER PLACES</font>\n<size=72%><color=#C9D8D8>Player {player} is placing a card...</color></size>"
+                : $"<font=\"ROG\">PLAYER {player} PLACES</font>\n<size=72%><color=#C9D8D8>Drag a card onto your coloured rows</color></size>";
         }
 
         bool battle = turns.Phase == GamePhase.Battle;
@@ -217,7 +221,7 @@ public class BattleHUD : MonoBehaviour
         key = key * 31 + card.GetHashCode();
         key = key * 31 + card.currentHP;
         key = key * 31 + card.Speed;
-        key = key * 31 + (hasMoved ? 1 : 0) + (turns.HasAttacked ? 2 : 0) + (turns.CanAct ? 4 : 0);
+        key = key * 31 + (hasMoved ? 1 : 0) + (turns.HasAttacked ? 2 : 0) + (turns.HumanCanAct ? 4 : 0);
         key = key * 31 + (turns.SelectedAttack != null ? turns.SelectedAttack.GetHashCode() : 0);
         key = key * 31 + hoveredButton;
         key = key * 31 + (card.CanUseAttack(card.data.attack1) ? 1 : 0) + (card.CanUseAttack(card.data.attack2) ? 2 : 0)
@@ -225,7 +229,7 @@ public class BattleHUD : MonoBehaviour
         if (key == cardPanelKey && Time.unscaledTime < cardPanelRefresh) return;
         cardPanelKey = key;
         cardPanelRefresh = Time.unscaledTime + 0.5f;
-        FillCardPanel(card, hasMoved, turns.HasAttacked, turns.CanAct, turns.SelectedAttack);
+        FillCardPanel(card, hasMoved, turns.HasAttacked, turns.HumanCanAct, turns.SelectedAttack);
     }
 
     private int cardPanelKey;
@@ -246,7 +250,9 @@ public class BattleHUD : MonoBehaviour
         SetChip(moveChip, moveChipText, canMove ? "MOVE" : hasMoved ? "MOVED" : "NO MOVE", canMove);
         SetChip(attackChip, attackChipText, hasAttacked ? "ATTACKED" : "ATTACK", !hasAttacked);
 
-        if (selected != null)
+        if (ComputerPlayer.Controls(card.owner))
+            hintText.text = selected != null ? $"Computer uses <b>{selected.attackName}</b>" : "Computer is thinking...";
+        else if (selected != null)
             hintText.text = CombatResolver.UsedOnSelf(selected) ? $"Click <b>{card.data.cardName}</b> to use {selected.attackName}"
                                                                 : $"Click a target for <b>{selected.attackName}</b>";
         else if (!canAct) hintText.text = "";
@@ -308,7 +314,7 @@ public class BattleHUD : MonoBehaviour
 
     void UpdateEndTurn(TurnManager turns)
     {
-        bool show = turns.CanAct;
+        bool show = turns.HumanCanAct; // No END TURN button on the computer's turns
         endTurnPanel.gameObject.SetActive(show);
         if (!show) return;
 
@@ -649,7 +655,7 @@ public class BattleHUD : MonoBehaviour
         button.root.gameObject.AddComponent<UISound>().clickCue = ""; // Hover sound only; TurnManager plays the select sound
         click.onClick.AddListener(() =>
         {
-            TurnManager.Instance?.SelectAttack(index);
+            if (TurnManager.Instance != null && TurnManager.Instance.HumanCanAct) TurnManager.Instance.SelectAttack(index);
             EventSystem.current?.SetSelectedGameObject(null); // Otherwise Space would also "press" the button
         });
 
@@ -695,7 +701,7 @@ public class BattleHUD : MonoBehaviour
         endTurnPanel.gameObject.AddComponent<UISound>().clickCue = ""; // Hover sound only; TurnManager plays the end turn sound
         click.onClick.AddListener(() =>
         {
-            TurnManager.Instance?.EndTurn();
+            if (TurnManager.Instance != null && TurnManager.Instance.HumanCanAct) TurnManager.Instance.EndTurn();
             EventSystem.current?.SetSelectedGameObject(null);
         });
 
